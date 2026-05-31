@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#1a0533"/>
+      <stop offset="100%" style="stop-color:#0a0a0f"/>
+    </radialGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a855f7"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#bgGrad)"/>
+  <circle cx="50" cy="50" r="46" fill="none" stroke="url(#textGrad)" stroke-width="2.5" opacity="0.9"/>
+  <text x="50" y="60"
+        font-family="Arial Black, sans-serif"
+        font-size="30"
+        font-weight="900"
+        text-anchor="middle"
+        fill="url(#textGrad)"
+        letter-spacing="2">DSA</text>
+</svg>
+

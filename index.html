@@ -4,6 +4,7 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
     <title>Striver DSA Roadmap</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -329,6 +330,59 @@
             background-clip: text;
         }
         body.light .bg-orb { opacity: 0.15; }
+
+        /* ── DSA Interactive Logo ── */
+        .dsa-logo-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+        .dsa-logo-svg {
+            width: 110px;
+            height: 110px;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            filter: drop-shadow(0 0 18px rgba(168,85,247,0.5));
+        }
+        .dsa-logo-wrap:hover .dsa-logo-svg {
+            transform: scale(1.12) rotate(5deg);
+            filter: drop-shadow(0 0 32px rgba(168,85,247,0.85)) drop-shadow(0 0 18px rgba(6,182,212,0.6));
+        }
+        .dsa-logo-wrap:active .dsa-logo-svg {
+            transform: scale(0.95);
+        }
+        /* Spinning rings */
+        .spin-ring {
+            transform-origin: 60px 60px;
+            animation: spinCW 4s linear infinite;
+        }
+        .spin-ring-rev {
+            transform-origin: 60px 60px;
+            animation: spinCCW 6s linear infinite;
+        }
+        .orbit-dot {
+            transform-origin: 60px 60px;
+            animation: spinCW 4s linear infinite;
+        }
+        .orbit-dot-rev {
+            transform-origin: 60px 60px;
+            animation: spinCCW 6s linear infinite;
+        }
+        @keyframes spinCW {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        @keyframes spinCCW {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(-360deg); }
+        }
+        /* Pulse on logo hover */
+        .dsa-logo-wrap:hover .spin-ring {
+            animation-duration: 1.5s;
+        }
+        .dsa-logo-wrap:hover .spin-ring-rev {
+            animation-duration: 2s;
+        }
     </style>
 </head>
 <body>
@@ -340,6 +394,52 @@
 
     <div class="container">
         <div class="header">
+            <!-- Interactive DSA Logo -->
+            <div class="dsa-logo-wrap" id="dsaLogo" title="DSA Visual Learning">
+                <svg class="dsa-logo-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="bgG" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#2d0a5e"/>
+                            <stop offset="100%" stop-color="#0a0a0f"/>
+                        </radialGradient>
+                        <linearGradient id="ringG" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#a855f7"/>
+                            <stop offset="100%" stop-color="#06b6d4"/>
+                        </linearGradient>
+                        <linearGradient id="textG" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#c084fc"/>
+                            <stop offset="100%" stop-color="#22d3ee"/>
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+                    <!-- Background -->
+                    <circle cx="60" cy="60" r="58" fill="url(#bgG)"/>
+                    <!-- Spinning outer ring -->
+                    <circle class="spin-ring" cx="60" cy="60" r="55" fill="none" stroke="url(#ringG)" stroke-width="2" stroke-dasharray="80 260" stroke-linecap="round"/>
+                    <!-- Spinning inner ring (reverse) -->
+                    <circle class="spin-ring-rev" cx="60" cy="60" r="48" fill="none" stroke="url(#ringG)" stroke-width="1.5" stroke-dasharray="40 260" stroke-linecap="round" opacity="0.6"/>
+                    <!-- Glowing solid border -->
+                    <circle cx="60" cy="60" r="55" fill="none" stroke="url(#ringG)" stroke-width="0.5" opacity="0.3"/>
+                    <!-- Orbit dots -->
+                    <circle class="orbit-dot" cx="60" cy="5" r="3" fill="#a855f7" filter="url(#glow)"/>
+                    <circle class="orbit-dot-rev" cx="60" cy="115" r="2.5" fill="#06b6d4" filter="url(#glow)"/>
+                    <!-- DSA Text -->
+                    <text x="60" y="72"
+                          font-family="Arial Black, sans-serif"
+                          font-size="36"
+                          font-weight="900"
+                          text-anchor="middle"
+                          fill="url(#textG)"
+                          filter="url(#glow)"
+                          letter-spacing="3">DSA</text>
+                    <!-- Underline accent -->
+                    <line x1="25" y1="80" x2="95" y2="80" stroke="url(#ringG)" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+                </svg>
+            </div>
+
             <div class="badge">Striver A2Z DSA Sheet</div>
             <h1>Your DSA Roadmap</h1>
             <p class="subtitle">Master Data Structures & Algorithms step by step. Click any topic to dive in.</p>
