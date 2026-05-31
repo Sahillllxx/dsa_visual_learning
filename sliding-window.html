@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sliding Window – Striver Style</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;900&family=Fira+Code:wght@400;600&display=swap');
+
+:root {
+  --bg: #070809;
+  --surface: #0f1115;
+  --card: #13161c;
+  --border: #1c2030;
+  --accent: #00e5ff;
+  --accent2: #ff6b35;
+  --green: #00ff88;
+  --yellow: #ffd60a;
+  --red: #ff4757;
+  --muted: #4a5068;
+  --text: #dde3f0;
+  --dim: #8892a4;
+}
+
+[data-theme="light"] {
+  --bg: #f4f7fa;
+  --surface: #eaf1f8;
+  --card: #dce8f5;
+  --border: #b0c8e0;
+  --accent: #0066aa;
+  --accent2: #cc4400;
+  --green: #007744;
+  --yellow: #886600;
+  --red: #cc2200;
+  --muted: #4a6080;
+  --text: #0a1a2a;
+  --dim: #3a5070;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Barlow',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  transition:background .3s,color .3s;
+}
+
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.5;
+}
+[data-theme="light"] body::before{opacity:0;}
+
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,.02) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;z-index:0;
+}
+[data-theme="light"] body::after{
+  background-image:
+    linear-gradient(rgba(0,100,170,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,100,170,.06) 1px,transparent 1px);
+}
+
+/* ── THEME TOGGLE ── */
+#themeToggle{
+  position:fixed;top:16px;right:16px;z-index:10000;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;
+  font-size:1.2rem;cursor:pointer;transition:all .2s;
+  font-family:'Fira Code',monospace;color:var(--text);
+}
+#themeToggle:hover{border-color:var(--accent);transform:scale(1.05);}
+
+/* ── LEFT SIDEBAR ── */
+#sidebar{
+  position:fixed;top:0;left:0;
+  width:220px;height:100vh;
+  background:var(--card);
+  border-right:1px solid var(--border);
+  z-index:9000;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  transition:background .3s,border-color .3s;
+}
+.sb-header{
+  padding:14px 12px 10px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sb-brand{
+  font-family:'Fira Code',monospace;font-size:0.68rem;font-weight:700;
+  color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;
+}
+.sb-actions{display:flex;gap:7px;}
+#backHome{
+  flex:1;display:flex;align-items:center;gap:5px;
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:6px 10px;font-size:0.7rem;font-weight:600;
+  color:var(--text);text-decoration:none;
+  font-family:'Fira Code',monospace;
+  transition:all .2s;
+}
+#backHome:hover{border-color:var(--accent);color:var(--accent);}
+.sb-links{flex:1;overflow-y:auto;padding:6px 0;}
+.sb-links::-webkit-scrollbar{width:3px;}
+.sb-links::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.sb-link{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 12px;
+  text-decoration:none;color:var(--dim);
+  font-family:'Fira Code',monospace;font-size:11px;
+  transition:all .15s;border-left:2px solid transparent;
+}
+.sb-link:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.sb-link.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,229,255,0.05);}
+[data-theme="light"] .sb-link.active{background:rgba(0,102,170,0.07);}
+.sb-num{
+  font-size:9px;font-weight:700;
+  background:var(--accent);color:#000;
+  padding:2px 6px;border-radius:2px;flex-shrink:0;
+  font-family:'Fira Code',monospace;
+}
+
+/* Mobile toggle */
+#menuBtn{
+  display:none;
+  position:fixed;top:12px;left:12px;z-index:10001;
+  background:var(--card);border:1px solid var(--border);border-radius:6px;
+  padding:7px 10px;font-size:1.1rem;cursor:pointer;color:var(--text);
+}
+#sbOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:8999;}
+#sbOverlay.open{display:block;}
+
+.container{
+  position:relative;z-index:1;
+  max-width:900px;margin:0 auto;
+  padding:32px 20px 80px;
+}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:48px 20px 40px;position:relative;}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#0a1a1f;border:1px solid rgba(0,229,255,.25);
+  color:var(--accent);font-family:'Fira Code',monospace;
+  font-size:11px;letter-spacing:3px;
+  padding:6px 16px;border-radius:2px;margin-bottom:20px;text-transform:uppercase;
+}
+[data-theme="light"] .hero-tag{background:#e0eff8;border-color:rgba(0,102,170,.3);}
+.hero-tag::before{content:'▶';font-size:9px;}
+.hero h1{
+  font-family:'Barlow',sans-serif;font-weight:900;
+  font-size:clamp(3rem,8vw,5.5rem);line-height:.95;
+  letter-spacing:-2px;text-transform:uppercase;margin-bottom:16px;
+}
+.hero h1 .line1{color:var(--text);}
+.hero h1 .line2{color:transparent;-webkit-text-stroke:2px var(--accent);}
+.hero-sub{font-family:'Fira Code',monospace;font-size:13px;color:var(--muted);margin-bottom:32px;}
+.hero-sub span{color:var(--accent);}
+
+/* ── SECTION ── */
+.section{margin-bottom:28px;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.section-header{
+  background:var(--card);padding:16px 24px;
+  display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);
+}
+.sec-num{
+  font-family:'Barlow',sans-serif;font-weight:900;font-size:11px;
+  background:var(--accent);color:#000;padding:3px 8px;border-radius:2px;letter-spacing:1px;
+}
+[data-theme="light"] .sec-num{color:#fff;}
+.sec-title{
+  font-family:'Barlow',sans-serif;font-weight:700;font-size:.9rem;
+  text-transform:uppercase;letter-spacing:2px;color:var(--text);
+}
+.section-body{padding:24px;}
+
+/* ── STRIVER BOX ── */
+.sv{
+  display:flex;gap:14px;background:#0a0e14;
+  border:1px solid rgba(0,229,255,.12);border-radius:4px;padding:18px;margin-bottom:16px;
+}
+[data-theme="light"] .sv{background:rgba(0,102,170,.06);border-color:rgba(0,102,170,.2);}
+.sv-avatar{
+  flex-shrink:0;width:38px;height:38px;
+  background:linear-gradient(135deg,var(--accent),#0070ff);
+  border-radius:50%;display:grid;place-items:center;font-size:1.1rem;
+}
+.sv-content{}
+.sv-name{font-family:'Fira Code',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:6px;}
+.sv-text{font-size:14.5px;line-height:1.75;color:var(--text);}
+.sv-text em{color:var(--yellow);font-style:normal;font-weight:700;}
+.sv-text .hl{color:var(--accent);}
+.sv-text .warn{color:var(--red);}
+.sv-text .good{color:var(--green);}
+
+/* ── PROBLEM PILLS ── */
+.prob-row{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;}
+.prob-pill{padding:10px 18px;border-radius:3px;font-family:'Fira Code',monospace;font-size:12px;border:1px solid;}
+.naive{border-color:var(--red);background:#1a0a0a;color:var(--red);}
+[data-theme="light"] .naive{background:#fef0ee;}
+.optimal{border-color:var(--green);background:#0a1a10;color:var(--green);}
+[data-theme="light"] .optimal{background:#eef8f2;}
+
+/* ── TYPE GRID ── */
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+.type-card{background:#0a0e14;border:1px solid var(--border);border-radius:4px;padding:18px;}
+[data-theme="light"] .type-card{background:var(--surface);}
+.type-card.fixed{border-top:3px solid var(--accent);}
+.type-card.variable{border-top:3px solid var(--accent2);}
+.type-label{font-family:'Fira Code',monospace;font-size:10px;letter-spacing:2px;margin-bottom:8px;}
+.type-card.fixed .type-label{color:var(--accent);}
+.type-card.variable .type-label{color:var(--accent2);}
+.type-title{font-weight:700;font-size:1rem;margin-bottom:6px;}
+.type-desc{font-size:13px;color:var(--dim);line-height:1.6;}
+
+/* ── STEPPER ── */
+.stepper-wrap{
+  background:#0a0e14;border:1px solid var(--border);
+  border-radius:4px;padding:24px;margin-bottom:16px;
+}
+[data-theme="light"] .stepper-wrap{background:var(--surface);}
+
+.step-arr{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;}
+.step-cell{
+  width:48px;height:52px;border-radius:3px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:'Fira Code',monospace;font-weight:700;font-size:1.1rem;
+  border:1px solid var(--border);background:var(--card);color:var(--dim);
+  transition:all .35s cubic-bezier(.4,0,.2,1);
+}
+.step-cell.win{
+  background:#071820;border-color:var(--accent);color:var(--accent);
+  box-shadow:0 0 16px rgba(0,229,255,.25);transform:translateY(-3px);
+}
+[data-theme="light"] .step-cell.win{background:#daeeff;box-shadow:none;}
+.step-cell.best{
+  background:#071a0e;border-color:var(--green);color:var(--green);
+  box-shadow:0 0 16px rgba(0,255,136,.25);
+}
+[data-theme="light"] .step-cell.best{background:#d9f5e8;box-shadow:none;}
+.step-cell.left-ptr{border-color:var(--accent2);background:#1a0e08;}
+[data-theme="light"] .step-cell.left-ptr{background:#ffeedd;}
+.step-cell.right-ptr{border-color:var(--accent);background:#081418;}
+[data-theme="light"] .step-cell.right-ptr{background:#daeeff;}
+
+.ptrs-row{display:flex;gap:6px;justify-content:center;min-height:20px;margin-bottom:16px;}
+.ps{width:48px;text-align:center;font-family:'Fira Code',monospace;font-size:10px;display:flex;gap:2px;justify-content:center;}
+.pL{color:var(--accent2);font-weight:700;}
+.pR{color:var(--accent);font-weight:700;}
+.pS{color:var(--yellow);font-weight:700;}
+
+.info-panel{
+  background:#070a0f;border:1px solid var(--border);border-radius:3px;
+  padding:16px;font-family:'Fira Code',monospace;font-size:13px;line-height:1.7;min-height:80px;
+}
+[data-theme="light"] .info-panel{background:var(--card);}
+.info-panel .step-tag{font-size:10px;color:var(--accent);letter-spacing:2px;display:block;margin-bottom:8px;}
+.info-panel strong{color:var(--yellow);}
+.info-panel .g{color:var(--green);}
+.info-panel .r{color:var(--red);}
+.info-panel .c{color:var(--accent);}
+
+.stats-row{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap;}
+.stat-chip{
+  padding:6px 14px;border-radius:3px;
+  font-family:'Fira Code',monospace;font-size:12px;
+  border:1px solid var(--border);background:#0a0e14;
+}
+[data-theme="light"] .stat-chip{background:var(--card);}
+.stat-chip .sk{color:var(--muted);margin-right:4px;}
+.stat-chip .sv2{color:var(--yellow);font-weight:700;}
+
+/* ── CONTROLS ── */
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px;}
+.btn{
+  padding:10px 22px;border-radius:3px;border:none;cursor:pointer;
+  font-family:'Barlow',sans-serif;font-weight:700;
+  font-size:13px;letter-spacing:1px;text-transform:uppercase;transition:all .2s;
+}
+.btn-accent{background:var(--accent);color:#000;}
+.btn-accent:hover{filter:brightness(1.15);transform:translateY(-1px);}
+[data-theme="light"] .btn-accent{color:#fff;}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important;}
+.step-num{font-family:'Fira Code',monospace;font-size:11px;color:var(--muted);margin-left:auto;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.tab{
+  padding:10px 20px;font-family:'Barlow',sans-serif;font-weight:700;
+  font-size:12px;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;border-bottom:2px solid transparent;
+  color:var(--muted);transition:all .2s;margin-bottom:-1px;
+}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── CODE ── */
+pre{
+  background:#050708;border:1px solid var(--border);border-radius:4px;
+  padding:20px;overflow-x:auto;
+  font-family:'Fira Code',monospace;font-size:13px;line-height:1.9;
+}
+[data-theme="light"] pre{background:#eef5fc;color:#0a1a2a;}
+.kw{color:#c792ea;}
+.fn{color:#82aaff;}
+.cm{color:#374151;font-style:italic;}
+.num{color:var(--yellow);}
+.op{color:var(--accent);}
+.str{color:#a8ff78;}
+[data-theme="light"] .kw{color:#7c3aed;}
+[data-theme="light"] .fn{color:#1d4ed8;}
+[data-theme="light"] .cm{color:#6b7280;}
+[data-theme="light"] .num{color:#92400e;}
+[data-theme="light"] .op{color:#065f46;}
+[data-theme="light"] .str{color:#166534;}
+
+/* ── COMPLEXITY ── */
+.cx-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;}
+.cx-card{background:#0a0e14;border:1px solid var(--border);border-radius:4px;padding:14px;text-align:center;}
+[data-theme="light"] .cx-card{background:var(--surface);}
+.cx-lbl{font-family:'Fira Code',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;}
+.cx-val{font-family:'Barlow',sans-serif;font-weight:900;font-size:1.6rem;color:var(--green);}
+
+/* ── INSIGHT ── */
+.insight{
+  background:#07150a;border:1px solid rgba(0,255,136,.2);
+  border-radius:4px;padding:18px;font-size:14px;line-height:1.75;
+  color:var(--green);margin-top:16px;
+}
+[data-theme="light"] .insight{background:#eef8f2;border-color:rgba(0,119,68,.25);}
+.insight strong{color:#fff;}
+[data-theme="light"] .insight strong{color:#003322;}
+
+/* ── TEMPLATE ── */
+.template{
+  background:#07100f;border:1px solid rgba(0,229,255,.15);
+  border-radius:4px;padding:18px;margin-top:12px;
+}
+[data-theme="light"] .template{background:#eaf4fb;border-color:rgba(0,102,170,.2);}
+.template-title{font-family:'Fira Code',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:12px;}
+
+/* ── PROBLEMS LIST ── */
+.prob-list{margin-top:12px;}
+.prob-item{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-radius:3px;margin-bottom:6px;
+  background:#0a0e14;border:1px solid var(--border);font-size:14px;
+}
+[data-theme="light"] .prob-item{background:var(--surface);}
+.prob-item .diff{
+  font-family:'Fira Code',monospace;font-size:10px;
+  padding:3px 8px;border-radius:2px;font-weight:700;flex-shrink:0;
+}
+.easy{background:#0a1a10;color:var(--green);border:1px solid var(--green);}
+[data-theme="light"] .easy{background:#d9f5e8;}
+.med{background:#1a130a;color:var(--yellow);border:1px solid var(--yellow);}
+[data-theme="light"] .med{background:#fdf5dd;}
+.hard{background:#1a0a0a;color:var(--red);border:1px solid var(--red);}
+[data-theme="light"] .hard{background:#fef0ee;}
+
+@media(max-width:600px){
+  .type-grid{grid-template-columns:1fr;}
+  .cx-grid{grid-template-columns:1fr 1fr;}
+}
+
+/* Sidebar layout */
+body{padding-left:220px;}
+@media(max-width:768px){
+  body{padding-left:0;}
+  #sidebar{transform:translateX(-100%);transition:transform .3s;}
+  #sidebar.open{transform:translateX(0);}
+  #menuBtn{display:flex;}
+}
+</style>
+</head>
+<body>
+
+<button id="menuBtn" onclick="document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('open')">☰</button>
+<div id="sbOverlay" onclick="document.getElementById('sidebar').classList.remove('open');this.classList.remove('open')"></div>
+
+<!-- LEFT SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-header">
+    <div class="sb-brand">🪟 Sliding Window</div>
+    <div class="sb-actions">
+      <a href="index.html" id="backHome">← Home</a>
+    </div>
+  </div>
+  <div class="sb-links">
+    <a class="sb-link" href="#s1"><span class="sb-num">01</span>What is Sliding Window?</a>
+    <a class="sb-link" href="#s2"><span class="sb-num">02</span>Two Types</a>
+    <a class="sb-link" href="#s3"><span class="sb-num">03</span>Fixed Window Dry Run</a>
+    <a class="sb-link" href="#s4"><span class="sb-num">04</span>Variable Window Dry Run</a>
+    <a class="sb-link" href="#s5"><span class="sb-num">05</span>Master Template</a>
+    <a class="sb-link" href="#s6"><span class="sb-num">06</span>Complexity Analysis</a>
+    <a class="sb-link" href="#s7"><span class="sb-num">07</span>Must-Solve Problems</a>
+  </div>
+</nav>
+
+<!-- ── THEME TOGGLE ── -->
+<button id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">
+  <span id="themeIcon">☀️</span>
+</button>
+
+<div class="container">
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-tag">Striver Explains</div>
+  <h1>
+    <div class="line1">Sliding</div>
+    <div class="line2">Window</div>
+  </h1>
+  <p class="hero-sub">// The pattern that makes O(n²) problems → <span>O(n)</span></p>
+</div>
+
+<!-- SEC 1 -->
+<div class="section" id="s1">
+  <div class="section-header"><div class="sec-num">01</div><div class="sec-title">What is Sliding Window?</div></div>
+  <div class="section-body">
+    <div class="sv">
+      <div class="sv-avatar">🎙</div>
+      <div class="sv-content">
+        <div class="sv-name">STRIVER SAYS</div>
+        <div class="sv-text">Okay so bhaiya, sliding window is a <em>technique</em>, not a data structure. Whenever you have an array or string and you're working on a <em>contiguous subarray or substring</em> — that's your signal. Instead of using nested loops which give you O(n²), you use a <em>window</em> that slides through the array and that gets you down to <em>O(n)</em>. That's the whole magic! 🔥</div>
+      </div>
+    </div>
+    <div class="sv">
+      <div class="sv-avatar">💡</div>
+      <div class="sv-content">
+        <div class="sv-name">THE REAL WORLD ANALOGY</div>
+        <div class="sv-text">Socho ek train hai. Aur ek window hai usme. Jab train chalti hai, window move karti hai — but the window ka <em>size same rehta hai</em>. You only see what's inside the window at any point. That's exactly what we do with arrays — we maintain a window <em>[left ... right]</em> and slide it forward! 🚂</div>
+      </div>
+    </div>
+    <div class="prob-row">
+      <div class="prob-pill naive">❌ Brute Force: O(n²) — Nested loops</div>
+      <div class="prob-pill optimal">✅ Sliding Window: O(n) — Single pass</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEC 2 -->
+<div class="section" id="s2">
+  <div class="section-header"><div class="sec-num">02</div><div class="sec-title">Two Types — You MUST Know Both</div></div>
+  <div class="section-body">
+    <div class="sv">
+      <div class="sv-avatar">🎙</div>
+      <div class="sv-content">
+        <div class="sv-name">STRIVER SAYS</div>
+        <div class="sv-text">Bhaiya yeh bahut important hai. Sliding window ke <em>do types</em> hote hain. Agar tum dono types samajh lo, 90% sliding window problems tum khud solve kar loge. Trust me!</div>
+      </div>
+    </div>
+    <div class="type-grid">
+      <div class="type-card fixed">
+        <div class="type-label">TYPE 1</div>
+        <div class="type-title">Fixed Size Window</div>
+        <div class="type-desc">Window size <strong>k</strong> is given. You maintain a window of exactly k elements and slide it one step at a time.<br/><br/><strong>Signal:</strong> "...of size k", "...k consecutive elements"<br/><br/><strong>Example:</strong> Max sum of subarray of size k</div>
+      </div>
+      <div class="type-card variable">
+        <div class="type-label">TYPE 2</div>
+        <div class="type-title">Variable Size Window</div>
+        <div class="type-desc">Window size changes dynamically. You expand right pointer and shrink left pointer based on a condition.<br/><br/><strong>Signal:</strong> "longest/shortest subarray with condition X"<br/><br/><strong>Example:</strong> Longest substring without repeating chars</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SEC 3 -->
+<!-- SEC 3 -->
+<div class="section" id="s3">
+  <div class="section-header"><div class="sec-num">03</div><div class="sec-title">Fixed Window — Live Dry Run</div></div>
+  <div class="section-body">
+    <div class="sv">
+      <div class="sv-avatar">🎙</div>
+      <div class="sv-content">
+        <div class="sv-name">STRIVER SAYS</div>
+        <div class="sv-text">Problem: <em>Maximum sum subarray of size k=3</em>.<br/>Array = [2, 1, 5, 1, 3, 2], k = 3<br/><br/>Dekho bhaiya — brute force mein har subarray ko check karte the, O(n²). <em>Sliding window mein</em> — pehle window banao, phir slide karo. Jab right side add karo, left side remove karo. <em>That's it!</em></div>
+      </div>
+    </div>
+    <div class="stepper-wrap">
+      <div class="step-arr" id="fixArr"></div>
+      <div class="ptrs-row" id="fixPtrs"></div>
+      <div class="stats-row">
+        <div class="stat-chip"><span class="sk">Window Sum:</span><span class="sv2" id="fixSum">—</span></div>
+        <div class="stat-chip"><span class="sk">Max Sum:</span><span class="sv2" id="fixMax">—</span></div>
+        <div class="stat-chip"><span class="sk">Window:</span><span class="sv2" id="fixWin">—</span></div>
+      </div>
+      <div class="info-panel" id="fixInfo">Press <strong>Next Step →</strong> to begin the dry run!</div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-ghost" id="fPrev" disabled onclick="fPrev()">← Prev</button>
+      <button class="btn btn-accent" id="fNext" onclick="fNext()">Next Step →</button>
+      <button class="btn btn-ghost" onclick="fReset()">↺ Reset</button>
+      <span class="step-num" id="fCounter">Step 0 / 5</span>
+    </div>
+    <div style="margin-top:20px">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('fixed','code')">C++ Code</div>
+        <div class="tab" onclick="switchTab('fixed','java')">Java</div>
+        <div class="tab" onclick="switchTab('fixed','py')">Python</div>
+      </div>
+      <div class="tab-panel active" id="fixed-code">
+<pre>
+<span class="kw">int</span> <span class="fn">maxSumSubarray</span>(<span class="kw">vector</span>&lt;<span class="kw">int</span>&gt;&amp; arr, <span class="kw">int</span> k) {
+    <span class="kw">int</span> n <span class="op">=</span> arr.size();
+    <span class="kw">int</span> windowSum <span class="op">=</span> <span class="num">0</span>, maxSum <span class="op">=</span> INT_MIN;
+
+    <span class="cm">// Step 1: Build the first window</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> k; i<span class="op">++</span>)
+        windowSum <span class="op">+=</span> arr[i];
+    maxSum <span class="op">=</span> windowSum;
+
+    <span class="cm">// Step 2: Slide the window — add right, remove left</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> k; i <span class="op">&lt;</span> n; i<span class="op">++</span>) {
+        windowSum <span class="op">+=</span> arr[i];
+        windowSum <span class="op">-=</span> arr[i <span class="op">-</span> k];
+        maxSum <span class="op">=</span> max(maxSum, windowSum);
+    }
+    <span class="kw">return</span> maxSum;
+}
+</pre>
+      </div>
+      <div class="tab-panel" id="fixed-java">
+<pre>
+<span class="kw">int</span> <span class="fn">maxSumSubarray</span>(<span class="kw">int</span>[] arr, <span class="kw">int</span> k) {
+    <span class="kw">int</span> n <span class="op">=</span> arr.length;
+    <span class="kw">int</span> windowSum <span class="op">=</span> <span class="num">0</span>, maxSum <span class="op">=</span> Integer.MIN_VALUE;
+    <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> k; i<span class="op">++</span>)
+        windowSum <span class="op">+=</span> arr[i];
+    maxSum <span class="op">=</span> windowSum;
+    <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> k; i <span class="op">&lt;</span> n; i<span class="op">++</span>) {
+        windowSum <span class="op">+=</span> arr[i] <span class="op">-</span> arr[i <span class="op">-</span> k];
+        maxSum <span class="op">=</span> Math.max(maxSum, windowSum);
+    }
+    <span class="kw">return</span> maxSum;
+}
+</pre>
+      </div>
+      <div class="tab-panel" id="fixed-py">
+<pre>
+<span class="kw">def</span> <span class="fn">maxSumSubarray</span>(arr, k):
+    window_sum <span class="op">=</span> sum(arr[:<span class="num">k</span>])
+    max_sum <span class="op">=</span> window_sum
+    <span class="kw">for</span> i <span class="kw">in</span> range(k, len(arr)):
+        window_sum <span class="op">+=</span> arr[i] <span class="op">-</span> arr[i <span class="op">-</span> k]
+        max_sum <span class="op">=</span> max(max_sum, window_sum)
+    <span class="kw">return</span> max_sum
+</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SEC 4 -->
+<div class="section" id="s4">
+  <div class="section-header"><div class="sec-num">04</div><div class="sec-title">Variable Window — Live Dry Run</div></div>
+  <div class="section-body">
+    <div class="sv">
+      <div class="sv-avatar">🎙</div>
+      <div class="sv-content">
+        <div class="sv-name">STRIVER SAYS</div>
+        <div class="sv-text">Problem: <em>Longest subarray with sum ≤ target (target = 7)</em>.<br/>Array = [1, 2, 3, 1, 1, 2], target = 7<br/><br/>Variable window mein do pointers hote hain — <em class="hl">left</em> aur <em>right</em>. Right ko aage badhao, condition break ho to <em class="warn">left ko shrink karo</em>. Max window track karo. That's the whole template!</div>
+      </div>
+    </div>
+    <div class="stepper-wrap">
+      <div class="step-arr" id="varArr"></div>
+      <div class="ptrs-row" id="varPtrs"></div>
+      <div class="stats-row">
+        <div class="stat-chip"><span class="sk">Left:</span><span class="sv2" id="varL">0</span></div>
+        <div class="stat-chip"><span class="sk">Right:</span><span class="sv2" id="varR">-1</span></div>
+        <div class="stat-chip"><span class="sk">Sum:</span><span class="sv2" id="varSum">0</span></div>
+        <div class="stat-chip"><span class="sk">Max Len:</span><span class="sv2" id="varMax">0</span></div>
+      </div>
+      <div class="info-panel" id="varInfo">Press <strong>Next Step →</strong> to begin the variable window dry run!</div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-ghost" id="vPrev" disabled onclick="vPrev()">← Prev</button>
+      <button class="btn btn-accent" id="vNext" onclick="vNext()">Next Step →</button>
+      <button class="btn btn-ghost" onclick="vReset()">↺ Reset</button>
+      <span class="step-num" id="vCounter">Step 0 / 9</span>
+    </div>
+    <div style="margin-top:20px">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('var','code')">C++ Code</div>
+        <div class="tab" onclick="switchTab('var','java')">Java</div>
+        <div class="tab" onclick="switchTab('var','py')">Python</div>
+      </div>
+      <div class="tab-panel active" id="var-code">
+<pre>
+<span class="kw">int</span> <span class="fn">longestSubarrayWithSumK</span>(<span class="kw">vector</span>&lt;<span class="kw">int</span>&gt;&amp; arr, <span class="kw">int</span> target) {
+    <span class="kw">int</span> left <span class="op">=</span> <span class="num">0</span>, right <span class="op">=</span> <span class="num">0</span>;
+    <span class="kw">int</span> windowSum <span class="op">=</span> <span class="num">0</span>, maxLen <span class="op">=</span> <span class="num">0</span>;
+
+    <span class="kw">while</span> (right <span class="op">&lt;</span> arr.size()) {
+        windowSum <span class="op">+=</span> arr[right]; <span class="cm">// expand window</span>
+
+        <span class="cm">// shrink from left if condition violated</span>
+        <span class="kw">while</span> (windowSum <span class="op">&gt;</span> target) {
+            windowSum <span class="op">-=</span> arr[left];
+            left<span class="op">++</span>;
+        }
+
+        <span class="cm">// valid window — update answer</span>
+        maxLen <span class="op">=</span> max(maxLen, right <span class="op">-</span> left <span class="op">+</span> <span class="num">1</span>);
+        right<span class="op">++</span>;
+    }
+    <span class="kw">return</span> maxLen;
+}
+</pre>
+      </div>
+      <div class="tab-panel" id="var-java">
+<pre>
+<span class="kw">int</span> <span class="fn">longestSubarrayWithSumK</span>(<span class="kw">int</span>[] arr, <span class="kw">int</span> target) {
+    <span class="kw">int</span> left <span class="op">=</span> <span class="num">0</span>, right <span class="op">=</span> <span class="num">0</span>;
+    <span class="kw">int</span> windowSum <span class="op">=</span> <span class="num">0</span>, maxLen <span class="op">=</span> <span class="num">0</span>;
+    <span class="kw">while</span> (right <span class="op">&lt;</span> arr.length) {
+        windowSum <span class="op">+=</span> arr[right];
+        <span class="kw">while</span> (windowSum <span class="op">&gt;</span> target)
+            windowSum <span class="op">-=</span> arr[left<span class="op">++</span>];
+        maxLen <span class="op">=</span> Math.max(maxLen, right <span class="op">-</span> left <span class="op">+</span> <span class="num">1</span>);
+        right<span class="op">++</span>;
+    }
+    <span class="kw">return</span> maxLen;
+}
+</pre>
+      </div>
+      <div class="tab-panel" id="var-py">
+<pre>
+<span class="kw">def</span> <span class="fn">longestSubarrayWithSumK</span>(arr, target):
+    left <span class="op">=</span> <span class="num">0</span>
+    window_sum <span class="op">=</span> <span class="num">0</span>
+    max_len <span class="op">=</span> <span class="num">0</span>
+    <span class="kw">for</span> right <span class="kw">in</span> range(len(arr)):
+        window_sum <span class="op">+=</span> arr[right]
+        <span class="kw">while</span> window_sum <span class="op">&gt;</span> target:
+            window_sum <span class="op">-=</span> arr[left]
+            left <span class="op">+=</span> <span class="num">1</span>
+        max_len <span class="op">=</span> max(max_len, right <span class="op">-</span> left <span class="op">+</span> <span class="num">1</span>)
+    <span class="kw">return</span> max_len
+</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SEC 5 -->
+<div class="section" id="s5">
+  <div class="section-header"><div class="sec-num">05</div><div class="sec-title">The Master Template — Memorise This!</div></div>
+  <div class="section-body">
+    <div class="sv">
+      <div class="sv-avatar">🎙</div>
+      <div class="sv-content">
+        <div class="sv-name">STRIVER SAYS</div>
+        <div class="sv-text">Bhaiya, yeh template yaad kar lo. <em>Sab sliding window problems isi se solve hoti hain</em>. Bas condition change hogi, structure same rehega. Ye mera guarantee hai! 😄</div>
+      </div>
+    </div>
+    <div class="template">
+      <div class="template-title">VARIABLE WINDOW MASTER TEMPLATE</div>
+<pre style="border:none;padding:0;background:transparent">
+<span class="kw">int</span> left <span class="op">=</span> <span class="num">0</span>, right <span class="op">=</span> <span class="num">0</span>;
+<span class="cm">// initialize your window state (sum, map, freq etc.)</span>
+
+<span class="kw">while</span> (right <span class="op">&lt;</span> n) {
+    <span class="cm">// 1. EXPAND — add arr[right] to window</span>
+
+    <span class="cm">// 2. SHRINK — while window is INVALID, remove arr[left], left++</span>
+    <span class="kw">while</span> (<span class="op">!</span>isValid(window)) {
+        remove(arr[left]);
+        left<span class="op">++</span>;
+    }
+
+    <span class="cm">// 3. RECORD — window is now valid, update answer</span>
+    ans <span class="op">=</span> max(ans, right <span class="op">-</span> left <span class="op">+</span> <span class="num">1</span>);
+    right<span class="op">++</span>;
+}
+</pre>
+    </div>
+    <div class="insight">
+      <strong>🔑 Striver's Key Insight:</strong><br/>
+      The right pointer always moves forward — it <strong>never goes back</strong>. That's why we get O(n). Each element is added once (by right) and removed at most once (by left). So total operations = 2n = O(n). Beautiful, right? 🔥
+    </div>
+  </div>
+</div>
+
+<!-- SEC 6 -->
+<div class="section" id="s6">
+  <div class="section-header"><div class="sec-num">06</div><div class="sec-title">Complexity Analysis</div></div>
+  <div class="section-body">
+    <div class="cx-grid">
+      <div class="cx-card"><div class="cx-lbl">TIME (Fixed)</div><div class="cx-val">O(N)</div><div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:'Fira Code',monospace">One loop, single pass</div></div>
+      <div class="cx-card"><div class="cx-lbl">TIME (Variable)</div><div class="cx-val">O(N)</div><div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:'Fira Code',monospace">Each elem added & removed once</div></div>
+      <div class="cx-card"><div class="cx-lbl">SPACE</div><div class="cx-val">O(1)*</div><div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:'Fira Code',monospace">*O(k) if using hashmap</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SEC 7 -->
+<div class="section" id="s7">
+  <div class="section-header"><div class="sec-num">07</div><div class="sec-title">Must-Solve Problems (Striver's List)</div></div>
+  <div class="section-body">
+    <div class="sv">
+      <div class="sv-avatar">🎙</div>
+      <div class="sv-content">
+        <div class="sv-name">STRIVER SAYS</div>
+        <div class="sv-text">Bhaiya, inhe solve karo in order. First 3 easy ones, phir medium, phir hard. <em>Don't jump to hard directly</em>. Build your intuition first! Ek ek karke karo, pattern samjhega apne aap!</div>
+      </div>
+    </div>
+    <div class="prob-list">
+      <div class="prob-item"><span class="diff easy">EASY</span> Maximum sum subarray of size K (Fixed window warm-up)</div>
+      <div class="prob-item"><span class="diff easy">EASY</span> First negative integer in every window of size K</div>
+      <div class="prob-item"><span class="diff easy">EASY</span> Count of anagrams in a string (Fixed + HashMap)</div>
+      <div class="prob-item"><span class="diff med">MEDIUM</span> Longest substring without repeating characters (LC #3)</div>
+      <div class="prob-item"><span class="diff med">MEDIUM</span> Longest subarray with sum ≤ K (Variable window)</div>
+      <div class="prob-item"><span class="diff med">MEDIUM</span> Fruits into baskets / Max consecutive ones III (LC #1004)</div>
+      <div class="prob-item"><span class="diff med">MEDIUM</span> Longest substring with at most K distinct characters</div>
+      <div class="prob-item"><span class="diff hard">HARD</span> Minimum window substring (LC #76)</div>
+      <div class="prob-item"><span class="diff hard">HARD</span> Sliding window maximum — Deque trick (LC #239)</div>
+      <div class="prob-item"><span class="diff hard">HARD</span> Subarrays with K different integers (LC #992)</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ══════════════════════════════════
+// THEME TOGGLE
+// ══════════════════════════════════
+(function () {
+  const saved = localStorage.getItem('sw-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.getElementById('themeIcon').textContent = saved === 'light' ? '🌙' : '☀️';
+})();
+
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('sw-theme', next);
+  document.getElementById('themeIcon').textContent = next === 'light' ? '🌙' : '☀️';
+}
+
+// ══════════════════════════════════
+// FIXED WINDOW STEPPER
+// ══════════════════════════════════
+const fArr = [2, 1, 5, 1, 3, 2];
+
+const fSteps = [
+  { win:[], best:[], sum:0, maxS:0, label:'[—]',
+    info:'<span class="step-tag">INITIAL STATE</span>Array = [2,1,5,1,3,2], k=3. We want the <strong>maximum sum subarray of size 3</strong>.' },
+  { win:[0,1,2], best:[], sum:8, maxS:8, label:'[0..2]',
+    info:'<span class="step-tag">BUILD FIRST WINDOW (i=0 to 2)</span>Add first k=3 elements: 2+1+5 = <strong class="g">8</strong>. This is our first window. maxSum = 8.' },
+  { win:[1,2,3], best:[], sum:7, maxS:8, label:'[1..3]',
+    info:'<span class="step-tag">SLIDE → i=3</span>Add arr[3]=1, Remove arr[0]=2. New sum = 8+1-2 = <strong>7</strong>. maxSum stays <strong class="g">8</strong>.' },
+  { win:[2,3,4], best:[], sum:9, maxS:9, label:'[2..4]',
+    info:'<span class="step-tag">SLIDE → i=4</span>Add arr[4]=3, Remove arr[1]=1. New sum = 7+3-1 = <strong class="g">9</strong>. New maxSum = <strong class="g">9</strong>! 🔥' },
+  { win:[3,4,5], best:[], sum:6, maxS:9, label:'[3..5]',
+    info:'<span class="step-tag">SLIDE → i=5</span>Add arr[5]=2, Remove arr[2]=5. New sum = 9+2-5 = <strong>6</strong>. maxSum stays <strong class="g">9</strong>.' },
+  { win:[], best:[2,3,4], sum:9, maxS:9, label:'Done',
+    info:'<span class="step-tag">✅ DONE!</span>Maximum sum = <strong class="g">9</strong>, achieved at window [5,1,3] (indices 2 to 4). Time: O(n), Space: O(1). 🔥' },
+];
+
+let fi = 0;
+
+function renderFixed() {
+  const s = fSteps[fi];
+  document.getElementById('fixArr').innerHTML = fArr.map((v, i) => {
+    let cls = 'step-cell';
+    if (s.best.includes(i)) cls += ' best';
+    else if (s.win.includes(i)) cls += ' win';
+    return `<div class="${cls}">${v}</div>`;
+  }).join('');
+  document.getElementById('fixSum').textContent = fi === 0 ? '—' : s.sum;
+  document.getElementById('fixMax').textContent = fi === 0 ? '—' : s.maxS;
+  document.getElementById('fixWin').textContent = s.label;
+  document.getElementById('fixInfo').innerHTML  = s.info;
+  document.getElementById('fCounter').textContent = `Step ${fi} / ${fSteps.length - 1}`;
+  document.getElementById('fPrev').disabled = fi === 0;
+  document.getElementById('fNext').disabled = fi === fSteps.length - 1;
+}
+
+function fNext()  { if (fi < fSteps.length - 1) { fi++; renderFixed(); } }
+function fPrev()  { if (fi > 0)                 { fi--; renderFixed(); } }
+function fReset() { fi = 0; renderFixed(); }
+renderFixed();
+
+// ══════════════════════════════════
+// VARIABLE WINDOW STEPPER
+// ══════════════════════════════════
+const vArr = [1, 2, 3, 1, 1, 2];
+
+const vSteps = [
+  { L:0, R:-1, sum:0, mx:0, win:[],
+    info:'<span class="step-tag">INITIAL STATE</span>Array=[1,2,3,1,1,2], target=7. left=0, right=-1. Sum=0. We expand right and shrink left!' },
+  { L:0, R:0, sum:1, mx:1, win:[0],
+    info:'<span class="step-tag">right=0 → ADD arr[0]=1</span>Sum = 0+1 = <strong>1</strong>. Sum ≤ 7 ✅ Valid! maxLen = max(0, 0-0+1) = <strong class="g">1</strong>.' },
+  { L:0, R:1, sum:3, mx:2, win:[0,1],
+    info:'<span class="step-tag">right=1 → ADD arr[1]=2</span>Sum = 1+2 = <strong>3</strong>. Sum ≤ 7 ✅ Valid! maxLen = max(1, 1-0+1) = <strong class="g">2</strong>.' },
+  { L:0, R:2, sum:6, mx:3, win:[0,1,2],
+    info:'<span class="step-tag">right=2 → ADD arr[2]=3</span>Sum = 3+3 = <strong>6</strong>. Sum ≤ 7 ✅ Valid! maxLen = max(2, 2-0+1) = <strong class="g">3</strong>.' },
+  { L:0, R:3, sum:7, mx:4, win:[0,1,2,3],
+    info:'<span class="step-tag">right=3 → ADD arr[3]=1</span>Sum = 6+1 = <strong>7</strong>. Sum ≤ 7 ✅ Still valid! maxLen = max(3, 3-0+1) = <strong class="g">4</strong>. 🔥' },
+  { L:0, R:4, sum:8, mx:4, win:[0,1,2,3,4],
+    info:'<span class="step-tag">right=4 → ADD arr[4]=1</span>Sum = 7+1 = <strong class="r">8</strong>. Sum > 7 ❌ INVALID! Must shrink from left...' },
+  { L:1, R:4, sum:7, mx:4, win:[1,2,3,4],
+    info:'<span class="step-tag">SHRINK → Remove arr[left=0]=1</span>Sum = 8-1 = <strong>7</strong>. left++ → left=1. Sum ≤ 7 ✅ Valid! maxLen = max(4, 4-1+1) = <strong class="g">4</strong>.' },
+  { L:1, R:5, sum:9, mx:4, win:[1,2,3,4,5],
+    info:'<span class="step-tag">right=5 → ADD arr[5]=2</span>Sum = 7+2 = <strong class="r">9</strong>. Sum > 7 ❌ INVALID! Shrink from left...' },
+  { L:2, R:5, sum:7, mx:4, win:[2,3,4,5],
+    info:'<span class="step-tag">SHRINK → Remove arr[left=1]=2</span>Sum = 9-2 = <strong>7</strong>. left++ → left=2. Sum ≤ 7 ✅ Valid! maxLen = max(4, 5-2+1) = <strong class="g">4</strong>.' },
+  { L:2, R:5, sum:7, mx:4, win:[2,3,4,5],
+    info:'<span class="step-tag">✅ LOOP ENDS — right reached end</span>Answer = <strong class="g">4</strong>. Longest subarray with sum ≤ 7 has length 4: [2,3,1,1]. Time: O(n)! 🔥' },
+];
+
+let vi = 0;
+
+function renderVar() {
+  const s = vSteps[vi];
+  document.getElementById('varArr').innerHTML = vArr.map((v, i) => {
+    let cls = 'step-cell';
+    if (s.win.includes(i)) cls += ' win';
+    if (i === s.L && s.R >= 0) cls += ' left-ptr';
+    if (i === s.R && s.R >= 0) cls += ' right-ptr';
+    return `<div class="${cls}">${v}</div>`;
+  }).join('');
+
+  document.getElementById('varPtrs').innerHTML = vArr.map((_, i) => {
+    let inner = '';
+    if (i === s.L && s.R >= 0) inner += '<span class="pL">L</span>';
+    if (i === s.R && s.R >= 0) inner += '<span class="pR">R</span>';
+    return `<div class="ps">${inner}</div>`;
+  }).join('');
+
+  document.getElementById('varL').textContent   = s.L;
+  document.getElementById('varR').textContent   = s.R;
+  document.getElementById('varSum').textContent = s.sum;
+  document.getElementById('varMax').textContent = s.mx;
+  document.getElementById('varInfo').innerHTML  = s.info;
+  document.getElementById('vCounter').textContent = `Step ${vi} / ${vSteps.length - 1}`;
+  document.getElementById('vPrev').disabled = vi === 0;
+  document.getElementById('vNext').disabled = vi === vSteps.length - 1;
+}
+
+function vNext()  { if (vi < vSteps.length - 1) { vi++; renderVar(); } }
+function vPrev()  { if (vi > 0)                 { vi--; renderVar(); } }
+function vReset() { vi = 0; renderVar(); }
+renderVar();
+
+// ══════════════════════════════════
+// TAB SWITCHER
+// ══════════════════════════════════
+function switchTab(group, lang) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${group}-${lang}`).classList.add('active');
+  const langs = ['code', 'java', 'py'];
+  document.querySelectorAll('.tab').forEach(t => {
+    if (langs.some(l => t.getAttribute('onclick') === `switchTab('${group}','${l}')`)) {
+      t.classList.toggle('active', t.getAttribute('onclick') === `switchTab('${group}','${lang}')`);
+    }
+  });
+// scroll spy for sidebar
+(function(){
+  const links = document.querySelectorAll('#sidebar .sb-link');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = '#' + e.target.id;
+        links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === id));
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('.section[id]').forEach(s => obs.observe(s));
+})();
+</script>
+</body>
+</html>

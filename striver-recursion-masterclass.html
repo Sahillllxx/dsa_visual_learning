@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recursion Masterclass - Striver Style</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #21262d;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --accent2: #79c0ff;
+            --border: #30363d;
+            --code-bg: #1c2128;
+            --success: #3fb950;
+            --info: #58a6ff;
+        }
+
+        .light {
+            --bg: #ffffff;
+            --surface: #f6f8fa;
+            --surface2: #eaeef2;
+            --text: #1f2328;
+            --text-muted: #656d76;
+            --accent: #0969da;
+            --accent2: #218bff;
+            --border: #d0d7de;
+            --code-bg: #f0f3f6;
+            --success: #1a7f37;
+            --info: #0969da;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Smooth scroll */
+        html { scroll-behavior: smooth; }
+
+        /* Navigation */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(22, 27, 34, 0.85);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .light .top-nav {
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-toggle {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.2);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 56px;
+            width: 280px;
+            height: calc(100vh - 56px);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 16px 0;
+            z-index: 999;
+        }
+
+        .sidebar h3 {
+            padding: 12px 20px 8px;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text);
+            margin-top: 24px;
+            font-weight: 800;
+            background: linear-gradient(90deg, rgba(88,166,255,0.15), transparent);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .sidebar h3:first-child {
+            margin-top: 8px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 8px 20px 8px 28px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 400;
+            border-left: 3px solid transparent;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            color: var(--accent);
+            background: var(--surface2);
+            border-left-color: var(--accent);
+            padding-left: 32px;
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 280px;
+            margin-top: 56px;
+            padding: 48px 64px;
+            max-width: 920px;
+        }
+
+        .section {
+            margin-bottom: 72px;
+            padding-top: 24px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 18px;
+            color: var(--accent);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            color: var(--accent2);
+        }
+
+        p { margin-bottom: 16px; color: var(--text); font-weight: 400; }
+
+        .striver-note {
+            background: linear-gradient(135deg, var(--surface2), var(--surface));
+            border-left: 4px solid var(--accent);
+            padding: 18px 22px;
+            border-radius: 0 12px 12px 0;
+            margin: 24px 0;
+            font-style: italic;
+            transition: transform 0.3s ease;
+        }
+
+        .striver-note:hover {
+            transform: translateX(4px);
+        }
+
+        .striver-note::before {
+            content: "🔥 Striver Says: ";
+            font-weight: 700;
+            font-style: normal;
+            color: var(--accent);
+        }
+
+        .important-box {
+            background: var(--surface2);
+            border: 1px solid var(--accent);
+            border-radius: 16px;
+            padding: 22px;
+            margin: 24px 0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .important-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(88, 166, 255, 0.1);
+        }
+
+        .important-box h4 {
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.84rem;
+            line-height: 1.9;
+            transition: border-color 0.3s ease;
+        }
+
+        pre:hover {
+            border-color: var(--accent);
+        }
+
+        pre .keyword { color: #ff7b72; }
+        pre .func { color: #d2a8ff; }
+        pre .string { color: #a5d6ff; }
+        pre .comment { color: #8b949e; font-style: italic; }
+        pre .number { color: #79c0ff; }
+        pre .type { color: #7ee787; }
+
+        /* Visual Tree */
+        .tree-visual {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 26px;
+            margin: 22px 0;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.83rem;
+            white-space: pre;
+            overflow-x: auto;
+            line-height: 1.5;
+            transition: border-color 0.3s ease;
+        }
+
+        .tree-visual:hover {
+            border-color: var(--info);
+        }
+
+        /* Interactive Demo */
+        .demo-box {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            margin: 28px 0;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .demo-box:hover {
+            border-color: var(--info);
+            box-shadow: 0 8px 32px rgba(88, 166, 255, 0.08);
+        }
+
+        .demo-box h4 {
+            color: var(--info);
+            margin-bottom: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .demo-controls input {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            width: 130px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .demo-controls input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+        }
+
+        .demo-controls button {
+            background: linear-gradient(135deg, var(--accent), #79c0ff);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .demo-controls button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(88, 166, 255, 0.3);
+        }
+
+        .demo-controls button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .demo-output {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 18px;
+            min-height: 60px;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: pre-wrap;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .step-trace {
+            color: var(--success);
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 0.88rem;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            text-align: center;
+        }
+
+        th {
+            background: var(--surface2);
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.5px;
+        }
+
+        td { background: var(--surface); }
+
+        tr:hover td {
+            background: var(--surface2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 24px 16px; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.4rem; }
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), #79c0ff);
+            color: white;
+            padding: 3px 12px;
+            border-radius: 14px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        ul, ol {
+            margin: 12px 0 12px 24px;
+        }
+
+        li { margin-bottom: 8px; }
+
+        .formula {
+            background: var(--surface2);
+            border: 1px dashed var(--accent2);
+            padding: 14px 24px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin: 18px 0;
+            font-family: 'JetBrains Mono', monospace;
+            transition: transform 0.3s ease;
+        }
+
+        .formula:hover {
+            transform: scale(1.02);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <a href="index.html" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:inherit;text-decoration:none;font-size:0.8rem;font-weight:600;transition:all .2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">← Roadmap</a>
+            <div class="logo">🚀 Recursion Masterclass</div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark / ☀️ Light</button>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h3> Foundations</h3>
+        <a href="#intro" onclick="setActive(this)">What is Recursion?</a>
+        <a href="#how-recursion-works" onclick="setActive(this)">How Recursion Works</a>
+        <a href="#base-case" onclick="setActive(this)">Base Case & Stack</a>
+        <a href="#print-name" onclick="setActive(this)">Print Name N Times</a>
+        <a href="#print-1-to-n" onclick="setActive(this)">Print 1 to N</a>
+        <a href="#print-n-to-1" onclick="setActive(this)">Print N to 1</a>
+
+        <h3>📐 Parameterised & Functional</h3>
+        <a href="#sum-n" onclick="setActive(this)">Sum of N Numbers</a>
+        <a href="#factorial" onclick="setActive(this)">Factorial</a>
+
+        <h3> Backtracking Basics</h3>
+        <a href="#reverse-array" onclick="setActive(this)">Reverse an Array</a>
+        <a href="#palindrome" onclick="setActive(this)">Check Palindrome</a>
+
+        <h3>🧮 Multiple Recursion Calls</h3>
+        <a href="#fibonacci" onclick="setActive(this)">Fibonacci Number</a>
+
+        <h3>⚡ Advanced Recursion</h3>
+        <a href="#subsequences" onclick="setActive(this)">Print Subsequences</a>
+        <a href="#subseq-sum" onclick="setActive(this)">Subsequences with Sum K</a>
+        <a href="#count-subseq" onclick="setActive(this)">Count Subsequences</a>
+
+        <h3>🧩 Hard Problems</h3>
+        <a href="#combination-sum" onclick="setActive(this)">Combination Sum</a>
+        <a href="#subset-sum" onclick="setActive(this)">Subset Sum</a>
+        <a href="#permutations" onclick="setActive(this)">Permutations</a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- SECTION 1: INTRO -->
+        <div class="section" id="intro">
+            <h1>Recursion - The Complete Guide 🔥</h1>
+            <p>Welcome! This is the complete recursion masterclass. We'll go step by step, from absolute zero to solving hard problems. No shortcuts, no skipping — just pure understanding.</p>
+
+            <div class="striver-note">
+                "Recursion is not difficult. It's just that people skip steps. If you follow this sheet step by step, I guarantee you'll master it. Trust the process!"
+            </div>
+
+            <h2>What is Recursion?</h2>
+            <p>Recursion is when a <strong>function calls itself</strong> until a specified condition (base case) is met.</p>
+            <p>Think of it like this — you're standing in front of a mirror with another mirror behind you. You see infinite reflections. Each reflection is a "call" and the moment you remove one mirror, the reflections stop. That's your <strong>base case</strong>.</p>
+
+            <div class="important-box">
+                <h4>📌 Key Definition</h4>
+                <p>A function that calls itself repeatedly until a <strong>base condition</strong> is met is called a recursive function.</p>
+            </div>
+
+            <pre><span class="keyword">void</span> <span class="func">f</span>() {
+    <span class="comment">// Base condition (MUST have one)</span>
+    <span class="keyword">if</span> (condition) <span class="keyword">return</span>;
+    
+    <span class="comment">// Some work</span>
+    
+    <span class="func">f</span>(); <span class="comment">// Function calls itself</span>
+}</pre>
+
+            <div class="striver-note">
+                "If there's no base case, the function will call itself infinitely → Stack Overflow! Always think about WHERE to stop first."
+            </div>
+        </div>
+
+        <!-- SECTION 2: HOW RECURSION WORKS -->
+        <div class="section" id="how-recursion-works">
+            <h2>How Recursion Works - The Call Stack</h2>
+            <p>Every time a function is called, it's pushed onto the <strong>call stack</strong>. When it returns, it's popped off. This is the most crucial concept!</p>
+
+            <div class="tree-visual">
+main() calls f(3)
+    → f(3) calls f(2)
+        → f(2) calls f(1)
+            → f(1) hits base case, returns
+        ← f(2) resumes, returns
+    ← f(3) resumes, returns
+← main() continues
+            </div>
+
+            <div class="important-box">
+                <h4>🧠 Stack Memory Visualization</h4>
+                <p>Each recursive call creates a new <strong>stack frame</strong> with its own local variables. The stack grows until base case is hit, then unwinds.</p>
+            </div>
+
+            <table>
+                <tr><th>Stack Frame</th><th>Function Call</th><th>State</th></tr>
+                <tr><td>Frame 3 (top)</td><td>f(1)</td><td>Base case → returns</td></tr>
+                <tr><td>Frame 2</td><td>f(2)</td><td>Waiting for f(1)</td></tr>
+                <tr><td>Frame 1</td><td>f(3)</td><td>Waiting for f(2)</td></tr>
+                <tr><td>Frame 0 (bottom)</td><td>main()</td><td>Waiting for f(3)</td></tr>
+            </table>
+
+            <div class="striver-note">
+                "Always dry run with the stack. Draw it on paper. Once you SEE how the stack builds and unwinds, recursion clicks forever."
+            </div>
+        </div>
+
+        <!-- SECTION 3: BASE CASE -->
+        <div class="section" id="base-case">
+            <h2>Base Case & Stack Overflow</h2>
+
+            <h3>What if there's no base case?</h3>
+            <pre><span class="keyword">void</span> <span class="func">infinite</span>() {
+    cout << <span class="string">"Hello"</span>;
+    <span class="func">infinite</span>(); <span class="comment">// Never stops!</span>
+}
+<span class="comment">// Result: SEGMENTATION FAULT (Stack Overflow)</span></pre>
+
+            <p>The stack has <strong>limited memory</strong>. If you keep pushing frames without popping, it overflows. This is called <strong>Stack Overflow</strong> or Segmentation Fault.</p>
+
+            <div class="important-box">
+                <h4>✅ Rules for Base Case</h4>
+                <ul>
+                    <li>Every recursive function MUST have a base case</li>
+                    <li>Base case should be reachable (function must progress toward it)</li>
+                    <li>Think of the <strong>smallest/simplest</strong> version of the problem</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SECTION 4: Print Name N Times -->
+        <div class="section" id="print-name">
+            <h2>Print Name N Times</h2>
+            <p><strong>Problem:</strong> Print your name N times using recursion (no loops!).</p>
+
+            <div class="striver-note">
+                "This is the simplest recursion problem. If you can't do this, you can't do anything ahead. Master this first!"
+            </div>
+
+            <pre><span class="keyword">void</span> <span class="func">printName</span>(<span class="type">int</span> i, <span class="type">int</span> n) {
+    <span class="comment">// Base case: if i exceeds n, stop</span>
+    <span class="keyword">if</span> (i > n) <span class="keyword">return</span>;
+    
+    cout << <span class="string">"Striver"</span> << endl;
+    <span class="func">printName</span>(i + <span class="number">1</span>, n); <span class="comment">// Move toward base case</span>
+}
+
+<span class="comment">// Call: printName(1, 5) → prints "Striver" 5 times</span></pre>
+
+            <div class="tree-visual">
+printName(1, 5) → prints "Striver", calls printName(2, 5)
+  printName(2, 5) → prints "Striver", calls printName(3, 5)
+    printName(3, 5) → prints "Striver", calls printName(4, 5)
+      printName(4, 5) → prints "Striver", calls printName(5, 5)
+        printName(5, 5) → prints "Striver", calls printName(6, 5)
+          printName(6, 5) → 6 > 5 → RETURN
+            </div>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Print Name N Times</h4>
+                <div class="demo-controls">
+                    <input type="number" id="printNameInput" value="5" min="1" max="20">
+                    <button onclick="demoPrintName()">Run</button>
+                </div>
+                <div class="demo-output" id="printNameOutput">Click "Run" to see the recursion trace...</div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: Print 1 to N -->
+        <div class="section" id="print-1-to-n">
+            <h2>Print 1 to N</h2>
+            <p><strong>Problem:</strong> Print numbers from 1 to N using recursion.</p>
+
+            <pre><span class="keyword">void</span> <span class="func">print1ToN</span>(<span class="type">int</span> i, <span class="type">int</span> n) {
+    <span class="keyword">if</span> (i > n) <span class="keyword">return</span>;
+    
+    cout << i << endl;   <span class="comment">// Print BEFORE recursive call</span>
+    <span class="func">print1ToN</span>(i + <span class="number">1</span>, n);
+}
+
+<span class="comment">// Call: print1ToN(1, 5) → 1 2 3 4 5</span></pre>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Print 1 to N</h4>
+                <div class="demo-controls">
+                    <input type="number" id="print1NInput" value="7" min="1" max="30">
+                    <button onclick="demo1ToN()">Run</button>
+                </div>
+                <div class="demo-output" id="print1NOutput">Click "Run" to see the trace...</div>
+            </div>
+        </div>
+
+        <!-- SECTION 6: Print N to 1 -->
+        <div class="section" id="print-n-to-1">
+            <h2>Print N to 1</h2>
+            <p><strong>Problem:</strong> Print numbers from N to 1 using recursion.</p>
+
+            <h3>Approach 1: Direct (Print before call)</h3>
+            <pre><span class="keyword">void</span> <span class="func">printNTo1</span>(<span class="type">int</span> n) {
+    <span class="keyword">if</span> (n < <span class="number">1</span>) <span class="keyword">return</span>;
+    
+    cout << n << endl;   <span class="comment">// Print BEFORE recursive call</span>
+    <span class="func">printNTo1</span>(n - <span class="number">1</span>);
+}
+
+<span class="comment">// Call: printNTo1(5) → 5 4 3 2 1</span></pre>
+
+            <h3>Approach 2: Using Backtracking (Print AFTER call)</h3>
+            <pre><span class="keyword">void</span> <span class="func">printNTo1_BT</span>(<span class="type">int</span> i, <span class="type">int</span> n) {
+    <span class="keyword">if</span> (i > n) <span class="keyword">return</span>;
+    
+    <span class="func">printNTo1_BT</span>(i + <span class="number">1</span>, n); <span class="comment">// Call FIRST</span>
+    cout << i << endl;       <span class="comment">// Print while coming back (backtracking)</span>
+}
+
+<span class="comment">// Call: printNTo1_BT(1, 5) → 5 4 3 2 1</span></pre>
+
+            <div class="striver-note">
+                "This is VERY important! Where you place the print — before or after the recursive call — completely changes the output. This is the foundation of backtracking!"
+            </div>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Print N to 1 (Both Approaches)</h4>
+                <div class="demo-controls">
+                    <input type="number" id="printN1Input" value="5" min="1" max="20">
+                    <button onclick="demoNTo1()">Run</button>
+                </div>
+                <div class="demo-output" id="printN1Output">Click "Run" to see both approaches...</div>
+            </div>
+        </div>
+
+        <!-- Sum of N Numbers -->
+        <div class="section" id="sum-n">
+            <h2>Sum of First N Numbers</h2>
+            <p>Two approaches: <strong>Parameterised</strong> and <strong>Functional</strong> recursion.</p>
+
+            <h3>Approach 1: Parameterised (carry answer in parameter)</h3>
+            <pre><span class="keyword">void</span> <span class="func">sumParam</span>(<span class="type">int</span> i, <span class="type">int</span> sum) {
+    <span class="keyword">if</span> (i < <span class="number">1</span>) {
+        cout << sum;
+        <span class="keyword">return</span>;
+    }
+    <span class="func">sumParam</span>(i - <span class="number">1</span>, sum + i);
+}
+<span class="comment">// sumParam(5, 0) → prints 15</span></pre>
+
+            <h3>Approach 2: Functional (return the answer)</h3>
+            <pre><span class="type">int</span> <span class="func">sumFunc</span>(<span class="type">int</span> n) {
+    <span class="keyword">if</span> (n == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;
+    <span class="keyword">return</span> n + <span class="func">sumFunc</span>(n - <span class="number">1</span>);
+}
+<span class="comment">// sumFunc(5) → 5 + 4 + 3 + 2 + 1 + 0 = 15</span></pre>
+
+            <div class="striver-note">
+                "Parameterised = you carry the answer along. Functional = the function itself returns the answer. Both are valid, but functional is more elegant for most problems."
+            </div>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Sum of N</h4>
+                <div class="demo-controls">
+                    <input type="number" id="sumNInput" value="5" min="0" max="50">
+                    <button onclick="demoSumN()">Calculate</button>
+                </div>
+                <div class="demo-output" id="sumNOutput">Click "Calculate" to see both approaches...</div>
+            </div>
+        </div>
+
+        <!-- Factorial -->
+        <div class="section" id="factorial">
+            <h2>Factorial of N</h2>
+            <div class="formula">n! = n × (n-1) × (n-2) × ... × 1, where 0! = 1</div>
+
+            <pre><span class="type">int</span> <span class="func">factorial</span>(<span class="type">int</span> n) {
+    <span class="keyword">if</span> (n == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">1</span>; <span class="comment">// Base case: 0! = 1</span>
+    <span class="keyword">return</span> n * <span class="func">factorial</span>(n - <span class="number">1</span>);
+}
+
+<span class="comment">// factorial(5) = 5 * factorial(4)
+//              = 5 * 4 * factorial(3)
+//              = 5 * 4 * 3 * factorial(2)
+//              = 5 * 4 * 3 * 2 * factorial(1)
+//              = 5 * 4 * 3 * 2 * 1 * factorial(0)
+//              = 5 * 4 * 3 * 2 * 1 * 1
+//              = 120</span></pre>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Factorial</h4>
+                <div class="demo-controls">
+                    <input type="number" id="factInput" value="5" min="0" max="15">
+                    <button onclick="demoFactorial()">Calculate</button>
+                </div>
+                <div class="demo-output" id="factOutput">Click "Calculate" to see the trace...</div>
+            </div>
+        </div>
+
+        <!-- Reverse Array -->
+        <div class="section" id="reverse-array">
+            <h2>Reverse an Array</h2>
+            <p><strong>Problem:</strong> Reverse an array using recursion.</p>
+
+            <h3>Approach: Two Pointer (Swap from both ends)</h3>
+            <pre><span class="keyword">void</span> <span class="func">reverseArray</span>(<span class="type">int</span> arr[], <span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="keyword">if</span> (l >= r) <span class="keyword">return</span>; <span class="comment">// Base case: pointers crossed</span>
+    
+    swap(arr[l], arr[r]);
+    <span class="func">reverseArray</span>(arr, l + <span class="number">1</span>, r - <span class="number">1</span>);
+}
+
+<span class="comment">// [1, 2, 3, 4, 5] → swap(1,5) → [5, 2, 3, 4, 1]
+//                  → swap(2,4) → [5, 4, 3, 2, 1]
+//                  → l >= r    → STOP ✅</span></pre>
+
+            <h3>Approach: Single Variable</h3>
+            <pre><span class="keyword">void</span> <span class="func">reverseArray</span>(<span class="type">int</span> arr[], <span class="type">int</span> i, <span class="type">int</span> n) {
+    <span class="keyword">if</span> (i >= n / <span class="number">2</span>) <span class="keyword">return</span>;
+    
+    swap(arr[i], arr[n - i - <span class="number">1</span>]);
+    <span class="func">reverseArray</span>(arr, i + <span class="number">1</span>, n);
+}</pre>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Reverse Array</h4>
+                <div class="demo-controls">
+                    <input type="text" id="revInput" value="1,2,3,4,5" placeholder="Comma-separated">
+                    <button onclick="demoReverse()">Reverse</button>
+                </div>
+                <div class="demo-output" id="revOutput">Click "Reverse" to see step-by-step...</div>
+            </div>
+        </div>
+
+        <!-- Palindrome -->
+        <div class="section" id="palindrome">
+            <h2>Check if String is Palindrome</h2>
+            <p>Same logic as reverse! Compare characters from both ends.</p>
+
+            <pre><span class="type">bool</span> <span class="func">isPalindrome</span>(<span class="type">string</span> s, <span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="keyword">if</span> (l >= r) <span class="keyword">return</span> <span class="number">true</span>; <span class="comment">// All matched!</span>
+    
+    <span class="keyword">if</span> (s[l] != s[r]) <span class="keyword">return</span> <span class="number">false</span>; <span class="comment">// Mismatch found</span>
+    
+    <span class="keyword">return</span> <span class="func">isPalindrome</span>(s, l + <span class="number">1</span>, r - <span class="number">1</span>);
+}
+
+<span class="comment">// isPalindrome("madam", 0, 4) → m==m ✓ → a==a ✓ → l>=r → true</span></pre>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Palindrome Check</h4>
+                <div class="demo-controls">
+                    <input type="text" id="palInput" value="madam" placeholder="Enter string">
+                    <button onclick="demoPalindrome()">Check</button>
+                </div>
+                <div class="demo-output" id="palOutput">Click "Check" to see the trace...</div>
+            </div>
+        </div>
+
+        <!-- Fibonacci -->
+        <div class="section" id="fibonacci">
+            <h2>Fibonacci Number (Multiple Recursion Calls)</h2>
+            <p>This is where recursion gets interesting — a function calling itself <strong>TWICE</strong>!</p>
+
+            <div class="formula">fib(n) = fib(n-1) + fib(n-2), where fib(0)=0, fib(1)=1</div>
+
+            <pre><span class="type">int</span> <span class="func">fib</span>(<span class="type">int</span> n) {
+    <span class="keyword">if</span> (n <= <span class="number">1</span>) <span class="keyword">return</span> n;
+    <span class="keyword">return</span> <span class="func">fib</span>(n - <span class="number">1</span>) + <span class="func">fib</span>(n - <span class="number">2</span>);
+}
+<span class="comment">// Time: O(2^n) — exponential! (can optimize with DP later)</span></pre>
+
+            <div class="tree-visual">
+                fib(5)
+               /      \
+          fib(4)      fib(3)
+         /    \       /    \
+      fib(3) fib(2) fib(2) fib(1)
+      /  \    / \    / \      |
+   f(2) f(1) f(1) f(0) f(1) f(0)  1
+   / \    |    |    |    |    |
+ f(1) f(0) 1  1    0    1    0
+  |    |
+  1    0
+
+Result: 5
+            </div>
+
+            <div class="striver-note">
+                "This is O(2^n) — very slow! But understand this pattern first. When we do Dynamic Programming later, we'll optimize this to O(n). Foundation first, optimization later!"
+            </div>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Fibonacci</h4>
+                <div class="demo-controls">
+                    <input type="number" id="fibInput" value="6" min="0" max="15">
+                    <button onclick="demoFib()">Calculate</button>
+                </div>
+                <div class="demo-output" id="fibOutput">Click "Calculate" to see the tree...</div>
+            </div>
+        </div>
+
+        <!-- Subsequences -->
+        <div class="section" id="subsequences">
+            <h2>Print All Subsequences</h2>
+            <p>A <strong>subsequence</strong> is a contiguous or non-contiguous sequence that follows the order of the original array.</p>
+
+            <div class="important-box">
+                <h4>📌 Key Insight: Take / Not-Take Pattern</h4>
+                <p>At every index, you have TWO choices:</p>
+                <ul>
+                    <li><strong>Take</strong> the current element (include it)</li>
+                    <li><strong>Not Take</strong> the current element (exclude it)</li>
+                </ul>
+                <p>This gives 2^n total subsequences.</p>
+            </div>
+
+            <pre><span class="keyword">void</span> <span class="func">printSubseq</span>(<span class="type">int</span> ind, vector&lt;<span class="type">int</span>&gt;&amp; ds, <span class="type">int</span> arr[], <span class="type">int</span> n) {
+    <span class="keyword">if</span> (ind == n) {
+        <span class="comment">// Print the subsequence</span>
+        <span class="keyword">for</span> (<span class="type">auto</span> it : ds) cout << it << <span class="string">" "</span>;
+        cout << endl;
+        <span class="keyword">return</span>;
+    }
+    
+    <span class="comment">// TAKE the element</span>
+    ds.push_back(arr[ind]);
+    <span class="func">printSubseq</span>(ind + <span class="number">1</span>, ds, arr, n);
+    
+    <span class="comment">// NOT TAKE (backtrack)</span>
+    ds.pop_back();
+    <span class="func">printSubseq</span>(ind + <span class="number">1</span>, ds, arr, n);
+}</pre>
+
+            <div class="tree-visual">
+arr = [3, 1, 2]
+
+                    f(0, [])
+                   /         \
+            TAKE 3            NOT TAKE 3
+           f(1, [3])          f(1, [])
+          /       \           /       \
+     TAKE 1    NOT 1     TAKE 1    NOT 1
+   f(2,[3,1]) f(2,[3])  f(2,[1])  f(2,[])
+    /    \     /    \     /    \    /    \
+  T2   NT2  T2   NT2   T2  NT2  T2   NT2
+
+Results: [3,1,2] [3,1] [3,2] [3] [1,2] [1] [2] []
+            </div>
+
+            <div class="striver-note">
+                "Take / Not-Take is the MOST important pattern in recursion. Subsequences, subsets, combination sum — everything uses this. Master this and you've mastered 70% of recursion problems!"
+            </div>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Print Subsequences</h4>
+                <div class="demo-controls">
+                    <input type="text" id="subseqInput" value="3,1,2" placeholder="Comma-separated">
+                    <button onclick="demoSubseq()">Generate</button>
+                </div>
+                <div class="demo-output" id="subseqOutput">Click "Generate" to see all subsequences...</div>
+            </div>
+        </div>
+
+        <!-- Subsequences with Sum K -->
+        <div class="section" id="subseq-sum">
+            <h2>Subsequences with Sum = K</h2>
+            <p>Print all subsequences whose elements sum up to K.</p>
+
+            <pre><span class="keyword">void</span> <span class="func">subseqSum</span>(<span class="type">int</span> ind, vector&lt;<span class="type">int</span>&gt;&amp; ds, <span class="type">int</span> s, <span class="type">int</span> arr[], <span class="type">int</span> n, <span class="type">int</span> k) {
+    <span class="keyword">if</span> (ind == n) {
+        <span class="keyword">if</span> (s == k) {
+            <span class="comment">// Print subsequence</span>
+            <span class="keyword">for</span>(<span class="type">auto</span> it : ds) cout << it << <span class="string">" "</span>;
+            cout << endl;
+        }
+        <span class="keyword">return</span>;
+    }
+    
+    <span class="comment">// Take</span>
+    ds.push_back(arr[ind]);
+    s += arr[ind];
+    <span class="func">subseqSum</span>(ind + <span class="number">1</span>, ds, s, arr, n, k);
+    
+    <span class="comment">// Not Take (backtrack)</span>
+    ds.pop_back();
+    s -= arr[ind];
+    <span class="func">subseqSum</span>(ind + <span class="number">1</span>, ds, s, arr, n, k);
+}</pre>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Subsequences with Sum K</h4>
+                <div class="demo-controls">
+                    <input type="text" id="subSumArrInput" value="1,2,1" placeholder="Array">
+                    <input type="number" id="subSumKInput" value="2" placeholder="K">
+                    <button onclick="demoSubseqSum()">Find</button>
+                </div>
+                <div class="demo-output" id="subSumOutput">Click "Find" to see matching subsequences...</div>
+            </div>
+        </div>
+
+        <!-- Count Subsequences -->
+        <div class="section" id="count-subseq">
+            <h2>Count Subsequences with Sum = K</h2>
+            <p>Instead of printing, just <strong>count</strong> them. Return 1 if condition met, 0 otherwise.</p>
+
+            <pre><span class="type">int</span> <span class="func">countSubseq</span>(<span class="type">int</span> ind, <span class="type">int</span> s, <span class="type">int</span> arr[], <span class="type">int</span> n, <span class="type">int</span> k) {
+    <span class="keyword">if</span> (ind == n) {
+        <span class="keyword">if</span> (s == k) <span class="keyword">return</span> <span class="number">1</span>;
+        <span class="keyword">return</span> <span class="number">0</span>;
+    }
+    
+    <span class="comment">// Take</span>
+    s += arr[ind];
+    <span class="type">int</span> left = <span class="func">countSubseq</span>(ind + <span class="number">1</span>, s, arr, n, k);
+    
+    <span class="comment">// Not Take</span>
+    s -= arr[ind];
+    <span class="type">int</span> right = <span class="func">countSubseq</span>(ind + <span class="number">1</span>, s, arr, n, k);
+    
+    <span class="keyword">return</span> left + right;
+}</pre>
+
+            <div class="striver-note">
+                "When the problem says 'count', don't store — just return 1 or 0 and ADD the left and right recursive calls. This is a pattern you'll see in DP too!"
+            </div>
+        </div>
+
+        <!-- Combination Sum -->
+        <div class="section" id="combination-sum">
+            <h2>Combination Sum</h2>
+            <p>Find all unique combinations where chosen numbers sum to target. You can use the same element <strong>unlimited times</strong>.</p>
+
+            <pre><span class="keyword">void</span> <span class="func">combSum</span>(<span class="type">int</span> ind, <span class="type">int</span> target, vector&lt;<span class="type">int</span>&gt;&amp; ds, 
+             vector&lt;<span class="type">int</span>&gt;&amp; arr, vector&lt;vector&lt;<span class="type">int</span>&gt;&gt;&amp; ans) {
+    <span class="keyword">if</span> (ind == arr.size()) {
+        <span class="keyword">if</span> (target == <span class="number">0</span>) ans.push_back(ds);
+        <span class="keyword">return</span>;
+    }
+    
+    <span class="comment">// Pick (stay at same index — can pick again!)</span>
+    <span class="keyword">if</span> (arr[ind] <= target) {
+        ds.push_back(arr[ind]);
+        <span class="func">combSum</span>(ind, target - arr[ind], ds, arr, ans);
+        ds.pop_back();
+    }
+    
+    <span class="comment">// Not pick (move to next index)</span>
+    <span class="func">combSum</span>(ind + <span class="number">1</span>, target, ds, arr, ans);
+}</pre>
+
+            <div class="important-box">
+                <h4>🔑 Key Difference</h4>
+                <p>When you <strong>pick</strong>, you stay at the same index (ind, not ind+1) because you can pick the same element again. When you <strong>don't pick</strong>, you move forward.</p>
+            </div>
+        </div>
+
+        <!-- Subset Sum -->
+        <div class="section" id="subset-sum">
+            <h2>Subset Sum (Print All Subset Sums)</h2>
+            <pre><span class="keyword">void</span> <span class="func">subsetSum</span>(<span class="type">int</span> ind, <span class="type">int</span> sum, vector&lt;<span class="type">int</span>&gt;&amp; arr, <span class="type">int</span> n, vector&lt;<span class="type">int</span>&gt;&amp; sumList) {
+    <span class="keyword">if</span> (ind == n) {
+        sumList.push_back(sum);
+        <span class="keyword">return</span>;
+    }
+    
+    <span class="comment">// Take</span>
+    <span class="func">subsetSum</span>(ind + <span class="number">1</span>, sum + arr[ind], arr, n, sumList);
+    
+    <span class="comment">// Not Take</span>
+    <span class="func">subsetSum</span>(ind + <span class="number">1</span>, sum, arr, n, sumList);
+}
+<span class="comment">// Sort sumList to get all subset sums in order</span></pre>
+        </div>
+
+        <!-- Permutations -->
+        <div class="section" id="permutations">
+            <h2>Print All Permutations</h2>
+            <p>Given an array, print all possible arrangements (order matters!).</p>
+
+            <h3>Approach 1: Using visited array</h3>
+            <pre><span class="keyword">void</span> <span class="func">permute</span>(vector&lt;<span class="type">int</span>&gt;&amp; ds, vector&lt;<span class="type">int</span>&gt;&amp; arr, 
+             vector&lt;vector&lt;<span class="type">int</span>&gt;&gt;&amp; ans, <span class="type">bool</span> visited[]) {
+    <span class="keyword">if</span> (ds.size() == arr.size()) {
+        ans.push_back(ds);
+        <span class="keyword">return</span>;
+    }
+    
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < arr.size(); i++) {
+        <span class="keyword">if</span> (!visited[i]) {
+            visited[i] = <span class="number">true</span>;
+            ds.push_back(arr[i]);
+            <span class="func">permute</span>(ds, arr, ans, visited);
+            ds.pop_back();
+            visited[i] = <span class="number">false</span>;
+        }
+    }
+}</pre>
+
+            <h3>Approach 2: Swap method (Space Optimized)</h3>
+            <pre><span class="keyword">void</span> <span class="func">permute2</span>(<span class="type">int</span> ind, vector&lt;<span class="type">int</span>&gt;&amp; arr, vector&lt;vector&lt;<span class="type">int</span>&gt;&gt;&amp; ans) {
+    <span class="keyword">if</span> (ind == arr.size()) {
+        ans.push_back(arr);
+        <span class="keyword">return</span>;
+    }
+    
+    <span class="keyword">for</span> (<span class="type">int</span> i = ind; i < arr.size(); i++) {
+        swap(arr[ind], arr[i]);
+        <span class="func">permute2</span>(ind + <span class="number">1</span>, arr, ans);
+        swap(arr[ind], arr[i]); <span class="comment">// Backtrack</span>
+    }
+}</pre>
+
+            <div class="striver-note">
+                "Approach 2 is better — no extra space for visited array or ds. Just swap and recurse. This is what interviewers love to see!"
+            </div>
+
+            <div class="demo-box">
+                <h4>🎮 Try It: Permutations</h4>
+                <div class="demo-controls">
+                    <input type="text" id="permInput" value="1,2,3" placeholder="Comma-separated">
+                    <button onclick="demoPermutations()">Generate</button>
+                </div>
+                <div class="demo-output" id="permOutput">Click "Generate" to see all permutations...</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="margin-top: 80px; padding: 30px; text-align: center; border-top: 1px solid var(--border); color: var(--text-muted);">
+            <p>🔥 Built with ❤️ following Striver's A2Z DSA Sheet</p>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Master recursion → Master backtracking → Master DP. Trust the process!</p>
+        </div>
+    </main>
+
+    <script>
+        // Theme Toggle
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+        }
+
+        // Active sidebar link
+        function setActive(el) {
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // Scroll spy
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const links = document.querySelectorAll('.sidebar a');
+            let current = '';
+            sections.forEach(s => {
+                if (window.scrollY >= s.offsetTop - 100) current = s.id;
+            });
+            links.forEach(l => {
+                l.classList.remove('active');
+                if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.section').forEach(section => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(30px)';
+            section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(section);
+        });
+
+        // DEMOS
+        function demoPrintName() {
+            const n = parseInt(document.getElementById('printNameInput').value);
+            let output = '';
+            for (let i = 1; i <= n; i++) {
+                output += `Call ${i}: printName(${i}, ${n}) → prints "Striver"\n`;
+            }
+            output += `Call ${n+1}: printName(${n+1}, ${n}) → ${n+1} > ${n} → RETURN ✅\n`;
+            output += `\n--- Output ---\n`;
+            for (let i = 0; i < n; i++) output += 'Striver\n';
+            document.getElementById('printNameOutput').textContent = output;
+        }
+
+        function demo1ToN() {
+            const n = parseInt(document.getElementById('print1NInput').value);
+            let output = 'Recursion Trace:\n';
+            for (let i = 1; i <= n; i++) {
+                output += `${'  '.repeat(i-1)}→ print1ToN(${i}, ${n}) prints: ${i}\n`;
+            }
+            output += `${'  '.repeat(n)}→ print1ToN(${n+1}, ${n}) → RETURN ✅\n`;
+            output += `\nOutput: ${Array.from({length:n},(_,i)=>i+1).join(' ')}`;
+            document.getElementById('print1NOutput').textContent = output;
+        }
+
+        function demoNTo1() {
+            const n = parseInt(document.getElementById('printN1Input').value);
+            let output = '=== Approach 1: Print before call ===\n';
+            for (let i = n; i >= 1; i--) {
+                output += `printNTo1(${i}) → prints ${i}\n`;
+            }
+            output += `printNTo1(0) → RETURN ✅\n`;
+            output += `Output: ${Array.from({length:n},(_,i)=>n-i).join(' ')}\n\n`;
+            output += '=== Approach 2: Backtracking (print after call) ===\n';
+            for (let i = 1; i <= n; i++) {
+                output += `${'  '.repeat(i-1)}→ call printNTo1_BT(${i}, ${n})\n`;
+            }
+            output += `${'  '.repeat(n)}→ printNTo1_BT(${n+1}) BASE CASE\n`;
+            for (let i = n; i >= 1; i--) {
+                output += `${'  '.repeat(i-1)}← returning, prints: ${i}\n`;
+            }
+            output += `Output: ${Array.from({length:n},(_,i)=>n-i).join(' ')}`;
+            document.getElementById('printN1Output').textContent = output;
+        }
+
+        function demoSumN() {
+            const n = parseInt(document.getElementById('sumNInput').value);
+            let output = `=== Functional Approach ===\n`;
+            let expr = '';
+            for (let i = n; i >= 0; i--) {
+                output += `${'  '.repeat(n-i)}sumFunc(${i})${i===0 ? ' → returns 0 (base case)' : ''}\n`;
+                if (i > 0) expr += i + (i > 1 ? ' + ' : '');
+            }
+            output += `\nUnwinding: ${expr} = ${n*(n+1)/2}\n`;
+            output += `\n✅ Sum of 1 to ${n} = ${n*(n+1)/2}`;
+            document.getElementById('sumNOutput').textContent = output;
+        }
+
+        function demoFactorial() {
+            const n = parseInt(document.getElementById('factInput').value);
+            let output = `factorial(${n}) trace:\n\n`;
+            for (let i = n; i >= 0; i--) {
+                output += `${'  '.repeat(n-i)}factorial(${i})${i===0 ? ' → returns 1 (base case)' : ` → ${i} * factorial(${i-1})`}\n`;
+            }
+            let result = 1;
+            output += `\nUnwinding:\n`;
+            for (let i = 1; i <= n; i++) {
+                result *= i;
+                output += `  ${i}! = ${result}\n`;
+            }
+            output += `\n✅ ${n}! = ${result}`;
+            document.getElementById('factOutput').textContent = output;
+        }
+
+        function demoReverse() {
+            const arr = document.getElementById('revInput').value.split(',').map(Number);
+            let output = `Reversing [${arr.join(', ')}]:\n\n`;
+            const a = [...arr];
+            let l = 0, r = a.length - 1, step = 1;
+            while (l < r) {
+                output += `Step ${step}: swap(arr[${l}]=${a[l]}, arr[${r}]=${a[r]}) → `;
+                [a[l], a[r]] = [a[r], a[l]];
+                output += `[${a.join(', ')}]\n`;
+                l++; r--; step++;
+            }
+            output += `\nl >= r → STOP\n✅ Result: [${a.join(', ')}]`;
+            document.getElementById('revOutput').textContent = output;
+        }
+
+        function demoPalindrome() {
+            const s = document.getElementById('palInput').value;
+            let output = `Checking if "${s}" is palindrome:\n\n`;
+            let l = 0, r = s.length - 1;
+            let isPalin = true;
+            while (l < r) {
+                output += `  Compare s[${l}]='${s[l]}' with s[${r}]='${s[r]}' → `;
+                if (s[l] !== s[r]) { output += `MISMATCH ❌\n`; isPalin = false; break; }
+                output += `MATCH ✓\n`;
+                l++; r--;
+            }
+            if (isPalin) output += `  l >= r → All matched!\n`;
+            output += `\n✅ "${s}" is ${isPalin ? '' : 'NOT '}a palindrome${isPalin ? ' ✓' : ' ✗'}`;
+            document.getElementById('palOutput').textContent = output;
+        }
+
+        function demoFib() {
+            const n = parseInt(document.getElementById('fibInput').value);
+            function fib(x) { return x <= 1 ? x : fib(x-1) + fib(x-2); }
+            let output = `Fibonacci(${n}):\n\nSequence: `;
+            for (let i = 0; i <= n; i++) output += fib(i) + (i < n ? ', ' : '');
+            output += `\n\n✅ fib(${n}) = ${fib(n)}`;
+            output += `\n\nRecursion calls made: ~${Math.pow(2,n)} (exponential!)`;
+            output += `\nTime Complexity: O(2^n)`;
+            document.getElementById('fibOutput').textContent = output;
+        }
+
+        function demoSubseq() {
+            const arr = document.getElementById('subseqInput').value.split(',').map(Number);
+            let results = [];
+            function gen(ind, ds) {
+                if (ind === arr.length) { results.push([...ds]); return; }
+                ds.push(arr[ind]); gen(ind+1, ds); ds.pop(); gen(ind+1, ds);
+            }
+            gen(0, []);
+            let output = `All subsequences of [${arr.join(', ')}]:\n`;
+            output += `Total: 2^${arr.length} = ${results.length} subsequences\n\n`;
+            results.forEach((r, i) => {
+                output += `  ${(i+1).toString().padStart(2)}: [${r.join(', ')}]${r.length===0?' (empty)':''}\n`;
+            });
+            document.getElementById('subseqOutput').textContent = output;
+        }
+
+        function demoSubseqSum() {
+            const arr = document.getElementById('subSumArrInput').value.split(',').map(Number);
+            const k = parseInt(document.getElementById('subSumKInput').value);
+            let results = [];
+            function gen(ind, ds, s) {
+                if (ind === arr.length) { if (s === k) results.push([...ds]); return; }
+                ds.push(arr[ind]); gen(ind+1, ds, s+arr[ind]); ds.pop(); gen(ind+1, ds, s);
+            }
+            gen(0, [], 0);
+            let output = `Subsequences of [${arr.join(', ')}] with sum = ${k}:\n\n`;
+            if (results.length === 0) output += '  No subsequences found!\n';
+            else results.forEach((r, i) => { output += `  ${i+1}: [${r.join(', ')}] → sum = ${k} ✓\n`; });
+            output += `\nTotal found: ${results.length}`;
+            document.getElementById('subSumOutput').textContent = output;
+        }
+
+        function demoPermutations() {
+            const arr = document.getElementById('permInput').value.split(',').map(Number);
+            let results = [];
+            function perm(ind, a) {
+                if (ind === a.length) { results.push([...a]); return; }
+                for (let i = ind; i < a.length; i++) {
+                    [a[ind], a[i]] = [a[i], a[ind]];
+                    perm(ind+1, a);
+                    [a[ind], a[i]] = [a[i], a[ind]];
+                }
+            }
+            perm(0, [...arr]);
+            let output = `All permutations of [${arr.join(', ')}]:\n`;
+            output += `Total: ${arr.length}! = ${results.length} permutations\n\n`;
+            results.forEach((r, i) => { output += `  ${(i+1).toString().padStart(2)}: [${r.join(', ')}]\n`; });
+            document.getElementById('permOutput').textContent = output;
+        }
+    </script>
+</body>
+</html>

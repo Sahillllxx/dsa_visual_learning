@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Basic Maths — Striver's A-Z DSA</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@400;600;700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════
+   THEME TOKENS
+═══════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+  --bg:       #080b10;
+  --bg2:      #0d1117;
+  --bg3:      #161b24;
+  --bg4:      #1c2333;
+  --card:     #12171f;
+  --border:   #21293a;
+  --border2:  #2d3a50;
+  --acc1:     #00e5ff;   /* cyan  */
+  --acc2:     #ff6b35;   /* orange*/
+  --acc3:     #39ff14;   /* neon green */
+  --acc4:     #bf5af2;   /* purple */
+  --acc5:     #ffd60a;   /* yellow */
+  --text:     #e2e8f4;
+  --text2:    #8892a4;
+  --text3:    #3d4a5c;
+  --code-bg:  #090d13;
+  --glow1:    rgba(0,229,255,0.15);
+  --glow2:    rgba(255,107,53,0.15);
+  --shadow:   0 20px 60px rgba(0,0,0,0.7);
+  --chip-bg:  #1c2333;
+}
+:root[data-theme="light"] {
+  --bg:       #f0f4ff;
+  --bg2:      #e6ecfa;
+  --bg3:      #dde4f5;
+  --bg4:      #d3daf0;
+  --card:     #ffffff;
+  --border:   #c8d2e8;
+  --border2:  #b0bdd8;
+  --acc1:     #0077b6;
+  --acc2:     #d4530a;
+  --acc3:     #16a34a;
+  --acc4:     #7c3aed;
+  --acc5:     #b45309;
+  --text:     #0f172a;
+  --text2:    #475569;
+  --text3:    #94a3b8;
+  --code-bg:  #e8eef8;
+  --glow1:    rgba(0,119,182,0.08);
+  --glow2:    rgba(212,83,10,0.08);
+  --shadow:   0 20px 60px rgba(0,0,0,0.12);
+  --chip-bg:  #dde4f5;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  transition: background .3s, color .3s;
+  overflow-x: hidden;
+}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ═══ HEADER ═══ */
+header {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(16px);
+}
+.logo {
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 900; font-size: 1rem;
+  letter-spacing: -0.02em;
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-dot { width:8px;height:8px;border-radius:50%;background:var(--acc1);box-shadow:0 0 10px var(--acc1); }
+.logo em { color: var(--acc2); font-style: normal; }
+
+.header-center {
+  display: flex; gap: 6px;
+}
+.chapter-chip {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
+  text-transform: uppercase; padding: 4px 12px; border-radius: 20px;
+  background: var(--chip-bg); color: var(--text2); border: 1px solid var(--border);
+  cursor: pointer; transition: all .2s;
+  font-family: 'Space Mono', monospace;
+}
+.chapter-chip.active { background: var(--acc1); color: var(--bg); border-color: var(--acc1); }
+.chapter-chip:hover:not(.active) { border-color: var(--acc1); color: var(--acc1); }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+.progress-ring-wrap { position: relative; width: 36px; height: 36px; cursor: default; }
+.progress-ring-wrap svg { transform: rotate(-90deg); }
+.progress-ring-track { fill: none; stroke: var(--border); stroke-width: 3; }
+.progress-ring-fill { fill: none; stroke: var(--acc3); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+.progress-ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-family: 'Space Mono', monospace; font-weight: 700; color: var(--acc3); }
+
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg3);
+  cursor: pointer; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; color: var(--text2);
+}
+.theme-toggle:hover { border-color: var(--acc1); color: var(--acc1); }
+
+/* ═══ LAYOUT ═══ */
+.app-layout { display: flex; min-height: calc(100vh - 56px); }
+
+/* ═══ SIDEBAR ═══ */
+.sidebar {
+  width: 256px; flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 20px 0;
+  position: sticky; top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.sidebar-section-label {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 12px 20px 6px; font-family: 'Space Mono', monospace;
+}
+.nav-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 20px; cursor: pointer;
+  font-size: 0.85rem; color: var(--text2);
+  border-left: 3px solid transparent;
+  transition: all .15s; position: relative;
+}
+.nav-link:hover { background: var(--bg3); color: var(--text); }
+.nav-link.active { background: var(--glow1); color: var(--acc1); border-left-color: var(--acc1); font-weight: 600; }
+.nav-link .nav-ico { font-size: 1.1rem; min-width: 24px; text-align: center; }
+.nav-link .nav-txt { flex: 1; }
+.nav-link .nav-done {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--acc3); display: none;
+  align-items: center; justify-content: center;
+  font-size: 0.65rem; color: var(--bg);
+}
+.nav-link.done .nav-done { display: flex; }
+.nav-link .nav-num { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--text3); }
+
+/* ═══ MAIN ═══ */
+main { flex: 1; padding: 40px 52px; max-width: 960px; }
+@media(max-width:768px) { main { padding: 24px 18px; } .sidebar { display: none; } }
+
+/* ═══ SECTIONS ═══ */
+.section { display: none; animation: fadeUp .35s ease; }
+.section.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+/* ═══ SECTION HEADER ═══ */
+.sec-eyebrow {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.eyebrow-tag {
+  font-family: 'Space Mono', monospace; font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--acc2); background: var(--glow2);
+  padding: 3px 10px; border-radius: 4px; border: 1px solid var(--acc2);
+}
+.eyebrow-num {
+  font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--text3);
+}
+h2 {
+  font-family: 'Unbounded', sans-serif; font-weight: 900;
+  font-size: 1.9rem; line-height: 1.15; margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+h2 em { color: var(--acc1); font-style: normal; }
+.section-sub { color: var(--text2); font-size: 0.9rem; line-height: 1.6; margin-bottom: 28px; }
+
+h3 { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 1rem; margin: 28px 0 10px; color: var(--text); }
+p { color: var(--text2); line-height: 1.75; margin-bottom: 12px; font-size: 0.92rem; }
+strong { color: var(--text); font-weight: 600; }
+
+/* ═══ STRIVER CALLOUT ═══ */
+.striver-box {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-left: 4px solid var(--acc2);
+  border-radius: 0 10px 10px 0;
+  padding: 16px 20px; margin: 20px 0;
+  position: relative;
+}
+.striver-box::before {
+  content: "🎯  Striver Says";
+  display: block; font-family: 'Space Mono', monospace;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--acc2); margin-bottom: 8px;
+}
+.striver-box p { margin: 0; font-size: 0.9rem; color: var(--text); }
+
+/* ═══ CALLOUTS ═══ */
+.callout { border-radius: 8px; padding: 13px 18px; margin: 14px 0; font-size: 0.88rem; line-height: 1.65; }
+.callout::before { display: block; font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
+.c-info { background: rgba(0,229,255,0.07); border: 1px solid rgba(0,229,255,0.25); color: var(--text); }
+.c-info::before { content: "💡 Key Insight"; color: var(--acc1); }
+.c-warn { background: rgba(255,214,10,0.07); border: 1px solid rgba(255,214,10,0.25); color: var(--text); }
+.c-warn::before { content: "⚠️  Watch Out"; color: var(--acc5); }
+.c-win { background: rgba(57,255,20,0.07); border: 1px solid rgba(57,255,20,0.25); color: var(--text); }
+.c-win::before { content: "✅  Key Takeaway"; color: var(--acc3); }
+.c-trick { background: rgba(191,90,242,0.07); border: 1px solid rgba(191,90,242,0.25); color: var(--text); }
+.c-trick::before { content: "🔮  Interview Trick"; color: var(--acc4); }
+
+/* ═══ FORMULA BOX ═══ */
+.formula-box {
+  background: var(--code-bg);
+  border: 1px solid var(--acc4);
+  border-radius: 10px;
+  padding: 18px 22px; margin: 18px 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem; color: var(--text);
+  text-align: center; line-height: 1.9;
+}
+.formula-box .f-label {
+  font-size: 0.65rem; color: var(--acc4); text-transform: uppercase;
+  letter-spacing: 0.1em; font-weight: 700; margin-bottom: 10px; display: block;
+}
+
+/* ═══ CODE BLOCK ═══ */
+.code-wrap {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px; margin: 18px 0;
+  overflow: hidden;
+}
+.code-top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px; background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+.code-lang { font-family: 'Space Mono', monospace; font-size: 0.68rem; font-weight: 700; color: var(--acc1); text-transform: uppercase; letter-spacing: 0.08em; }
+.code-complexity { font-size: 0.68rem; font-family: 'Space Mono', monospace; color: var(--text3); }
+.copy-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--text2);
+  padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 0.68rem;
+  font-family: 'Space Mono', monospace; transition: all .2s;
+}
+.copy-btn:hover { border-color: var(--acc1); color: var(--acc1); }
+pre { padding: 20px; overflow-x: auto; }
+code { font-family: 'Space Mono', monospace; font-size: 0.8rem; line-height: 1.8; color: var(--text); }
+.kw { color: #ff6b35; font-weight: 700; }
+.fn { color: #00e5ff; }
+.cm { color: #3d4a5c; font-style: italic; }
+.nm { color: #39ff14; }
+.st { color: #ffd60a; }
+.tp { color: #bf5af2; }
+
+/* ═══ COMPLEXITY GRID ═══ */
+.cx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.cx-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 13px 16px; }
+.cx-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); font-family: 'Space Mono', monospace; font-weight: 700; margin-bottom: 5px; }
+.cx-val { font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--acc3); }
+.cx-note { font-size: 0.75rem; color: var(--text2); margin-top: 3px; }
+
+/* ═══ VIZ CARD ═══ */
+.viz-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px;
+  margin: 24px 0; box-shadow: var(--shadow);
+  position: relative; overflow: hidden;
+}
+.viz-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--acc1), var(--acc4), var(--acc2));
+}
+.viz-title {
+  font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 0.9rem;
+  color: var(--text); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.viz-badge {
+  font-size: 0.62rem; background: var(--glow1); color: var(--acc1);
+  padding: 2px 9px; border-radius: 3px; border: 1px solid var(--acc1);
+  font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 0.07em;
+}
+
+/* ═══ INPUT FIELD ═══ */
+.field-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.field-label { font-size: 0.82rem; color: var(--text2); font-family: 'Space Mono', monospace; }
+.num-input {
+  padding: 8px 14px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--bg3);
+  color: var(--text); font-family: 'Space Mono', monospace;
+  font-size: 0.9rem; outline: none; width: 110px;
+  transition: border-color .2s;
+}
+.num-input:focus { border-color: var(--acc1); }
+
+/* ═══ BUTTONS ═══ */
+.btn {
+  padding: 9px 22px; border-radius: 8px;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  border: none; transition: all .2s;
+  font-family: 'Space Mono', monospace; letter-spacing: 0.03em;
+}
+.btn-pri { background: var(--acc1); color: var(--bg); }
+.btn-pri:hover { opacity: .85; transform: translateY(-1px); }
+.btn-sec { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+.btn-sec:hover { border-color: var(--acc1); color: var(--acc1); }
+.btn-grn { background: var(--acc3); color: var(--bg); }
+.btn-grn:hover { opacity: .85; transform: translateY(-1px); }
+.btn:disabled { opacity: .35; cursor: not-allowed; transform: none !important; }
+
+/* ═══ STEP INFO ═══ */
+.step-box {
+  background: var(--bg3); border-radius: 8px; padding: 12px 16px;
+  margin-top: 14px; font-size: 0.85rem; min-height: 46px;
+  border-left: 3px solid var(--acc1); color: var(--text);
+  font-family: 'Space Mono', monospace; line-height: 1.6;
+}
+.step-box .s-num { color: var(--acc1); font-weight: 700; }
+
+/* ═══ DIGIT VISUALIZER ═══ */
+.digit-row { display: flex; gap: 6px; margin: 14px 0; flex-wrap: wrap; align-items: flex-end; }
+.digit-block {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.digit-cell {
+  width: 54px; height: 54px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Mono', monospace; font-size: 1.2rem; font-weight: 700;
+  border-radius: 10px; border: 2px solid var(--border);
+  background: var(--bg3); color: var(--text);
+  transition: all .4s cubic-bezier(.34,1.56,.64,1);
+}
+.digit-cell.active {
+  background: var(--acc1); border-color: var(--acc1); color: var(--bg);
+  transform: scale(1.15); box-shadow: 0 0 20px rgba(0,229,255,0.5);
+}
+.digit-cell.done {
+  background: var(--acc3); border-color: var(--acc3); color: var(--bg);
+}
+.digit-cell.highlight {
+  background: var(--acc2); border-color: var(--acc2); color: #fff;
+  transform: scale(1.1);
+}
+.digit-label { font-size: 0.6rem; color: var(--text3); font-family: 'Space Mono', monospace; }
+
+/* ═══ RESULT BOX ═══ */
+.result-box {
+  background: var(--bg3); border-radius: 10px; padding: 14px 18px;
+  margin: 12px 0; display: none;
+}
+.result-box.show { display: block; }
+.r-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); font-family: 'Space Mono', monospace; font-weight: 700; margin-bottom: 6px; }
+.r-val { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--acc3); }
+.r-trace { font-size: 0.78rem; color: var(--text2); margin-top: 6px; font-family: 'Space Mono', monospace; line-height: 1.6; }
+
+/* ═══ DIVISORS GRID ═══ */
+.div-grid { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+.div-pill {
+  padding: 6px 14px; border-radius: 20px; font-family: 'Space Mono', monospace;
+  font-size: 0.82rem; font-weight: 700; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text2);
+  transition: all .3s;
+}
+.div-pill.divisor { background: var(--acc1); border-color: var(--acc1); color: var(--bg); transform: scale(1.05); }
+.div-pill.checking { background: var(--acc5); border-color: var(--acc5); color: var(--bg); transform: scale(1.05); }
+.div-pill.not-div { background: transparent; border-color: var(--border); color: var(--text3); opacity: .5; }
+
+/* ═══ PRIME SIEVE ═══ */
+.sieve-grid { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; }
+.s-cell {
+  width: 40px; height: 40px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Mono', monospace; font-size: 0.75rem; font-weight: 700;
+  border: 1.5px solid var(--border); background: var(--bg3);
+  color: var(--text2); transition: all .3s;
+}
+.s-cell.prime { background: var(--acc3); border-color: var(--acc3); color: var(--bg); }
+.s-cell.composite { background: transparent; border-color: var(--text3); color: var(--text3); opacity: .4; text-decoration: line-through; }
+.s-cell.active-check { background: var(--acc2); border-color: var(--acc2); color: #fff; transform: scale(1.15); }
+
+/* ═══ GCD VIZ ═══ */
+.gcd-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 10px 0; }
+.gcd-step-box {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px;
+  font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--text);
+  transition: all .3s;
+}
+.gcd-step-box.active-step { border-color: var(--acc1); color: var(--acc1); background: var(--glow1); }
+.gcd-step-box.final { border-color: var(--acc3); color: var(--acc3); background: rgba(57,255,20,0.07); }
+
+/* ═══ ARMSTRONG ═══ */
+.arm-calc { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+.arm-part {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; text-align: center;
+  font-family: 'Space Mono', monospace; transition: all .3s;
+}
+.arm-part .ap-num { font-size: 1.1rem; font-weight: 700; color: var(--acc1); }
+.arm-part .ap-label { font-size: 0.6rem; color: var(--text3); margin-top: 3px; }
+.arm-part.powered { border-color: var(--acc4); background: rgba(191,90,242,0.08); }
+.arm-part.powered .ap-num { color: var(--acc4); }
+
+/* ═══ PROGRESS SEPARATOR ═══ */
+.sep { height: 1px; background: var(--border); margin: 32px 0; }
+
+/* ═══ SECTION FOOTER ═══ */
+.sec-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+/* ═══ QUIZ ═══ */
+.quiz-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin: 20px 0; }
+.quiz-q { font-weight: 600; font-size: 0.92rem; margin-bottom: 14px; color: var(--text); }
+.quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px; cursor: pointer;
+  font-size: 0.85rem; color: var(--text2); transition: all .2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.quiz-opt:hover { border-color: var(--acc1); color: var(--text); }
+.quiz-opt.correct { background: rgba(57,255,20,.12); border-color: var(--acc3); color: var(--acc3); font-weight: 600; pointer-events: none; }
+.quiz-opt.wrong { background: rgba(255,59,48,.1); border-color: #ff3b30; color: #ff3b30; pointer-events: none; }
+.quiz-explain { margin-top: 12px; display: none; background: var(--bg3); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: var(--text2); line-height: 1.65; font-family: 'Space Mono', monospace; }
+.quiz-explain.show { display: block; }
+
+/* ═══ MARK DONE ═══ */
+.mark-done-btn {
+  background: transparent; border: 1px solid var(--acc3); color: var(--acc3);
+  padding: 8px 18px; border-radius: 8px; cursor: pointer;
+  font-family: 'Space Mono', monospace; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.05em; transition: all .2s;
+}
+.mark-done-btn:hover { background: var(--acc3); color: var(--bg); }
+.mark-done-btn.marked { background: var(--acc3); color: var(--bg); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Striver's <em>&nbsp;Basic Maths</em>
+  </div>
+  <div class="header-center" id="chapterChips"></div>
+  <div class="header-right">
+    <a href="index.html" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);text-decoration:none;font-size:0.78rem;font-weight:600;transition:all .2s;" onmouseover="this.style.borderColor='var(--acc1)';this.style.color='var(--acc1)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">← Roadmap</a>
+    <div class="progress-ring-wrap" title="Your progress">
+      <svg width="36" height="36" viewBox="0 0 36 36">
+        <circle class="progress-ring-track" cx="18" cy="18" r="14"/>
+        <circle class="progress-ring-fill" id="progRing" cx="18" cy="18" r="14"
+          stroke-dasharray="88" stroke-dashoffset="88"/>
+      </svg>
+      <div class="progress-ring-label" id="progLabel">0/7</div>
+    </div>
+    <button class="theme-toggle" id="themeBtn">🌙</button>
+  </div>
+</header>
+
+<!-- ═══════════════ LAYOUT ═══════════════ -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section-label">Basic Maths</div>
+    <div class="nav-link active" onclick="gotoSec(0,this)" id="nl0">
+      <span class="nav-ico">🔢</span>
+      <span class="nav-txt">Count Digits</span>
+      <span class="nav-num">01</span>
+      <span class="nav-done">✓</span>
+    </div>
+    <div class="nav-link" onclick="gotoSec(1,this)" id="nl1">
+      <span class="nav-ico">🔄</span>
+      <span class="nav-txt">Reverse a Number</span>
+      <span class="nav-num">02</span>
+      <span class="nav-done">✓</span>
+    </div>
+    <div class="nav-link" onclick="gotoSec(2,this)" id="nl2">
+      <span class="nav-ico">🪞</span>
+      <span class="nav-txt">Palindrome Check</span>
+      <span class="nav-num">03</span>
+      <span class="nav-done">✓</span>
+    </div>
+    <div class="nav-link" onclick="gotoSec(3,this)" id="nl3">
+      <span class="nav-ico">🤝</span>
+      <span class="nav-txt">GCD / HCF</span>
+      <span class="nav-num">04</span>
+      <span class="nav-done">✓</span>
+    </div>
+    <div class="nav-link" onclick="gotoSec(4,this)" id="nl4">
+      <span class="nav-ico">💪</span>
+      <span class="nav-txt">Armstrong Numbers</span>
+      <span class="nav-num">05</span>
+      <span class="nav-done">✓</span>
+    </div>
+    <div class="nav-link" onclick="gotoSec(5,this)" id="nl5">
+      <span class="nav-ico">➗</span>
+      <span class="nav-txt">Print All Divisors</span>
+      <span class="nav-num">06</span>
+      <span class="nav-done">✓</span>
+    </div>
+    <div class="nav-link" onclick="gotoSec(6,this)" id="nl6">
+      <span class="nav-ico">🔬</span>
+      <span class="nav-txt">Check Prime</span>
+      <span class="nav-num">07</span>
+      <span class="nav-done">✓</span>
+    </div>
+    <div class="sidebar-section-label" style="margin-top:14px;">Quick Quiz</div>
+    <div class="nav-link" onclick="gotoSec(7,this)" id="nl7">
+      <span class="nav-ico">🧠</span>
+      <span class="nav-txt">Quiz Yourself</span>
+      <span class="nav-num">08</span>
+      <span class="nav-done">✓</span>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main id="mainArea">
+
+<!-- ══════════════════════════════════════════
+     SECTION 0 — COUNT DIGITS
+══════════════════════════════════════════ -->
+<div class="section active" id="sec0">
+  <div class="sec-eyebrow">
+    <span class="eyebrow-tag">Problem 01</span>
+    <span class="eyebrow-num">Basic Maths → Count Digits</span>
+  </div>
+  <h2>Count the <em>Digits</em> in a Number</h2>
+  <p class="section-sub">Given an integer N, find how many digits it has. Sounds too easy? Wait till you see the 3 approaches Striver covers — and which one shines in interviews.</p>
+
+  <div class="striver-box">
+    <p>Bhai, ye ek warmup problem hai but it teaches you something fundamental — working with individual digits using the <strong>modulo + division trick</strong>. Every number problem in maths ultimately boils down to this. Isko acche se samjho.</p>
+  </div>
+
+  <h3>Approach 1 — String Conversion (Avoid in Interviews!)</h3>
+  <p>Convert N to string, return its length. Works, but it's a cheap trick. Never do this in an interview unless asked for a one-liner.</p>
+
+  <div class="callout c-warn">Using String.valueOf(n).length() is O(log N) internally anyway — just wasteful. Interviewers will ask you for the proper approach.</div>
+
+  <h3>Approach 2 — Division Loop (Standard)</h3>
+  <p>Keep dividing by 10 until number becomes 0. Count each division. This is the <strong>correct approach</strong>.</p>
+
+  <div class="formula-box">
+    <span class="f-label">Core Idea</span>
+    digits(1234) = digits(123) + 1 = digits(12) + 2 = ... = 4<br/>
+    Number of times you can divide N by 10 before reaching 0 = digit count
+  </div>
+
+  <div class="viz-card">
+    <div class="viz-title">Division Loop Visualizer <span class="viz-badge">Interactive</span></div>
+    <div class="field-row">
+      <span class="field-label">N =</span>
+      <input class="num-input" id="cdInput" type="number" value="12345" min="1" max="999999999"/>
+      <button class="btn btn-pri" onclick="cdReset()">▶ Start</button>
+      <button class="btn btn-sec" onclick="cdAuto()">⚡ Auto</button>
+    </div>
+    <div style="margin-top:12px;">
+      <div style="font-size:0.72rem;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:8px;">CURRENT NUMBER</div>
+      <div class="digit-row" id="cdDigits"></div>
+    </div>
+    <div class="step-box" id="cdStepBox"><span class="s-num">Ready!</span> Press Start to visualize the division loop.</div>
+    <div class="result-box" id="cdResult">
+      <div class="r-label">Digit Count</div>
+      <div class="r-val" id="cdResVal"></div>
+      <div class="r-trace" id="cdResTrace"></div>
+    </div>
+  </div>
+
+  <h3>Approach 3 — Log Formula (O(1) but tricky)</h3>
+  <div class="formula-box">
+    <span class="f-label">Mathematical Formula</span>
+    digits(N) = ⌊log₁₀(N)⌋ + 1
+  </div>
+  <div class="callout c-warn">Fails for N=0. Also floating point precision issues for numbers like 10, 100, 1000 in some languages. Division loop is safer in practice.</div>
+
+  <div class="code-wrap">
+    <div class="code-top">
+      <span class="code-lang">Java</span>
+      <span class="code-complexity">TC: O(log N) &nbsp;|&nbsp; SC: O(1)</span>
+      <button class="copy-btn" onclick="doCopy('cd_code')">Copy</button>
+    </div>
+    <pre id="cd_code"><code><span class="kw">public class</span> <span class="fn">CountDigits</span> {
+
+    <span class="cm">// Approach 2 — Division Loop (Recommended)</span>
+    <span class="kw">public static int</span> <span class="fn">countDigits</span>(<span class="kw">int</span> n) {
+        <span class="kw">if</span> (n == <span class="nm">0</span>) <span class="kw">return</span> <span class="nm">1</span>;        <span class="cm">// edge case</span>
+        n = Math.abs(n);              <span class="cm">// handle negatives</span>
+        <span class="kw">int</span> count = <span class="nm">0</span>;
+        <span class="kw">while</span> (n > <span class="nm">0</span>) {
+            n /= <span class="nm">10</span>;               <span class="cm">// strip last digit</span>
+            count++;
+        }
+        <span class="kw">return</span> count;
+    }
+
+    <span class="cm">// Approach 3 — Log Formula (O(1) but risky)</span>
+    <span class="kw">public static int</span> <span class="fn">countDigitsLog</span>(<span class="kw">int</span> n) {
+        <span class="kw">if</span> (n == <span class="nm">0</span>) <span class="kw">return</span> <span class="nm">1</span>;
+        <span class="kw">return</span> (<span class="kw">int</span>) Math.floor(Math.log10(Math.abs(n))) + <span class="nm">1</span>;
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(String[] args) {
+        System.out.println(<span class="fn">countDigits</span>(<span class="nm">12345</span>));  <span class="cm">// 5</span>
+        System.out.println(<span class="fn">countDigits</span>(<span class="nm">7</span>));      <span class="cm">// 1</span>
+        System.out.println(<span class="fn">countDigits</span>(<span class="nm">0</span>));      <span class="cm">// 1</span>
+    }
+}</code></pre>
+  </div>
+
+  <div class="cx-grid">
+    <div class="cx-card"><div class="cx-label">Time</div><div class="cx-val">O(log N)</div><div class="cx-note">log₁₀(N) iterations of the loop</div></div>
+    <div class="cx-card"><div class="cx-label">Space</div><div class="cx-val">O(1)</div><div class="cx-note">No extra memory used</div></div>
+  </div>
+
+  <div class="callout c-trick">Interview follow-up: "Count digits of N that evenly divide N." Just extract each digit via % 10, check if digit != 0 && N % digit == 0, count such digits.</div>
+
+  <div class="sep"></div>
+  <div class="sec-footer">
+    <button class="mark-done-btn" onclick="markDone(0,this)">Mark Done ✓</button>
+    <button class="btn btn-pri" onclick="gotoSec(1, document.getElementById('nl1'))">Next: Reverse Number →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 1 — REVERSE NUMBER
+══════════════════════════════════════════ -->
+<div class="section" id="sec1">
+  <div class="sec-eyebrow">
+    <span class="eyebrow-tag">Problem 02</span>
+    <span class="eyebrow-num">Basic Maths → Reverse a Number</span>
+  </div>
+  <h2>Reverse a <em>Number</em></h2>
+  <p class="section-sub">Given N = 1234, return 4321. Classic digit manipulation. This is the foundation for palindrome checking.</p>
+
+  <div class="striver-box">
+    <p>Yaar, reverse number ka pattern ek hi hai — <strong>extract last digit via % 10, build reversed number by multiplying by 10, strip last digit via / 10</strong>. Isko ek baar samjho, palindrome, Armstrong — sab ban jaayega.</p>
+  </div>
+
+  <h3>The Core Pattern — Extract → Build → Strip</h3>
+  <div class="formula-box">
+    <span class="f-label">The Loop Invariant</span>
+    last_digit  = N % 10<br/>
+    reversed    = reversed * 10 + last_digit<br/>
+    N           = N / 10  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← strip last digit
+  </div>
+
+  <div class="viz-card">
+    <div class="viz-title">Reverse Number Visualizer <span class="viz-badge">Step by Step</span></div>
+    <div class="field-row">
+      <span class="field-label">N =</span>
+      <input class="num-input" id="rvInput" type="number" value="1534236" min="1" max="9999999"/>
+      <button class="btn btn-pri" onclick="rvStart()">▶ Start</button>
+      <button class="btn btn-sec" onclick="rvNext()" id="rvNextBtn" disabled>Next Step</button>
+      <button class="btn btn-sec" onclick="rvAuto()">⚡ Auto</button>
+    </div>
+    <div style="display:flex;gap:30px;flex-wrap:wrap;margin-top:14px;">
+      <div>
+        <div style="font-size:0.68rem;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:8px;">REMAINING (N)</div>
+        <div class="digit-row" id="rvRemaining"></div>
+      </div>
+      <div>
+        <div style="font-size:0.68rem;color:var(--text3);font-family:'Space Mono',monospace;margin-bottom:8px;">REVERSED</div>
+        <div class="digit-row" id="rvReversed"></div>
+      </div>
+    </div>
+    <div class="step-box" id="rvStepBox"><span class="s-num">Ready!</span> Press Start to begin.</div>
+    <div class="result-box" id="rvResult">
+      <div class="r-label">Result</div>
+      <div class="r-val" id="rvResVal"></div>
+      <div class="r-trace" id="rvResTrace"></div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-top">
+      <span class="code-lang">Java</span>
+      <span class="code-complexity">TC: O(log N) &nbsp;|&nbsp; SC: O(1)</span>
+      <button class="copy-btn" onclick="doCopy('rv_code')">Copy</button>
+    </div>
+    <pre id="rv_code"><code><span class="kw">public class</span> <span class="fn">ReverseNumber</span> {
+
+    <span class="kw">public static int</span> <span class="fn">reverse</span>(<span class="kw">int</span> n) {
+        <span class="kw">int</span> rev = <span class="nm">0</span>;
+        <span class="kw">while</span> (n != <span class="nm">0</span>) {
+            <span class="kw">int</span> digit = n % <span class="nm">10</span>;    <span class="cm">// extract last digit</span>
+            rev = rev * <span class="nm">10</span> + digit; <span class="cm">// build reversed</span>
+            n /= <span class="nm">10</span>;               <span class="cm">// strip last digit</span>
+        }
+        <span class="kw">return</span> rev;
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(String[] args) {
+        System.out.println(<span class="fn">reverse</span>(<span class="nm">1234</span>));    <span class="cm">// 4321</span>
+        System.out.println(<span class="fn">reverse</span>(-<span class="nm">120</span>));   <span class="cm">// -21 (trailing zeros dropped)</span>
+        System.out.println(<span class="fn">reverse</span>(<span class="nm">1534236</span>)); <span class="cm">// 6324351</span>
+    }
+}</code></pre>
+  </div>
+
+  <div class="callout c-warn">For LC 7 (Reverse Integer), check for integer overflow BEFORE multiplying: if (rev > Integer.MAX_VALUE/10) return 0.</div>
+  <div class="callout c-trick">This exact pattern — extract last digit with % 10 — is the skeleton of 90% of all basic maths problems. Internalize it.</div>
+
+  <div class="sep"></div>
+  <div class="sec-footer">
+    <button class="mark-done-btn" onclick="markDone(1,this)">Mark Done ✓</button>
+    <button class="btn btn-pri" onclick="gotoSec(2, document.getElementById('nl2'))">Next: Palindrome →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 2 — PALINDROME
+══════════════════════════════════════════ -->
+<div class="section" id="sec2">
+  <div class="sec-eyebrow">
+    <span class="eyebrow-tag">Problem 03</span>
+    <span class="eyebrow-num">Basic Maths → Palindrome Number</span>
+  </div>
+  <h2>Check <em>Palindrome</em> Number</h2>
+  <p class="section-sub">A number is a palindrome if it equals its reverse. 121 → palindrome. 1231 → not a palindrome. LC 9.</p>
+
+  <div class="striver-box">
+    <p>Ek baar reverse karna aaya, to palindrome ekdum easy hai bhai. Reverse the number, compare. Done. But there's also a <strong>half-reversal trick</strong> that's more optimal. I'll show you both.</p>
+  </div>
+
+  <h3>Approach 1 — Full Reversal (Simple)</h3>
+  <p>Reverse the number using the same pattern from Problem 2. If <code style="color:var(--acc1)">rev == original</code>, it's a palindrome.</p>
+
+  <div class="callout c-warn">Negative numbers are never palindromes (because of the minus sign). Return false immediately for n &lt; 0.</div>
+
+  <h3>Approach 2 — Half Reversal (Optimal, used in LC 9)</h3>
+  <div class="callout c-info">Reverse only <strong>half</strong> the number. Compare with the other half. Avoids potential overflow from reversing large numbers.</div>
+
+  <div class="viz-card">
+    <div class="viz-title">Palindrome Check Visualizer <span class="viz-badge">Interactive</span></div>
+    <div class="field-row">
+      <span class="field-label">N =</span>
+      <input class="num-input" id="palInput" type="number" value="121" min="0" max="999999"/>
+      <button class="btn btn-pri" onclick="checkPalin()">Check ▶</button>
+    </div>
+    <div id="palViz" style="margin-top:16px;display:none;">
+      <div style="display:flex;gap:30px;flex-wrap:wrap;">
+        <div>
+          <div class="digit-label" style="margin-bottom:8px;">ORIGINAL</div>
+          <div class="digit-row" id="palOrig"></div>
+        </div>
+        <div>
+          <div class="digit-label" style="margin-bottom:8px;">REVERSED</div>
+          <div class="digit-row" id="palRev"></div>
+        </div>
+      </div>
+      <div class="result-box show" id="palResult" style="margin-top:14px;">
+        <div class="r-label">Verdict</div>
+        <div class="r-val" id="palResVal"></div>
+        <div class="r-trace" id="palResTrace"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-top">
+      <span class="code-lang">Java</span>
+      <span class="code-complexity">TC: O(log N) &nbsp;|&nbsp; SC: O(1)</span>
+      <button class="copy-btn" onclick="doCopy('pal_code')">Copy</button>
+    </div>
+    <pre id="pal_code"><code><span class="kw">public class</span> <span class="fn">PalindromeNumber</span> {
+
+    <span class="cm">// Approach 1 — Full reversal</span>
+    <span class="kw">public static boolean</span> <span class="fn">isPalindrome</span>(<span class="kw">int</span> n) {
+        <span class="kw">if</span> (n < <span class="nm">0</span>) <span class="kw">return false</span>;    <span class="cm">// negatives never palindrome</span>
+        <span class="kw">int</span> original = n, rev = <span class="nm">0</span>;
+        <span class="kw">while</span> (n != <span class="nm">0</span>) {
+            rev = rev * <span class="nm">10</span> + n % <span class="nm">10</span>;
+            n /= <span class="nm">10</span>;
+        }
+        <span class="kw">return</span> original == rev;
+    }
+
+    <span class="cm">// Approach 2 — Half reversal (LC 9 optimal)</span>
+    <span class="kw">public static boolean</span> <span class="fn">isPalindromeOpt</span>(<span class="kw">int</span> n) {
+        <span class="kw">if</span> (n < <span class="nm">0</span> || (n % <span class="nm">10</span> == <span class="nm">0</span> && n != <span class="nm">0</span>)) <span class="kw">return false</span>;
+        <span class="kw">int</span> rev = <span class="nm">0</span>;
+        <span class="kw">while</span> (n > rev) {            <span class="cm">// stop at midpoint</span>
+            rev = rev * <span class="nm">10</span> + n % <span class="nm">10</span>;
+            n /= <span class="nm">10</span>;
+        }
+        <span class="cm">// odd digits: n == rev/10 (ignore middle digit)</span>
+        <span class="kw">return</span> n == rev || n == rev / <span class="nm">10</span>;
+    }
+}</code></pre>
+  </div>
+
+  <div class="callout c-win">Numbers ending in 0 (except 0 itself) cannot be palindromes — because no number starts with 0. This is the extra check in Approach 2.</div>
+
+  <div class="sep"></div>
+  <div class="sec-footer">
+    <button class="mark-done-btn" onclick="markDone(2,this)">Mark Done ✓</button>
+    <button class="btn btn-pri" onclick="gotoSec(3, document.getElementById('nl3'))">Next: GCD / HCF →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 3 — GCD / HCF
+══════════════════════════════════════════ -->
+<div class="section" id="sec3">
+  <div class="sec-eyebrow">
+    <span class="eyebrow-tag">Problem 04</span>
+    <span class="eyebrow-num">Basic Maths → GCD / HCF</span>
+  </div>
+  <h2>GCD &amp; HCF — <em>Euclidean</em> Algorithm</h2>
+  <p class="section-sub">Find the Greatest Common Divisor of two numbers. This is one of the most important algorithms you'll ever learn. It's used inside LCM, fraction simplification, cryptography, and Competitive Programming constantly.</p>
+
+  <div class="striver-box">
+    <p>GCD ka Euclidean algorithm is a masterpiece of efficiency. Brute force is O(min(a,b)). Euclidean makes it O(log(min(a,b))). The beautiful insight: <strong>GCD(a, b) = GCD(b, a%b)</strong>. That's it. That's the whole algorithm.</p>
+  </div>
+
+  <h3>Why Does GCD(a,b) = GCD(b, a%b)?</h3>
+  <p>If d divides both a and b, it must also divide a-b, a-2b, … a%b. So any common divisor of (a,b) is also a common divisor of (b, a%b). Hence the GCDs are the same!</p>
+
+  <div class="formula-box">
+    <span class="f-label">Euclidean Algorithm</span>
+    GCD(a, 0) = a &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← base case<br/>
+    GCD(a, b) = GCD(b, a % b) &nbsp;&nbsp;← recursive step
+  </div>
+
+  <div class="viz-card">
+    <div class="viz-title">Euclidean Algorithm Visualizer <span class="viz-badge">Step by Step</span></div>
+    <div class="field-row">
+      <span class="field-label">a =</span>
+      <input class="num-input" id="gcdA" type="number" value="48" min="1" max="99999" style="width:90px;"/>
+      <span class="field-label">b =</span>
+      <input class="num-input" id="gcdB" type="number" value="18" min="1" max="99999" style="width:90px;"/>
+      <button class="btn btn-pri" onclick="runGCD()">Visualize ▶</button>
+    </div>
+    <div id="gcdSteps" style="margin-top:14px;display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="result-box" id="gcdResult">
+      <div class="r-label">GCD</div>
+      <div class="r-val" id="gcdResVal"></div>
+      <div class="r-trace" id="gcdResTrace"></div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-top">
+      <span class="code-lang">Java</span>
+      <span class="code-complexity">TC: O(log min(a,b)) &nbsp;|&nbsp; SC: O(1) iterative</span>
+      <button class="copy-btn" onclick="doCopy('gcd_code')">Copy</button>
+    </div>
+    <pre id="gcd_code"><code><span class="kw">public class</span> <span class="fn">GCD</span> {
+
+    <span class="cm">// Recursive Euclidean</span>
+    <span class="kw">public static int</span> <span class="fn">gcd</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+        <span class="kw">if</span> (b == <span class="nm">0</span>) <span class="kw">return</span> a;
+        <span class="kw">return</span> <span class="fn">gcd</span>(b, a % b);
+    }
+
+    <span class="cm">// Iterative Euclidean (preferred — no stack overhead)</span>
+    <span class="kw">public static int</span> <span class="fn">gcdIter</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+        <span class="kw">while</span> (b != <span class="nm">0</span>) {
+            <span class="kw">int</span> temp = b;
+            b = a % b;
+            a = temp;
+        }
+        <span class="kw">return</span> a;
+    }
+
+    <span class="cm">// LCM using GCD: lcm(a,b) = (a/gcd) * b  ← avoids overflow</span>
+    <span class="kw">public static long</span> <span class="fn">lcm</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+        <span class="kw">return</span> (<span class="kw">long</span>) a / <span class="fn">gcdIter</span>(a, b) * b;
+    }
+}</code></pre>
+  </div>
+
+  <div class="cx-grid">
+    <div class="cx-card"><div class="cx-label">Brute Force</div><div class="cx-val">O(min(a,b))</div><div class="cx-note">Check every number from 1 to min</div></div>
+    <div class="cx-card"><div class="cx-label">Euclidean</div><div class="cx-val">O(log min)</div><div class="cx-note">Fibonacci worst case — insanely fast</div></div>
+  </div>
+
+  <div class="callout c-trick">LCM(a,b) = (a × b) / GCD(a,b). But compute it as <strong>(a / gcd) × b</strong> to avoid integer overflow — divide first, then multiply!</div>
+
+  <div class="sep"></div>
+  <div class="sec-footer">
+    <button class="mark-done-btn" onclick="markDone(3,this)">Mark Done ✓</button>
+    <button class="btn btn-pri" onclick="gotoSec(4, document.getElementById('nl4'))">Next: Armstrong →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 4 — ARMSTRONG
+══════════════════════════════════════════ -->
+<div class="section" id="sec4">
+  <div class="sec-eyebrow">
+    <span class="eyebrow-tag">Problem 05</span>
+    <span class="eyebrow-num">Basic Maths → Armstrong Numbers</span>
+  </div>
+  <h2><em>Armstrong</em> Numbers</h2>
+  <p class="section-sub">A number is Armstrong if the sum of each digit raised to the power of the number of digits equals the number itself. 153 = 1³ + 5³ + 3³ = 1 + 125 + 27 = 153 ✅</p>
+
+  <div class="striver-box">
+    <p>Armstrong number ka concept simple hai — digit count karo, phir har digit ko us power pe raise karo, sum karo, compare karo. This is a direct application of the digit extraction pattern we already know. Notice the <strong>count digits + reverse loop combined</strong>.</p>
+  </div>
+
+  <div class="formula-box">
+    <span class="f-label">Armstrong Number Condition</span>
+    Let k = number of digits in N<br/>
+    N is Armstrong if: N = d₁ᵏ + d₂ᵏ + d₃ᵏ + ... (for each digit dᵢ)
+  </div>
+
+  <h3>Famous Armstrong Numbers</h3>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:'Space Mono',monospace;font-size:0.82rem;">1 = 1¹</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:'Space Mono',monospace;font-size:0.82rem;">153 = 1³+5³+3³</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:'Space Mono',monospace;font-size:0.82rem;">370 = 3³+7³+0³</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:'Space Mono',monospace;font-size:0.82rem;">371 = 3³+7³+1³</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:'Space Mono',monospace;font-size:0.82rem;">407 = 4³+0³+7³</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:'Space Mono',monospace;font-size:0.82rem;">1634 = 1⁴+6⁴+3⁴+4⁴</div>
+  </div>
+
+  <div class="viz-card">
+    <div class="viz-title">Armstrong Checker <span class="viz-badge">Interactive</span></div>
+    <div class="field-row">
+      <span class="field-label">N =</span>
+      <input class="num-input" id="armInput" type="number" value="153" min="1" max="999999"/>
+      <button class="btn btn-pri" onclick="checkArm()">Check ▶</button>
+    </div>
+    <div id="armViz" style="margin-top:16px;display:none;">
+      <div id="armParts" class="arm-calc"></div>
+      <div class="result-box show" style="margin-top:14px;">
+        <div class="r-label">Verdict</div>
+        <div class="r-val" id="armResVal"></div>
+        <div class="r-trace" id="armResTrace"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-top">
+      <span class="code-lang">Java</span>
+      <span class="code-complexity">TC: O(log N) &nbsp;|&nbsp; SC: O(1)</span>
+      <button class="copy-btn" onclick="doCopy('arm_code')">Copy</button>
+    </div>
+    <pre id="arm_code"><code><span class="kw">public class</span> <span class="fn">Armstrong</span> {
+
+    <span class="kw">public static boolean</span> <span class="fn">isArmstrong</span>(<span class="kw">int</span> n) {
+        <span class="kw">int</span> original = n;
+        <span class="kw">int</span> k = String.valueOf(n).length(); <span class="cm">// number of digits</span>
+        <span class="cm">// Or use the division loop to count digits</span>
+        <span class="kw">int</span> sum = <span class="nm">0</span>;
+        <span class="kw">while</span> (n > <span class="nm">0</span>) {
+            <span class="kw">int</span> digit = n % <span class="nm">10</span>;
+            sum += (<span class="kw">int</span>) Math.pow(digit, k); <span class="cm">// digitᵏ</span>
+            n /= <span class="nm">10</span>;
+        }
+        <span class="kw">return</span> sum == original;
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(String[] args) {
+        System.out.println(<span class="fn">isArmstrong</span>(<span class="nm">153</span>));  <span class="cm">// true</span>
+        System.out.println(<span class="fn">isArmstrong</span>(<span class="nm">123</span>));  <span class="cm">// false</span>
+        System.out.println(<span class="fn">isArmstrong</span>(<span class="nm">1634</span>)); <span class="cm">// true</span>
+    }
+}</code></pre>
+  </div>
+
+  <div class="callout c-info">You can also write a helper <code>power(base, exp)</code> using a loop instead of Math.pow to avoid floating-point issues for very large numbers.</div>
+
+  <div class="sep"></div>
+  <div class="sec-footer">
+    <button class="mark-done-btn" onclick="markDone(4,this)">Mark Done ✓</button>
+    <button class="btn btn-pri" onclick="gotoSec(5, document.getElementById('nl5'))">Next: Divisors →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 5 — DIVISORS
+══════════════════════════════════════════ -->
+<div class="section" id="sec5">
+  <div class="sec-eyebrow">
+    <span class="eyebrow-tag">Problem 06</span>
+    <span class="eyebrow-num">Basic Maths → Print All Divisors</span>
+  </div>
+  <h2>Print All <em>Divisors</em></h2>
+  <p class="section-sub">Find all numbers that divide N completely (remainder = 0). This problem has a beautiful sqrt(N) optimization that you must know cold.</p>
+
+  <div class="striver-box">
+    <p>Brute force — loop from 1 to N, check if i divides N — is O(N). But notice: <strong>divisors always come in pairs!</strong> If i divides N, then N/i also divides N. So we only need to loop till √N. That takes it from O(N) to O(√N). Massive win!</p>
+  </div>
+
+  <h3>The √N Insight — Visualized</h3>
+  <div class="callout c-info">
+    For N = 36: pairs are (1,36), (2,18), (3,12), (4,9), (6,6). Both elements of each pair are divisors. Loop only till √36 = 6, get both in one iteration!
+  </div>
+
+  <div class="formula-box">
+    <span class="f-label">Key Optimization</span>
+    If i divides N → both i and N/i are divisors<br/>
+    Loop from i = 1 to √N → add both i and N/i<br/>
+    Special case: if i == N/i (perfect square), add only once
+  </div>
+
+  <div class="viz-card">
+    <div class="viz-title">Divisor Finder <span class="viz-badge">Animated</span></div>
+    <div class="field-row">
+      <span class="field-label">N =</span>
+      <input class="num-input" id="divInput" type="number" value="36" min="1" max="200"/>
+      <button class="btn btn-pri" onclick="findDivisors()">Find ▶</button>
+      <button class="btn btn-sec" onclick="animDivisors()" id="divAnimBtn">⚡ Animate</button>
+    </div>
+    <div id="divGrid" class="div-grid" style="margin-top:14px;"></div>
+    <div class="step-box" id="divStepBox" style="display:none;"></div>
+    <div class="result-box" id="divResult">
+      <div class="r-label">All Divisors (sorted)</div>
+      <div class="r-val" id="divResVal" style="font-size:1rem;"></div>
+      <div class="r-trace" id="divResTrace"></div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-top">
+      <span class="code-lang">Java</span>
+      <span class="code-complexity">TC: O(√N) &nbsp;|&nbsp; SC: O(d(N)) where d(N) = number of divisors</span>
+      <button class="copy-btn" onclick="doCopy('div_code')">Copy</button>
+    </div>
+    <pre id="div_code"><code><span class="kw">import</span> java.util.*;
+
+<span class="kw">public class</span> <span class="fn">Divisors</span> {
+
+    <span class="cm">// Brute Force — O(N)</span>
+    <span class="kw">public static</span> List&lt;Integer&gt; <span class="fn">bruteDivisors</span>(<span class="kw">int</span> n) {
+        List&lt;Integer&gt; divs = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">1</span>; i &lt;= n; i++) {
+            <span class="kw">if</span> (n % i == <span class="nm">0</span>) divs.add(i);
+        }
+        <span class="kw">return</span> divs;
+    }
+
+    <span class="cm">// Optimal — O(√N)  ← Always use this!</span>
+    <span class="kw">public static</span> List&lt;Integer&gt; <span class="fn">getDivisors</span>(<span class="kw">int</span> n) {
+        List&lt;Integer&gt; divs = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">1</span>; (<span class="kw">long</span>) i * i &lt;= n; i++) {
+            <span class="kw">if</span> (n % i == <span class="nm">0</span>) {
+                divs.add(i);
+                <span class="kw">if</span> (i != n / i) divs.add(n / i); <span class="cm">// avoid duplicate if perfect square</span>
+            }
+        }
+        Collections.sort(divs);  <span class="cm">// optional: sort them</span>
+        <span class="kw">return</span> divs;
+    }
+}</code></pre>
+  </div>
+
+  <div class="callout c-trick">Sum of divisors, count of divisors, check if N is perfect number (sum of proper divisors = N) — all use this same O(√N) loop. Master this pattern.</div>
+
+  <div class="sep"></div>
+  <div class="sec-footer">
+    <button class="mark-done-btn" onclick="markDone(5,this)">Mark Done ✓</button>
+    <button class="btn btn-pri" onclick="gotoSec(6, document.getElementById('nl6'))">Next: Check Prime →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 6 — CHECK PRIME
+══════════════════════════════════════════ -->
+<div class="section" id="sec6">
+  <div class="sec-eyebrow">
+    <span class="eyebrow-tag">Problem 07</span>
+    <span class="eyebrow-num">Basic Maths → Check Prime</span>
+  </div>
+  <h2>Check if a Number is <em>Prime</em></h2>
+  <p class="section-sub">A prime number has exactly 2 divisors: 1 and itself. The √N trick from divisors applies here directly. Then there's the "6k±1" optimization for extra speed.</p>
+
+  <div class="striver-box">
+    <p>Prime checking is directly connected to the divisors problem. A prime has exactly 2 divisors. Check divisors till √N — if you find any divisor other than 1, it's not prime. That's O(√N). But there's an even smarter check using 6k±1 that I want to show you.</p>
+  </div>
+
+  <h3>Why Loop Till √N?</h3>
+  <p>If N is not prime, it has a factor ≤ √N. Proof: if both factors were > √N, their product would be > N. Contradiction. So we only need to check till √N.</p>
+
+  <div class="formula-box">
+    <span class="f-label">6k ± 1 Optimization</span>
+    All primes &gt; 3 are of the form 6k-1 or 6k+1<br/>
+    (Because 6k, 6k+2, 6k+4 are even; 6k+3 is divisible by 3)<br/>
+    So skip all i that aren't 6k±1 → ~3× faster
+  </div>
+
+  <div class="viz-card">
+    <div class="viz-title">Prime Checker <span class="viz-badge">Interactive</span></div>
+    <div class="field-row">
+      <span class="field-label">N =</span>
+      <input class="num-input" id="primeInput" type="number" value="97" min="2" max="500"/>
+      <button class="btn btn-pri" onclick="checkPrime()">Check ▶</button>
+    </div>
+    <div id="primeViz" style="margin-top:14px;display:none;">
+      <div class="sieve-grid" id="primeGrid"></div>
+      <div class="result-box show" style="margin-top:12px;">
+        <div class="r-label">Verdict</div>
+        <div class="r-val" id="primeResVal"></div>
+        <div class="r-trace" id="primeResTrace"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-top">
+      <span class="code-lang">Java</span>
+      <span class="code-complexity">TC: O(√N) &nbsp;|&nbsp; SC: O(1)</span>
+      <button class="copy-btn" onclick="doCopy('prime_code')">Copy</button>
+    </div>
+    <pre id="prime_code"><code><span class="kw">public class</span> <span class="fn">Prime</span> {
+
+    <span class="cm">// Standard O(√N)</span>
+    <span class="kw">public static boolean</span> <span class="fn">isPrime</span>(<span class="kw">int</span> n) {
+        <span class="kw">if</span> (n <= <span class="nm">1</span>) <span class="kw">return false</span>;
+        <span class="kw">if</span> (n <= <span class="nm">3</span>) <span class="kw">return true</span>;
+        <span class="kw">if</span> (n % <span class="nm">2</span> == <span class="nm">0</span> || n % <span class="nm">3</span> == <span class="nm">0</span>) <span class="kw">return false</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">5</span>; (<span class="kw">long</span>) i * i &lt;= n; i += <span class="nm">2</span>) {
+            <span class="kw">if</span> (n % i == <span class="nm">0</span>) <span class="kw">return false</span>;
+        }
+        <span class="kw">return true</span>;
+    }
+
+    <span class="cm">// Optimized with 6k±1 trick</span>
+    <span class="kw">public static boolean</span> <span class="fn">isPrimeOpt</span>(<span class="kw">int</span> n) {
+        <span class="kw">if</span> (n <= <span class="nm">1</span>) <span class="kw">return false</span>;
+        <span class="kw">if</span> (n <= <span class="nm">3</span>) <span class="kw">return true</span>;
+        <span class="kw">if</span> (n % <span class="nm">2</span> == <span class="nm">0</span> || n % <span class="nm">3</span> == <span class="nm">0</span>) <span class="kw">return false</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">5</span>; (<span class="kw">long</span>) i * i &lt;= n; i += <span class="nm">6</span>) {
+            <span class="cm">// check 6k-1 and 6k+1</span>
+            <span class="kw">if</span> (n % i == <span class="nm">0</span> || n % (i + <span class="nm">2</span>) == <span class="nm">0</span>) <span class="kw">return false</span>;
+        }
+        <span class="kw">return true</span>;
+    }
+
+    <span class="cm">// Sieve of Eratosthenes — find ALL primes till N in O(N log log N)</span>
+    <span class="kw">public static boolean</span>[] <span class="fn">sieve</span>(<span class="kw">int</span> n) {
+        <span class="kw">boolean</span>[] isPrime = <span class="kw">new boolean</span>[n + <span class="nm">1</span>];
+        Arrays.fill(isPrime, <span class="kw">true</span>);
+        isPrime[<span class="nm">0</span>] = isPrime[<span class="nm">1</span>] = <span class="kw">false</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">2</span>; (<span class="kw">long</span>) i * i &lt;= n; i++) {
+            <span class="kw">if</span> (isPrime[i]) {
+                <span class="kw">for</span> (<span class="kw">int</span> j = i * i; j &lt;= n; j += i)
+                    isPrime[j] = <span class="kw">false</span>;
+            }
+        }
+        <span class="kw">return</span> isPrime;
+    }
+}</code></pre>
+  </div>
+
+  <div class="callout c-win">The Sieve of Eratosthenes is the go-to for "count primes up to N" or "find all primes in range". Time: O(N log log N). It's practically linear for most inputs.</div>
+  <div class="callout c-trick">When N can be up to 10⁶ or 10⁷, always use Sieve. For a single query on large N, use the 6k±1 check. Know when to use which!</div>
+
+  <div class="sep"></div>
+  <div class="sec-footer">
+    <button class="mark-done-btn" onclick="markDone(6,this)">Mark Done ✓</button>
+    <button class="btn btn-pri" onclick="gotoSec(7, document.getElementById('nl7'))">Quiz Yourself →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SECTION 7 — QUIZ
+══════════════════════════════════════════ -->
+<div class="section" id="sec7">
+  <div class="sec-eyebrow">
+    <span class="eyebrow-tag">Section 08</span>
+    <span class="eyebrow-num">Self Assessment</span>
+  </div>
+  <h2>Quiz <em>Yourself</em> 🧠</h2>
+  <p class="section-sub">Bhai, check kar — kitna samajh aaya? If you can answer all of these, your Basic Maths foundation is solid.</p>
+
+  <div class="quiz-wrap">
+    <div class="quiz-q">Q1. What is the time complexity of counting digits in N using the division loop?</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="qa(this,false,'qe1')">A) O(N)</div>
+      <div class="quiz-opt" onclick="qa(this,true,'qe1')">B) O(log₁₀ N)</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe1')">C) O(√N)</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe1')">D) O(1)</div>
+    </div>
+    <div class="quiz-explain" id="qe1">Each division by 10 reduces N by a factor of 10. So the loop runs ⌊log₁₀N⌋ + 1 times = <strong>O(log N)</strong>.</div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-q">Q2. For GCD(48, 18) using Euclidean algorithm, what are the steps?</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="qa(this,false,'qe2')">A) GCD(48,18) → GCD(18,30) → GCD(30,18) → 18</div>
+      <div class="quiz-opt" onclick="qa(this,true,'qe2')">B) GCD(48,18) → GCD(18,12) → GCD(12,6) → GCD(6,0) → 6</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe2')">C) GCD(48,18) → GCD(30,18) → GCD(12,6) → 6</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe2')">D) GCD(48,18) → GCD(18,6) → GCD(6,0) → 6</div>
+    </div>
+    <div class="quiz-explain" id="qe2">48%18=12 → GCD(18,12). 18%12=6 → GCD(12,6). 12%6=0 → GCD(6,0) = <strong>6</strong>. Always a%b, not a-b.</div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-q">Q3. Why do we loop till √N when finding all divisors?</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="qa(this,false,'qe3')">A) Because divisors above √N are always prime</div>
+      <div class="quiz-opt" onclick="qa(this,true,'qe3')">B) Divisors come in pairs (i, N/i) — if one is ≤ √N, the other is ≥ √N</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe3')">C) Numbers above √N don't divide N</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe3')">D) It's just a convention in textbooks</div>
+    </div>
+    <div class="quiz-explain" id="qe3">Every divisor i ≤ √N has a partner N/i ≥ √N. So looping till √N and collecting both covers all divisors in O(√N) instead of O(N).</div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-q">Q4. Is 370 an Armstrong number? (3-digit number)</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="qa(this,true,'qe4')">A) Yes — 3³ + 7³ + 0³ = 27 + 343 + 0 = 370</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe4')">B) No — 3+7+0 = 10 ≠ 370</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe4')">C) Yes — 3² + 7² + 0² = 58 ≠ 370</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe4')">D) Not enough info</div>
+    </div>
+    <div class="quiz-explain" id="qe4">k=3 digits. 3³=27, 7³=343, 0³=0. Sum = 370. <strong>Yes, Armstrong!</strong> Always raise to the power of digit count, not 2 or 3.</div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-q">Q5. What makes the 6k±1 trick useful for prime checking?</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="qa(this,false,'qe5')">A) It checks all numbers divisible by 6</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe5')">B) It eliminates the need to check √N</div>
+      <div class="quiz-opt" onclick="qa(this,true,'qe5')">C) All primes &gt;3 are 6k±1, so we skip ~66% of numbers</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe5')">D) It only works for numbers &lt; 100</div>
+    </div>
+    <div class="quiz-explain" id="qe5">Of 6 consecutive numbers, 4 are eliminated: multiples of 2 (6k,6k+2,6k+4) and multiple of 3 (6k+3). Only 6k+1 and 6k+5 (=6k-1) need checking. That's <strong>~33% of candidates</strong> vs 50% with just skipping evens.</div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-q">Q6. To reverse integer N and avoid overflow in Java (LC 7), you should:</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="qa(this,false,'qe6')">A) Use long for reversed and cast at end</div>
+      <div class="quiz-opt" onclick="qa(this,true,'qe6')">B) Check rev &gt; Integer.MAX_VALUE/10 BEFORE multiplying by 10</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe6')">C) Use try-catch for ArithmeticException</div>
+      <div class="quiz-opt" onclick="qa(this,false,'qe6')">D) Only reverse if N &lt; 10000</div>
+    </div>
+    <div class="quiz-explain" id="qe6">Check <code>if (rev > Integer.MAX_VALUE / 10)</code> before doing <code>rev * 10 + digit</code>. If rev is already larger than MAX_VALUE/10, multiplying by 10 would overflow. Return 0 in that case.</div>
+  </div>
+
+  <div class="callout c-win" style="margin-top:28px;">
+    🎉 That's Striver's complete Basic Maths section! These 6 problems teach you: digit manipulation (% 10 loop), GCD (Euclidean), optimizations (√N), and pattern recognition. Isko solid kar lo — ye sab aage bhi use hote rahenge!
+  </div>
+</div>
+
+  </main>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   THEME
+══════════════════════════════════════════════════════ */
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const html = document.documentElement;
+  const dark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.getElementById('themeBtn').textContent = dark ? '🌙' : '☀️';
+});
+
+/* ══════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════ */
+const TOTAL = 7;
+const done = new Array(TOTAL).fill(false);
+
+function gotoSec(idx, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec' + idx).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function markDone(idx, btn) {
+  done[idx] = true;
+  btn.classList.add('marked');
+  btn.textContent = '✓ Done!';
+  document.getElementById('nl' + idx).classList.add('done');
+  updateProgress();
+}
+
+function updateProgress() {
+  const count = done.filter(Boolean).length;
+  const circ = 2 * Math.PI * 14;
+  const offset = circ - (count / TOTAL) * circ;
+  document.getElementById('progRing').style.strokeDashoffset = offset;
+  document.getElementById('progLabel').textContent = count + '/' + TOTAL;
+}
+updateProgress();
+
+/* ══════════════════════════════════════════════════════
+   COPY CODE
+══════════════════════════════════════════════════════ */
+function doCopy(id) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text);
+  event.target.textContent = '✓ Copied';
+  setTimeout(() => event.target.textContent = 'Copy', 1500);
+}
+
+/* ══════════════════════════════════════════════════════
+   SECTION 0 — COUNT DIGITS VIZ
+══════════════════════════════════════════════════════ */
+let cdN = 0, cdCount = 0, cdOrig = 0, cdTimer = null;
+
+function numToDigits(n) {
+  return String(Math.abs(n)).split('').map(Number);
+}
+
+function cdReset() {
+  clearInterval(cdTimer);
+  cdN = parseInt(document.getElementById('cdInput').value) || 12345;
+  cdOrig = cdN; cdCount = 0;
+  renderCdDigits(cdN);
+  document.getElementById('cdStepBox').innerHTML = `<span class="s-num">Step 0</span> &nbsp; N = ${cdN}, count = 0`;
+  document.getElementById('cdResult').classList.remove('show');
+}
+
+function renderCdDigits(n) {
+  const c = document.getElementById('cdDigits');
+  if (n === 0) { c.innerHTML = `<div class="digit-block"><div class="digit-cell done">0</div><div class="digit-label">done</div></div>`; return; }
+  const digs = numToDigits(n);
+  c.innerHTML = digs.map((d, i) =>
+    `<div class="digit-block"><div class="digit-cell${i === digs.length - 1 ? ' active' : ' done'}">${d}</div><div class="digit-label">[${i}]</div></div>`
+  ).join('');
+}
+
+function cdStep() {
+  if (cdN === 0) {
+    clearInterval(cdTimer);
+    const res = document.getElementById('cdResult');
+    document.getElementById('cdResVal').textContent = cdCount + ' digits';
+    document.getElementById('cdResTrace').textContent = `Original: ${cdOrig} → counted ${cdCount} iterations of n /= 10`;
+    res.classList.add('show');
+    return;
+  }
+  const lastDig = cdN % 10;
+  cdN = Math.floor(cdN / 10); cdCount++;
+  renderCdDigits(cdN);
+  document.getElementById('cdStepBox').innerHTML =
+    `<span class="s-num">Step ${cdCount}</span> &nbsp; Stripped digit ${lastDig}. Remaining: ${cdN}, count = ${cdCount}`;
+  if (cdN === 0) cdStep();
+}
+
+function cdAuto() {
+  cdReset();
+  cdTimer = setInterval(() => { if (cdN === 0) { clearInterval(cdTimer); return; } cdStep(); }, 700);
+}
+
+// init
+window.addEventListener('load', () => {
+  cdN = 12345; cdOrig = 12345; cdCount = 0;
+  renderCdDigits(cdN);
+});
+
+/* ══════════════════════════════════════════════════════
+   SECTION 1 — REVERSE NUMBER VIZ
+══════════════════════════════════════════════════════ */
+let rvN = 0, rvRev = 0, rvOrig = 0, rvSteps = [], rvStepIdx = 0, rvTimer2 = null;
+
+function renderDigRow(containerId, n, highlightLast) {
+  const c = document.getElementById(containerId);
+  if (n === 0) { c.innerHTML = `<div class="digit-block"><div class="digit-cell">0</div></div>`; return; }
+  const s = String(Math.abs(n));
+  c.innerHTML = [...s].map((d, i) =>
+    `<div class="digit-block"><div class="digit-cell${highlightLast && i === s.length - 1 ? ' active' : ' done'}">${d}</div></div>`
+  ).join('');
+}
+function renderRevRow(containerId, n) {
+  const c = document.getElementById(containerId);
+  if (n === 0) { c.innerHTML = `<div class="digit-block"><div class="digit-cell">0</div></div>`; return; }
+  const s = String(Math.abs(n));
+  c.innerHTML = [...s].map((d, i) =>
+    `<div class="digit-block"><div class="digit-cell${i === s.length - 1 ? ' highlight' : ' done'}">${d}</div></div>`
+  ).join('');
+}
+
+function rvStart() {
+  clearInterval(rvTimer2);
+  rvOrig = parseInt(document.getElementById('rvInput').value) || 1534236;
+  rvN = rvOrig; rvRev = 0; rvSteps = []; rvStepIdx = 0;
+  // precompute steps
+  let tmp = rvN;
+  while (tmp !== 0) {
+    const d = tmp % 10;
+    rvRev = rvRev * 10 + d;
+    tmp = Math.floor(tmp / 10);
+    rvSteps.push({ rem: tmp, rev: rvRev, digit: d });
+  }
+  rvN = rvOrig; rvRev = 0; rvStepIdx = 0;
+  renderDigRow('rvRemaining', rvN, true);
+  renderRevRow('rvReversed', 0);
+  document.getElementById('rvStepBox').innerHTML = `<span class="s-num">Ready!</span> N = ${rvOrig}, reversed = 0`;
+  document.getElementById('rvResult').classList.remove('show');
+  document.getElementById('rvNextBtn').disabled = false;
+}
+
+function rvNext() {
+  if (rvStepIdx >= rvSteps.length) return;
+  const s = rvSteps[rvStepIdx++];
+  renderDigRow('rvRemaining', s.rem, s.rem !== 0);
+  renderRevRow('rvReversed', s.rev);
+  document.getElementById('rvStepBox').innerHTML =
+    `<span class="s-num">Step ${rvStepIdx}</span> &nbsp; digit = ${s.digit}, rev = rev×10 + ${s.digit} = ${s.rev}, remaining = ${s.rem}`;
+  if (rvStepIdx >= rvSteps.length) {
+    document.getElementById('rvNextBtn').disabled = true;
+    document.getElementById('rvResVal').textContent = `reverse(${rvOrig}) = ${s.rev}`;
+    document.getElementById('rvResTrace').textContent = `Processed ${rvSteps.length} digits.`;
+    document.getElementById('rvResult').classList.add('show');
+  }
+}
+
+function rvAuto() {
+  rvStart();
+  rvTimer2 = setInterval(() => {
+    if (rvStepIdx >= rvSteps.length) { clearInterval(rvTimer2); return; }
+    rvNext();
+  }, 650);
+}
+
+/* ══════════════════════════════════════════════════════
+   SECTION 2 — PALINDROME
+══════════════════════════════════════════════════════ */
+function checkPalin() {
+  let n = parseInt(document.getElementById('palInput').value);
+  const orig = n;
+  if (n < 0) {
+    document.getElementById('palResVal').textContent = 'NOT a Palindrome';
+    document.getElementById('palResTrace').textContent = 'Negative numbers are never palindromes.';
+    document.getElementById('palViz').style.display = 'block'; return;
+  }
+  let rev = 0, tmp = n;
+  while (tmp !== 0) { rev = rev * 10 + tmp % 10; tmp = Math.floor(tmp / 10); }
+  const isPalin = orig === rev;
+
+  const palOrig = document.getElementById('palOrig');
+  const palRev = document.getElementById('palRev');
+  palOrig.innerHTML = [...String(orig)].map((d, i) =>
+    `<div class="digit-block"><div class="digit-cell done">${d}</div><div class="digit-label">[${i}]</div></div>`
+  ).join('');
+  palRev.innerHTML = [...String(rev)].map((d, i) => {
+    const match = String(orig)[i] === d;
+    return `<div class="digit-block"><div class="digit-cell ${isPalin ? 'done' : (match ? 'done' : 'highlight')}">${d}</div><div class="digit-label">[${i}]</div></div>`;
+  }).join('');
+
+  document.getElementById('palResVal').style.color = isPalin ? 'var(--acc3)' : 'var(--acc2)';
+  document.getElementById('palResVal').textContent = isPalin ? `✅ ${orig} IS a Palindrome` : `❌ ${orig} is NOT a Palindrome`;
+  document.getElementById('palResTrace').textContent = `Original: ${orig} | Reversed: ${rev} | Equal: ${isPalin}`;
+  document.getElementById('palViz').style.display = 'block';
+}
+
+/* ══════════════════════════════════════════════════════
+   SECTION 3 — GCD VIZ
+══════════════════════════════════════════════════════ */
+function runGCD() {
+  let a = parseInt(document.getElementById('gcdA').value) || 48;
+  let b = parseInt(document.getElementById('gcdB').value) || 18;
+  const steps = [];
+  while (b !== 0) {
+    steps.push({ a, b, r: a % b });
+    const tmp = b; b = a % b; a = tmp;
+  }
+  steps.push({ a, b: 0, r: null, final: true });
+
+  const container = document.getElementById('gcdSteps');
+  container.innerHTML = '';
+  steps.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'gcd-step-box' + (s.final ? ' final' : '');
+    div.style.opacity = '0';
+    div.style.transform = 'translateX(-10px)';
+    if (s.final) {
+      div.textContent = `GCD = ${s.a}  ✓`;
+    } else {
+      div.innerHTML = `GCD(${s.a}, ${s.b}) = GCD(${s.b}, ${s.a}%${s.b} = ${s.r})`;
+    }
+    container.appendChild(div);
+    setTimeout(() => { div.style.transition = 'all .3s'; div.style.opacity = '1'; div.style.transform = 'none'; div.classList.add('active-step'); setTimeout(() => div.classList.remove('active-step'), 500); }, i * 350);
+  });
+  const last = steps[steps.length - 1];
+  setTimeout(() => {
+    document.getElementById('gcdResVal').textContent = `GCD = ${last.a}`;
+    document.getElementById('gcdResTrace').textContent = `Using Euclidean Algorithm — ${steps.length - 1} steps`;
+    document.getElementById('gcdResult').classList.add('show');
+  }, steps.length * 350);
+}
+
+/* ══════════════════════════════════════════════════════
+   SECTION 4 — ARMSTRONG
+══════════════════════════════════════════════════════ */
+function checkArm() {
+  const n = parseInt(document.getElementById('armInput').value) || 153;
+  const s = String(n);
+  const k = s.length;
+  let sum = 0;
+  const parts = [];
+  for (const ch of s) {
+    const d = parseInt(ch);
+    const pw = Math.pow(d, k);
+    sum += pw;
+    parts.push({ d, k, pw });
+  }
+  const isArm = sum === n;
+
+  const viz = document.getElementById('armViz');
+  const partsEl = document.getElementById('armParts');
+  viz.style.display = 'block';
+  partsEl.innerHTML = '';
+
+  parts.forEach((p, i) => {
+    if (i > 0) partsEl.innerHTML += `<div style="font-family:'Space Mono',monospace;font-size:1.2rem;color:var(--text2);">+</div>`;
+    partsEl.innerHTML += `<div class="arm-part powered"><div class="ap-num">${p.d}<sup style="font-size:0.65rem">${p.k}</sup> = ${p.pw}</div><div class="ap-label">digit ${p.d}</div></div>`;
+  });
+  partsEl.innerHTML += `<div style="font-family:'Space Mono',monospace;font-size:1.2rem;color:var(--text2);">=</div>`;
+  partsEl.innerHTML += `<div class="arm-part ${isArm ? '' : 'powered'}"><div class="ap-num" style="color:${isArm ? 'var(--acc3)' : 'var(--acc2)'}">${sum}</div><div class="ap-label">sum</div></div>`;
+
+  document.getElementById('armResVal').style.color = isArm ? 'var(--acc3)' : 'var(--acc2)';
+  document.getElementById('armResVal').textContent = isArm ? `✅ ${n} IS Armstrong` : `❌ ${n} is NOT Armstrong`;
+  document.getElementById('armResTrace').textContent = `k=${k} digits. Sum of each digit^${k} = ${sum} ${isArm ? '==' : '!='} ${n}`;
+}
+
+/* ══════════════════════════════════════════════════════
+   SECTION 5 — DIVISORS
+══════════════════════════════════════════════════════ */
+let divPills = [], divAnimTimer = null;
+
+function findDivisors() {
+  clearInterval(divAnimTimer);
+  const n = parseInt(document.getElementById('divInput').value) || 36;
+  const divs = [];
+  for (let i = 1; i * i <= n; i++) {
+    if (n % i === 0) { divs.push(i); if (i !== n / i) divs.push(n / i); }
+  }
+  divs.sort((a, b) => a - b);
+  const grid = document.getElementById('divGrid');
+  grid.innerHTML = '';
+  divs.forEach(d => {
+    const p = document.createElement('div');
+    p.className = 'div-pill divisor'; p.textContent = d;
+    grid.appendChild(p);
+  });
+  document.getElementById('divStepBox').style.display = 'none';
+  document.getElementById('divResVal').textContent = divs.join(', ');
+  document.getElementById('divResTrace').textContent = `Found ${divs.length} divisors. Looped only from 1 to √${n} ≈ ${Math.floor(Math.sqrt(n))}`;
+  document.getElementById('divResult').classList.add('show');
+}
+
+function animDivisors() {
+  clearInterval(divAnimTimer);
+  const n = parseInt(document.getElementById('divInput').value) || 36;
+  const sqrtN = Math.floor(Math.sqrt(n));
+  const grid = document.getElementById('divGrid');
+  grid.innerHTML = '';
+  const stepBox = document.getElementById('divStepBox');
+  stepBox.style.display = 'block';
+  document.getElementById('divResult').classList.remove('show');
+  divPills = [];
+  for (let i = 1; i <= sqrtN + 1; i++) {
+    const p = document.createElement('div');
+    p.className = 'div-pill'; p.textContent = i; p.id = 'dvp' + i;
+    grid.appendChild(p); divPills.push(p);
+  }
+  let i = 1;
+  const divs = [];
+  divAnimTimer = setInterval(() => {
+    if (i > sqrtN) {
+      clearInterval(divAnimTimer);
+      divs.sort((a, b) => a - b);
+      stepBox.innerHTML = `<span class="s-num">Done!</span> All divisors of ${n}: ${divs.join(', ')}`;
+      document.getElementById('divResVal').textContent = divs.join(', ');
+      document.getElementById('divResTrace').textContent = `Found ${divs.length} divisors. Loop: 1 to ${sqrtN}`;
+      document.getElementById('divResult').classList.add('show'); return;
+    }
+    const p = document.getElementById('dvp' + i);
+    if (n % i === 0) {
+      p.className = 'div-pill divisor';
+      divs.push(i);
+      stepBox.innerHTML = `<span class="s-num">i=${i}</span> &nbsp; ${n} % ${i} = 0 ✓ → Add ${i} and ${n/i === i ? '' : n/i}`;
+      if (i !== n / i) {
+        // add partner
+        const pp = document.createElement('div');
+        pp.className = 'div-pill divisor'; pp.textContent = n / i;
+        grid.appendChild(pp);
+        divs.push(n / i);
+      }
+    } else {
+      p.className = 'div-pill not-div';
+      stepBox.innerHTML = `<span class="s-num">i=${i}</span> &nbsp; ${n} % ${i} = ${n%i} ✗ → skip`;
+    }
+    i++;
+  }, 500);
+}
+
+/* ══════════════════════════════════════════════════════
+   SECTION 6 — PRIME CHECK VIZ
+══════════════════════════════════════════════════════ */
+function checkPrime() {
+  const n = parseInt(document.getElementById('primeInput').value) || 97;
+  const grid = document.getElementById('primeGrid');
+  grid.innerHTML = '';
+  document.getElementById('primeViz').style.display = 'block';
+
+  if (n <= 1) {
+    document.getElementById('primeResVal').textContent = `❌ ${n} is NOT Prime`;
+    document.getElementById('primeResTrace').textContent = 'Numbers ≤ 1 are not prime by definition.';
+    return;
+  }
+
+  const sqrtN = Math.floor(Math.sqrt(n));
+  const factors = [];
+  for (let i = 2; i <= sqrtN; i++) { if (n % i === 0) { factors.push(i); break; } }
+  const isPrim = factors.length === 0;
+
+  // Show numbers 2 to sqrtN as cells
+  for (let i = 2; i <= Math.min(sqrtN, 30); i++) {
+    const cell = document.createElement('div');
+    cell.className = 's-cell' + (factors[0] === i ? ' active-check' : (n % i === 0 ? ' composite' : ' prime'));
+    cell.textContent = i;
+    grid.appendChild(cell);
+  }
+  if (sqrtN > 30) {
+    const more = document.createElement('div');
+    more.style.cssText = 'font-size:0.72rem;color:var(--text3);font-family:Space Mono,monospace;padding:10px;';
+    more.textContent = `... up to √${n} = ${sqrtN}`;
+    grid.appendChild(more);
+  }
+
+  document.getElementById('primeResVal').style.color = isPrim ? 'var(--acc3)' : 'var(--acc2)';
+  document.getElementById('primeResVal').textContent = isPrim ? `✅ ${n} IS Prime` : `❌ ${n} is NOT Prime`;
+  document.getElementById('primeResTrace').textContent = isPrim
+    ? `No divisor found from 2 to √${n} = ${sqrtN}. It's prime!`
+    : `Found factor: ${factors[0]} (since ${n} = ${factors[0]} × ${n / factors[0]})`;
+}
+
+/* ══════════════════════════════════════════════════════
+   QUIZ
+══════════════════════════════════════════════════════ */
+function qa(el, correct, explainId) {
+  el.parentElement.querySelectorAll('.quiz-opt').forEach(o => o.style.pointerEvents = 'none');
+  el.classList.add(correct ? 'correct' : 'wrong');
+  document.getElementById(explainId).classList.add('show');
+}
+</script>
+</body>
+</html>

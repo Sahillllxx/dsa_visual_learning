@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Bit Manipulation – Striver Style</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700;900&family=Share+Tech+Mono&display=swap');
+
+/* ── TOKENS (dark default) ── */
+:root {
+  --bg:#04060a; --sur:#080c12; --card:#0c1018; --bdr:#162030;
+  --ac:#39ff14; --a2:#ff6b00; --bl:#00aaff; --pk:#ff2d6b;
+  --ye:#ffe600; --mu:#2a3a4a; --dim:#4a6070; --tx:#c8dce8;
+  --pu:#c792ea; --te:#00e5cc;
+}
+/* ── LIGHT THEME – highest specificity ── */
+html[data-theme="light"] {
+  --bg:#f2f6f2 !important; --sur:#e8f0e8 !important; --card:#d8e8d8 !important; --bdr:#9dbc9d !important;
+  --ac:#1a7a00 !important; --a2:#c45000 !important; --bl:#0055cc !important; --pk:#cc0044 !important;
+  --ye:#886600 !important; --mu:#8aaa8a !important; --dim:#3a5a3a !important; --tx:#0a180a !important;
+  --pu:#6d28d9 !important; --te:#00695c !important;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:'Exo 2',sans-serif;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
+html[data-theme="dark"] body::before{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);}
+
+/* ── SIDEBAR ── */
+#nav{
+  position:fixed;top:0;left:0;
+  width:230px;height:100vh;
+  background:var(--card);
+  border-right:1px solid var(--bdr);
+  z-index:5000;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  transition:background .3s,border-color .3s;
+}
+.nav-header{
+  padding:16px 14px 12px;
+  border-bottom:1px solid var(--bdr);
+  flex-shrink:0;
+}
+.nav-brand{
+  font-family:'Orbitron',monospace;font-size:0.65rem;font-weight:900;
+  color:var(--ac);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;
+}
+.nav-actions{display:flex;gap:8px;}
+#backHome{
+  flex:1;display:flex;align-items:center;gap:5px;
+  background:var(--sur);border:1px solid var(--bdr);border-radius:5px;
+  padding:6px 10px;font-size:0.68rem;font-weight:700;
+  color:var(--tx);text-decoration:none;
+  font-family:'Share Tech Mono',monospace;letter-spacing:0.04em;
+  transition:all .2s;
+}
+#backHome:hover{border-color:var(--ac);color:var(--ac);}
+#themeBtn{
+  background:var(--sur);border:1px solid var(--bdr);border-radius:5px;
+  padding:6px 9px;font-size:1rem;cursor:pointer;transition:all .2s;
+  color:var(--tx);flex-shrink:0;
+}
+#themeBtn:hover{border-color:var(--ac);}
+.nav-links{flex:1;overflow-y:auto;padding:8px 0;}
+.nav-links::-webkit-scrollbar{width:3px;}
+.nav-links::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px;}
+#nav .nl{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 14px;
+  text-decoration:none;color:var(--dim);
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  transition:all .15s;border-left:2px solid transparent;
+}
+#nav .nl:hover{color:var(--tx);background:rgba(255,255,255,0.03);}
+#nav .nl.active{color:var(--ac);border-left-color:var(--ac);background:rgba(57,255,20,.05);}
+html[data-theme="light"] #nav .nl.active{background:rgba(26,122,0,.07);}
+.nb{
+  font-size:9px;font-weight:700;color:#000;
+  background:var(--ac);padding:2px 6px;border-radius:2px;
+  font-family:'Orbitron',monospace;flex-shrink:0;
+}
+
+/* ── LAYOUT ── */
+.wrap{position:relative;z-index:1;max-width:850px;margin:0 auto;padding:0 18px 100px 18px;}
+
+/* ── HERO ── */
+.hero{padding:50px 0 34px;text-align:center;border-bottom:1px solid var(--bdr);margin-bottom:26px;}
+.badge{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--ac);border:1px solid var(--ac);padding:4px 13px;border-radius:2px;margin-bottom:16px;opacity:.7;}
+.htitle{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(2rem,7vw,4rem);line-height:1;margin-bottom:6px;}
+.htitle .t1{color:var(--tx);}
+.htitle .t2{color:var(--ac);}
+html[data-theme="dark"] .htitle .t2{text-shadow:0 0 28px rgba(57,255,20,.5);}
+.hsub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);margin-top:10px;letter-spacing:2px;}
+
+/* ── SECTION ── */
+.sec{margin-bottom:24px;border:1px solid var(--bdr);border-radius:4px;overflow:hidden;position:relative;}
+.sec::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--ac),transparent);}
+.sec.bl::before{background:linear-gradient(90deg,var(--bl),transparent);}
+.sec.or::before{background:linear-gradient(90deg,var(--a2),transparent);}
+.sec.pk::before{background:linear-gradient(90deg,var(--pk),transparent);}
+.sec.pu::before{background:linear-gradient(90deg,var(--pu),transparent);}
+.sec.te::before{background:linear-gradient(90deg,var(--te),transparent);}
+.sec.ye::before{background:linear-gradient(90deg,var(--ye),transparent);}
+.shdr{background:var(--card);padding:14px 20px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--bdr);}
+.sid{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:#000;background:var(--ac);padding:3px 9px;border-radius:2px;letter-spacing:1px;flex-shrink:0;}
+.sid.bl{background:var(--bl);}
+.sid.or{background:var(--a2);color:#fff;}
+.sid.pk{background:var(--pk);color:#fff;}
+.sid.pu{background:var(--pu);color:#fff;}
+.sid.te{background:var(--te);}
+.sid.ye{background:var(--ye);}
+.sttl{font-family:'Orbitron',monospace;font-weight:700;font-size:.8rem;color:var(--tx);letter-spacing:2px;text-transform:uppercase;}
+.sbdy{padding:22px;}
+
+/* ── STRIVER BOX ── */
+.sv{display:flex;gap:12px;border-radius:3px;padding:15px;margin-bottom:12px;border:1px solid;transition:background .3s,border-color .3s;}
+.sv{border-color:rgba(57,255,20,.2);background:rgba(57,255,20,.04);}
+html[data-theme="light"] .sv{background:rgba(26,122,0,.07);border-color:rgba(26,122,0,.25);}
+.sv.bl{border-color:rgba(0,170,255,.2);background:rgba(0,170,255,.04);}
+html[data-theme="light"] .sv.bl{background:rgba(0,85,204,.06);border-color:rgba(0,85,204,.2);}
+.sv.or{border-color:rgba(255,107,0,.2);background:rgba(255,107,0,.04);}
+html[data-theme="light"] .sv.or{background:rgba(196,80,0,.06);border-color:rgba(196,80,0,.2);}
+.sv.pk{border-color:rgba(255,45,107,.2);background:rgba(255,45,107,.04);}
+html[data-theme="light"] .sv.pk{background:rgba(204,0,68,.06);border-color:rgba(204,0,68,.2);}
+.sv.pu{border-color:rgba(199,146,234,.2);background:rgba(199,146,234,.04);}
+html[data-theme="light"] .sv.pu{background:rgba(109,40,217,.05);border-color:rgba(109,40,217,.2);}
+.sv.te{border-color:rgba(0,229,204,.2);background:rgba(0,229,204,.04);}
+html[data-theme="light"] .sv.te{background:rgba(0,105,92,.06);border-color:rgba(0,105,92,.2);}
+.sv.ye{border-color:rgba(255,230,0,.2);background:rgba(255,230,0,.04);}
+html[data-theme="light"] .sv.ye{background:rgba(136,102,0,.06);border-color:rgba(136,102,0,.2);}
+.svico{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:.9rem;background:linear-gradient(135deg,var(--ac),#00cc00);}
+.svico.bl{background:linear-gradient(135deg,var(--bl),#0044aa);}
+.svico.or{background:linear-gradient(135deg,var(--a2),#aa4400);}
+.svico.pk{background:linear-gradient(135deg,var(--pk),#aa0044);}
+.svico.pu{background:linear-gradient(135deg,var(--pu),#6d28d9);}
+.svico.te{background:linear-gradient(135deg,var(--te),#00897b);}
+.svico.ye{background:linear-gradient(135deg,var(--ye),#aa8800);}
+.svbdy .lbl{font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:3px;margin-bottom:6px;color:var(--ac);}
+.sv.bl .lbl{color:var(--bl);}
+.sv.or .lbl{color:var(--a2);}
+.sv.pk .lbl{color:var(--pk);}
+.sv.pu .lbl{color:var(--pu);}
+.sv.te .lbl{color:var(--te);}
+.sv.ye .lbl{color:var(--ye);}
+.svbdy p{font-size:13.5px;line-height:1.85;color:var(--tx);}
+.svbdy p em{color:var(--ye);font-style:normal;font-weight:700;}
+.svbdy p .r{color:var(--pk);}
+.svbdy p .b{color:var(--bl);}
+.svbdy p .g{color:var(--ac);}
+.svbdy p .t{color:var(--te);}
+
+/* ── INSIGHT ── */
+.ins{border-radius:3px;padding:14px;margin-top:12px;font-size:13px;line-height:1.75;border:1px solid;transition:background .3s;}
+.ins{border-color:rgba(57,255,20,.25);background:rgba(57,255,20,.05);color:var(--ac);}
+html[data-theme="light"] .ins{background:rgba(26,122,0,.07);border-color:rgba(26,122,0,.3);}
+.ins strong{color:var(--tx);}
+.ins.bl{border-color:rgba(0,170,255,.25);background:rgba(0,170,255,.05);color:var(--bl);}
+html[data-theme="light"] .ins.bl{background:rgba(0,85,204,.07);border-color:rgba(0,85,204,.3);}
+.ins.pk{border-color:rgba(255,45,107,.25);background:rgba(255,45,107,.05);color:var(--pk);}
+html[data-theme="light"] .ins.pk{background:rgba(204,0,68,.06);}
+.ins.pu{border-color:rgba(199,146,234,.25);background:rgba(199,146,234,.05);color:var(--pu);}
+.ins.te{border-color:rgba(0,229,204,.25);background:rgba(0,229,204,.05);color:var(--te);}
+html[data-theme="light"] .ins.te{background:rgba(0,105,92,.06);}
+.ins.ye{border-color:rgba(255,230,0,.25);background:rgba(255,230,0,.05);color:var(--ye);}
+html[data-theme="light"] .ins.ye{background:rgba(136,102,0,.06);}
+
+/* ── BIT CELL ── */
+.bitgrid{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:10px 0;}
+.bc{width:38px;height:50px;border:1px solid var(--bdr);border-radius:3px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:'Share Tech Mono',monospace;transition:all .25s;}
+.bc .bv{font-size:1rem;font-weight:700;}
+.bc .bp{font-size:7px;color:var(--dim);}
+.bc.one{background:rgba(57,255,20,.12);border-color:var(--ac);}
+html[data-theme="light"] .bc.one{background:rgba(26,122,0,.14);}
+.bc.one .bv{color:var(--ac);}
+.bc.zero .bv{color:var(--mu);}
+.bc.hl{background:rgba(255,230,0,.15);border-color:var(--ye);transform:scale(1.1);}
+html[data-theme="light"] .bc.hl{background:rgba(136,102,0,.14);}
+.bc.hl .bv{color:var(--ye);}
+.brl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);text-align:center;margin:4px 0;letter-spacing:2px;}
+.ddisp{text-align:center;margin-top:8px;font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--ac);}
+
+/* ── INTERACTIVE BIT ── */
+.ibit{width:42px;height:56px;border:1px solid var(--bdr);border-radius:3px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:all .22s;font-family:'Share Tech Mono',monospace;user-select:none;}
+.ibit:hover{border-color:var(--ac);transform:translateY(-2px);}
+.ibit .iv{font-size:1rem;font-weight:700;color:var(--mu);}
+html[data-theme="light"] .ibit .iv{color:var(--dim);}
+.ibit .ip{font-size:7px;color:var(--dim);}
+.ibit.on{background:rgba(57,255,20,.12);border-color:var(--ac);}
+html[data-theme="light"] .ibit.on{background:rgba(26,122,0,.14);}
+.ibit.on .iv{color:var(--ac);}
+
+/* ── MINI BIT ── */
+.bbt{width:30px;height:34px;border-radius:2px;border:1px solid var(--bdr);background:var(--card);display:grid;place-items:center;font-family:'Share Tech Mono',monospace;font-size:.85rem;font-weight:700;color:var(--mu);transition:all .25s;}
+html[data-theme="light"] .bbt{color:var(--dim);}
+.bbt.on{background:rgba(57,255,20,.12);border-color:var(--ac);color:var(--ac);}
+html[data-theme="light"] .bbt.on{background:rgba(26,122,0,.14);}
+.bbt.h2{background:rgba(255,230,0,.13);border-color:var(--ye);color:var(--ye);}
+html[data-theme="light"] .bbt.h2{background:rgba(136,102,0,.12);}
+.bbt.rs{background:rgba(0,170,255,.12);border-color:var(--bl);color:var(--bl);}
+html[data-theme="light"] .bbt.rs{background:rgba(0,85,204,.12);}
+.bbt.pu{background:rgba(199,146,234,.12);border-color:var(--pu);color:var(--pu);}
+.bbt.te{background:rgba(0,229,204,.12);border-color:var(--te);color:var(--te);}
+html[data-theme="light"] .bbt.te{background:rgba(0,105,92,.12);}
+.bvrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.bvlbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);width:88px;text-align:right;flex-shrink:0;}
+.bvbits{display:flex;gap:3px;}
+
+/* ── INPUTS ── */
+.ni{background:var(--card);border:1px solid var(--bdr);border-radius:3px;padding:9px 13px;font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:var(--ac);outline:none;transition:border-color .2s;-webkit-appearance:none;color-scheme:dark;}
+html[data-theme="light"] .ni{color-scheme:light;}
+.ni:focus{border-color:var(--ac);}
+.ni.bl{color:var(--bl);}
+.ni.bl:focus{border-color:var(--bl);}
+.ni.pk{color:var(--pk);}
+.ni.pk:focus{border-color:var(--pk);}
+.ni.pu{color:var(--pu);}
+.ni.pu:focus{border-color:var(--pu);}
+.ni.te{color:var(--te);}
+.ni.te:focus{border-color:var(--te);}
+.nisel{background:var(--card);border:1px solid var(--bdr);border-radius:2px;padding:8px 10px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ye);outline:none;cursor:pointer;}
+
+/* ── BUTTONS ── */
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+.btn{padding:9px 18px;border:none;border-radius:2px;cursor:pointer;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s;}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+.bg{background:var(--ac);color:#000;}
+.bg:hover:not(:disabled){background:#55ff33;}
+html[data-theme="light"] .bg:hover:not(:disabled){background:#22aa00;}
+.bbl{background:var(--bl);color:#000;}
+.bbl:hover:not(:disabled){background:#33bbff;}
+.bpu{background:var(--pu);color:#fff;}
+.bpu:hover:not(:disabled){background:#d4a8f0;}
+.bte{background:var(--te);color:#000;}
+.bte:hover:not(:disabled){background:#33eedd;}
+.bpk{background:var(--pk);color:#fff;}
+.bpk:hover:not(:disabled){background:#ff5588;}
+.bo{background:transparent;color:var(--tx);border:1px solid var(--bdr);}
+.bo:hover:not(:disabled){border-color:var(--ac);color:var(--ac);}
+.sc{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);margin-left:auto;}
+
+/* ── STEP BOX ── */
+.stp{background:var(--sur);border:1px solid var(--bdr);border-radius:4px;padding:18px;margin-bottom:12px;transition:background .3s,border-color .3s;}
+.sinfo{background:var(--card);border:1px solid var(--bdr);border-radius:3px;padding:12px;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.75;min-height:70px;margin-top:10px;color:var(--tx);transition:background .3s;}
+.sinfo strong{color:var(--ye);}
+.sinfo .g{color:var(--ac);}
+.sinfo .r{color:var(--pk);}
+.stag{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;display:block;margin-bottom:5px;color:var(--ac);}
+.stag.or{color:var(--a2);}
+.stag.pk{color:var(--pk);}
+.stag.te{color:var(--te);}
+
+/* ── TABLES ── */
+.otbl{width:100%;border-collapse:collapse;margin:12px 0;}
+.otbl th{font-family:'Orbitron',monospace;font-size:9px;color:var(--ac);padding:9px 12px;text-align:left;border-bottom:1px solid var(--bdr);background:var(--card);letter-spacing:1px;}
+.otbl td{padding:9px 12px;font-family:'Share Tech Mono',monospace;font-size:12px;border-bottom:1px solid rgba(22,32,48,.7);color:var(--tx);}
+html[data-theme="light"] .otbl td{border-bottom-color:var(--bdr);}
+.otbl tr:hover td{background:rgba(57,255,20,.03);}
+html[data-theme="light"] .otbl tr:hover td{background:rgba(26,122,0,.04);}
+.os{color:var(--ye);font-weight:700;font-size:.95rem;}
+.on{color:var(--bl);}
+.ot{color:var(--a2);font-size:11px;}
+
+.ptbl{width:100%;border-collapse:collapse;margin:10px 0;font-family:'Share Tech Mono',monospace;}
+.ptbl th{font-family:'Orbitron',monospace;font-size:9px;color:var(--ac);padding:8px 10px;text-align:center;border-bottom:1px solid var(--bdr);background:var(--card);letter-spacing:1px;}
+.ptbl td{padding:7px 10px;font-size:12px;border-bottom:1px solid rgba(22,32,48,.6);text-align:center;color:var(--tx);}
+html[data-theme="light"] .ptbl td{border-bottom-color:var(--bdr);}
+.pn{color:var(--bl);}
+.pv{color:var(--ye);font-weight:700;}
+.pb{color:var(--ac);}
+.ph{color:var(--a2);}
+
+/* ── TRUTH TABLE ── */
+.tt{display:inline-grid;border:1px solid var(--bdr);border-radius:3px;overflow:hidden;font-family:'Share Tech Mono',monospace;margin:5px;}
+.tt div{padding:6px 12px;text-align:center;font-size:12px;border-bottom:1px solid rgba(22,32,48,.8);}
+html[data-theme="light"] .tt div{border-bottom-color:var(--bdr);}
+.tt .th{background:var(--card);color:var(--ac);font-size:9px;letter-spacing:1px;}
+.tt .t1{color:var(--ac);}
+.tt .t0{color:var(--mu);}
+html[data-theme="light"] .tt .t0{color:var(--dim);}
+
+/* ── TRICKS ── */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px;margin:12px 0;}
+.tc{background:var(--sur);border:1px solid var(--bdr);border-radius:3px;padding:15px;border-left:3px solid var(--a2);transition:all .18s;}
+.tc:hover{transform:translateY(-2px);}
+.tc:nth-child(2){border-left-color:var(--bl);}
+.tc:nth-child(3){border-left-color:var(--pk);}
+.tc:nth-child(4){border-left-color:var(--ye);}
+.tc:nth-child(5){border-left-color:var(--ac);}
+.tc:nth-child(6){border-left-color:var(--pu);}
+.tc:nth-child(7){border-left-color:var(--te);}
+.tc:nth-child(8){border-left-color:var(--a2);}
+.tn{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:2px;margin-bottom:5px;}
+.ttt{font-weight:700;font-size:.88rem;margin-bottom:5px;color:var(--tx);}
+.tcode{font-family:'Share Tech Mono',monospace;font-size:11px;background:var(--card);border:1px solid var(--bdr);border-radius:2px;padding:7px 9px;margin:7px 0;color:var(--ac);}
+.tw{font-size:11.5px;color:var(--dim);line-height:1.6;}
+
+/* ── PLAYGROUND ── */
+.pg{background:var(--sur);border:1px solid var(--bdr);border-radius:4px;padding:20px;margin:12px 0;transition:background .3s,border-color .3s;}
+.pgtl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ac);letter-spacing:3px;margin-bottom:13px;}
+.pgrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+.pgres{background:var(--card);border:1px solid var(--bdr);border-radius:3px;padding:13px;margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.9;color:var(--tx);transition:background .3s;}
+.pgres .rl{color:var(--dim);margin-right:6px;}
+
+/* ── CODE ── */
+pre{background:#020408;border:1px solid var(--bdr);border-radius:3px;padding:16px;overflow-x:auto;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.9;margin-top:12px;}
+html[data-theme="light"] pre{background:#eef6ee;color:#0a180a;}
+.kw{color:#c792ea;}
+.fn{color:var(--bl);}
+.cm{color:#3a5060;font-style:italic;}
+.nm{color:var(--ye);}
+.op2{color:var(--ac);}
+html[data-theme="light"] .kw{color:#6d28d9;}
+html[data-theme="light"] .fn{color:#1d4ed8;}
+html[data-theme="light"] .cm{color:#6b7280;}
+html[data-theme="light"] .nm{color:#92400e;}
+html[data-theme="light"] .op2{color:#1a7a00;}
+
+/* ── PROBLEMS ── */
+.plist{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.pi{display:flex;align-items:flex-start;gap:10px;background:var(--sur);border:1px solid var(--bdr);border-radius:3px;padding:10px 13px;transition:border-color .2s;}
+.pi:hover{border-color:var(--ac);}
+.df{font-family:'Share Tech Mono',monospace;font-size:8.5px;padding:3px 6px;border-radius:2px;font-weight:700;flex-shrink:0;letter-spacing:1px;border:1px solid;}
+.de{color:var(--ac);border-color:var(--ac);background:rgba(57,255,20,.08);}
+html[data-theme="light"] .de{background:rgba(26,122,0,.1);}
+.dm{color:var(--ye);border-color:var(--ye);background:rgba(255,230,0,.08);}
+html[data-theme="light"] .dm{background:rgba(136,102,0,.1);}
+.dh{color:var(--pk);border-color:var(--pk);background:rgba(255,45,107,.08);}
+html[data-theme="light"] .dh{background:rgba(204,0,68,.08);}
+.pit{font-weight:700;font-size:.88rem;margin-bottom:2px;color:var(--tx);}
+.pih{font-size:11px;color:var(--dim);font-family:'Share Tech Mono',monospace;}
+
+/* ── COMPLEMENT ── */
+.comprow{display:flex;flex-direction:column;gap:8px;margin:10px 0;}
+.crow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.clbl{font-family:'Share Tech Mono',monospace;font-size:9px;width:108px;text-align:right;flex-shrink:0;}
+.clbl.g{color:var(--ac);}
+.clbl.pu{color:var(--pu);}
+.clbl.te{color:var(--te);}
+.cbits{display:flex;gap:3px;}
+.cbt{width:31px;height:35px;border-radius:2px;border:1px solid var(--bdr);background:var(--card);display:grid;place-items:center;font-family:'Share Tech Mono',monospace;font-size:.83rem;font-weight:700;color:var(--mu);transition:all .3s;}
+html[data-theme="light"] .cbt{color:var(--dim);}
+.cbt.co.on{background:rgba(57,255,20,.12);border-color:var(--ac);color:var(--ac);}
+html[data-theme="light"] .cbt.co.on{background:rgba(26,122,0,.14);}
+.cbt.c1.on{background:rgba(199,146,234,.12);border-color:var(--pu);color:var(--pu);}
+.cbt.c1.z{background:rgba(199,146,234,.05);border-color:rgba(199,146,234,.3);color:var(--pu);}
+.cbt.c2.on{background:rgba(0,229,204,.12);border-color:var(--te);color:var(--te);}
+.cbt.c2.z{background:rgba(0,229,204,.05);border-color:rgba(0,229,204,.3);color:var(--te);}
+html[data-theme="light"] .cbt.c2.on{background:rgba(0,105,92,.12);}
+.cbt.flip{animation:flip .3s ease;}
+@keyframes flip{50%{transform:rotateY(90deg)}}
+.vbox{background:var(--card);border:1px solid var(--bdr);border-radius:2px;padding:11px;margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:11.5px;line-height:1.85;color:var(--tx);}
+.vt{font-family:'Orbitron',monospace;font-size:9px;color:var(--te);letter-spacing:2px;margin-bottom:7px;}
+.vc{color:var(--te);}
+.vr{color:var(--ac);}
+
+/* ── SIGN VIS ── */
+.signrow{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;justify-content:center;margin:12px 0;}
+.sbox{width:40px;height:50px;border:2px solid var(--pk);border-radius:4px;background:rgba(255,45,107,.1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:'Share Tech Mono',monospace;position:relative;margin-bottom:18px;}
+html[data-theme="light"] .sbox{background:rgba(204,0,68,.08);}
+.sbox::after{content:'SIGN';position:absolute;bottom:-16px;font-size:6px;color:var(--pk);letter-spacing:1px;font-family:'Share Tech Mono',monospace;}
+.sbox .sv2{font-size:1.1rem;font-weight:900;color:var(--pk);}
+.dbox{width:35px;height:45px;border:1px solid var(--bdr);border-radius:3px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:'Share Tech Mono',monospace;}
+.dbox .dv{font-size:.95rem;font-weight:700;color:var(--ac);}
+.dbox .dp{font-size:6.5px;color:var(--dim);}
+
+/* ── RANGE CARDS ── */
+.rbox{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+.rc{flex:1;min-width:175px;background:var(--card);border:1px solid var(--bdr);border-radius:3px;padding:13px;}
+.rc.sg{border-left:3px solid var(--pk);}
+.rc.un{border-left:3px solid var(--bl);}
+.rc.in{border-left:3px solid var(--ye);}
+.rl2{font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:2px;margin-bottom:6px;}
+.rl2.sg{color:var(--pk);}
+.rl2.un{color:var(--bl);}
+.rl2.in{color:var(--ye);}
+.rv2{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;margin-bottom:4px;}
+.rv2.sg{color:var(--pk);}
+.rv2.un{color:var(--bl);}
+.rv2.in{color:var(--ye);}
+.rs2{font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--dim);line-height:1.6;}
+
+/* ── DIV TABLE ── */
+.dtbl{width:100%;border-collapse:collapse;margin:10px 0;font-family:'Share Tech Mono',monospace;font-size:12px;}
+.dtbl th{font-family:'Orbitron',monospace;font-size:9px;color:var(--pk);padding:8px 10px;border-bottom:1px solid var(--bdr);background:var(--card);text-align:center;letter-spacing:1px;}
+.dtbl td{padding:7px 10px;text-align:center;border-bottom:1px solid rgba(22,32,48,.7);color:var(--tx);}
+html[data-theme="light"] .dtbl td{border-bottom-color:var(--bdr);}
+.dtbl tr.active td{background:rgba(255,230,0,.07);}
+.dtbl tr.done td{opacity:.5;}
+.dq{color:var(--bl);}
+.dr{color:var(--ye);font-weight:700;}
+
+/* ── CHEAT GRID ── */
+.csgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;margin:10px 0;}
+.csi{background:var(--card);border:1px solid var(--bdr);border-radius:2px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;}
+.csop{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--tx);}
+.csv{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ac);font-weight:700;}
+
+/* Tab bar — removed (replaced by left sidebar) */
+#tabBar{display:none;}
+#mobileTabs{display:none;}
+
+/* Push content right to make room for sidebar */
+body{padding-top:0;padding-left:230px;}
+
+@media(max-width:700px){
+  #nav{transform:translateX(-100%);transition:transform .3s;}
+  #nav.open{transform:translateX(0);}
+  body{padding-left:0;}
+  .wrap{padding-left:16px;}
+  #mobileMenuBtn{display:flex;}
+  #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:4999;}
+  #sidebarOverlay.open{display:block;}
+}
+#mobileMenuBtn{
+  display:none;
+  position:fixed;top:12px;left:12px;z-index:6000;
+  background:var(--card);border:1px solid var(--bdr);border-radius:6px;
+  padding:7px 10px;font-size:1.1rem;cursor:pointer;color:var(--tx);
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile menu button (only shows on small screens) -->
+<button id="mobileMenuBtn" onclick="document.getElementById('nav').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open')">☰</button>
+<div id="sidebarOverlay" onclick="document.getElementById('nav').classList.remove('open');this.classList.remove('open')"></div>
+
+<!-- LEFT SIDEBAR -->
+<nav id="nav">
+  <div class="nav-header">
+    <div class="nav-brand">⚡ Bit Manipulation</div>
+    <div class="nav-actions">
+      <a href="index.html" id="backHome" title="Back to Roadmap">← Home</a>
+      <button id="themeBtn" onclick="toggleTheme()"><span id="themeIco">☀️</span></button>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a class="nl" href="#s01"><span class="nb">01</span>Why?</a>
+    <a class="nl" href="#s02"><span class="nb">02</span>Binary System</a>
+    <a class="nl" href="#s03"><span class="nb">03</span>Powers of 2</a>
+    <a class="nl" href="#s04"><span class="nb">04</span>Bin→Dec</a>
+    <a class="nl" href="#s05"><span class="nb">05</span>Dec→Bin</a>
+    <a class="nl" href="#s06"><span class="nb">06</span>Sign Bit</a>
+    <a class="nl" href="#s07"><span class="nb">07</span>1's Complement</a>
+    <a class="nl" href="#s08"><span class="nb">08</span>2's Complement</a>
+    <a class="nl" href="#s09"><span class="nb">09</span>6 Operators</a>
+    <a class="nl" href="#s10"><span class="nb">10</span>Converter</a>
+    <a class="nl" href="#s11"><span class="nb">11</span>8 Tricks</a>
+    <a class="nl" href="#s12"><span class="nb">12</span>Playground</a>
+    <a class="nl" href="#s13"><span class="nb">13</span>Dry Run</a>
+    <a class="nl" href="#s14"><span class="nb">14</span>Cheat Sheet</a>
+    <a class="nl" href="#s15"><span class="nb">15</span>Problems</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">⚡ STRIVER TEACHES — COMPLETE EDITION</div>
+  <div class="htitle"><div class="t1">BIT</div><div class="t2">MANIPULATION</div></div>
+  <p class="hsub">// Binary → Sign Bit → Complements → Operators → Tricks → Problems</p>
+</div>
+
+<!-- ══ SEC 01 ══ -->
+<div class="sec" id="s01">
+  <div class="shdr"><div class="sid">01</div><div class="sttl">Why Bit Manipulation?</div></div>
+  <div class="sbdy">
+    <div class="sv">
+      <div class="svico">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, bahut log bit manipulation ko ignore karte hain — <em>badi galti hai yeh!</em> FAANG companies mein yeh bahut commonly poochha jaata hai. Ek baar samajh gaye toh O(n) solutions ko <em>O(1) ya O(log n) mein convert kar sakte ho!</em> Computer ke andar <em>sab kuch binary mein hota hai</em>. Directly bits pe kaam karna <em class="g">fastest possible operation</em> hai!</p>
+      </div>
+    </div>
+    <div class="sv">
+      <div class="svico">🗺️</div>
+      <div class="svbdy">
+        <div class="lbl">TODAY'S ROADMAP</div>
+        <p>Step 1 → <em>Binary number system</em> &nbsp;|&nbsp; Step 2 → <em>Powers of 2</em> &nbsp;|&nbsp; Step 3 → <em>Bin↔Dec conversion</em><br/>
+        Step 4 → <em>Sign bit</em> &nbsp;|&nbsp; Step 5 → <em>1's complement</em> &nbsp;|&nbsp; Step 6 → <em>2's complement</em><br/>
+        Step 7 → <em>6 operators</em> &nbsp;|&nbsp; Step 8 → <em class="g">8 tricks</em> &nbsp;|&nbsp; Step 9 → <em class="r">Hard problems!</em></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 02 ══ -->
+<div class="sec bl" id="s02">
+  <div class="shdr"><div class="sid bl">02</div><div class="sttl">Binary Number System</div></div>
+  <div class="sbdy">
+    <div class="sv bl">
+      <div class="svico bl">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, hum <em>decimal (base 10)</em> mein sochte hain — 10 digits: 0–9. Computer <em>binary (base 2)</em> mein sochta hai — sirf <em>2 digits: 0 aur 1</em>. Kyun? Circuit mein sirf do states hain — <em class="r">current ON = 1</em> ya <em>current OFF = 0</em>. Same positional system, different base!</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
+      <div style="background:var(--card);border:1px solid var(--bdr);border-radius:3px;padding:13px;">
+        <div class="brl" style="color:var(--a2)">DECIMAL — BASE 10</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:12px;line-height:2;color:var(--tx);">
+          Number: <span style="color:var(--ye);font-weight:700">3 2 5</span><br/>
+          Position: <span style="color:var(--bl)">2 &nbsp;1 &nbsp;0</span><br/>
+          = 3×10² + 2×10¹ + 5×10⁰<br/>
+          = <span style="color:var(--ac)">300+20+5 = 325</span>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--bdr);border-radius:3px;padding:13px;">
+        <div class="brl" style="color:var(--bl)">BINARY — BASE 2</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:12px;line-height:2;color:var(--tx);">
+          Number: <span style="color:var(--ye);font-weight:700">1 1 0 1</span><br/>
+          Position: <span style="color:var(--bl)">3 &nbsp;2 &nbsp;1 &nbsp;0</span><br/>
+          = 1×2³ + 1×2² + 0×2¹ + 1×2⁰<br/>
+          = <span style="color:var(--ac)">8+4+0+1 = 13</span>
+        </div>
+      </div>
+    </div>
+    <div class="brl" style="margin-top:14px">HOW 13 LIVES IN MEMORY — 8-BIT</div>
+    <div class="bitgrid" id="thirteenBits"></div>
+    <div class="ddisp">= 8+4+1 = <span style="color:var(--ye)">13</span></div>
+    <div class="ins bl" style="margin-top:12px">
+      <strong>Key Terms:</strong> 1 bit = one 0/1 &nbsp;|&nbsp; 8 bits = 1 byte &nbsp;|&nbsp; <strong>int = 32 bits</strong> &nbsp;|&nbsp; <strong>long long = 64 bits</strong><br/>
+      MSB = Most Significant Bit (leftmost) &nbsp;|&nbsp; LSB = Least Significant Bit (rightmost)
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 03 ══ -->
+<div class="sec" id="s03">
+  <div class="shdr"><div class="sid">03</div><div class="sttl">Powers of 2 — Memorize This!</div></div>
+  <div class="sbdy">
+    <div class="sv">
+      <div class="svico">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, yeh table <em>raat ko neend mein bhi yaad honi chahiye!</em> Jab bhi bit manipulation problem aaye — <em>sabse pehle yahi table dimaag mein aata hai</em>. Left shift = multiply by 2 — iska seedha connection hai is table se!</p>
+      </div>
+    </div>
+    <table class="ptbl">
+      <tr><th>Power</th><th>Value</th><th>Binary (8-bit)</th><th>Note</th></tr>
+      <tr><td class="pn">2⁰</td><td class="pv">1</td><td class="pb">0000 0001</td><td style="font-size:11px;color:var(--dim)">LSB</td></tr>
+      <tr><td class="pn">2¹</td><td class="pv">2</td><td class="pb">0000 0010</td><td style="font-size:11px;color:var(--dim)">1 left shift of 1</td></tr>
+      <tr><td class="pn">2²</td><td class="pv">4</td><td class="pb">0000 0100</td><td></td></tr>
+      <tr><td class="pn">2³</td><td class="pv">8</td><td class="pb">0000 1000</td><td></td></tr>
+      <tr><td class="pn">2⁴</td><td class="pv">16</td><td class="pb">0001 0000</td><td></td></tr>
+      <tr><td class="pn">2⁵</td><td class="pv">32</td><td class="pb">0010 0000</td><td></td></tr>
+      <tr><td class="pn">2⁶</td><td class="pv">64</td><td class="pb">0100 0000</td><td></td></tr>
+      <tr><td class="pn">2⁷</td><td class="pv">128</td><td class="pb">1000 0000</td><td style="font-size:11px;color:var(--dim)">MSB of 8-bit</td></tr>
+      <tr><td class="pn">2¹⁰</td><td class="pv">1024</td><td class="pb">100 0000 0000</td><td style="font-size:11px;color:var(--dim)">≈ 1K</td></tr>
+      <tr><td class="pn">2³¹</td><td class="pv">2,147,483,648</td><td class="pb">MSB of int</td><td style="font-size:11px;color:var(--pk)">INT_MIN trigger!</td></tr>
+    </table>
+    <div class="ins">
+      <strong>Pattern:</strong> Every power of 2 has exactly <strong>ONE set bit</strong> — all others are 0.<br/>
+      This is why <strong>n &amp; (n-1) == 0</strong> checks if n is a power of 2!
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 04 ══ -->
+<div class="sec or" id="s04">
+  <div class="shdr"><div class="sid or">04</div><div class="sttl">Binary → Decimal (Step-by-Step)</div></div>
+  <div class="sbdy">
+    <div class="sv or">
+      <div class="svico or">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, binary se decimal convert karna bahut simple hai! Rule: <em>right se left jaao</em>, position 0 se start karo. Har bit ko <em>2^(position) se multiply karo</em>, phir sab add karo. <em>Press Next Step to see live!</em></p>
+      </div>
+    </div>
+    <div class="pg" style="border-color:rgba(255,107,0,.25)">
+      <div class="pgtl" style="color:var(--a2)">// ENTER 8-BIT BINARY</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">BINARY:</span>
+        <input class="ni bl" type="text" id="b2dIn" value="00001101" maxlength="8" oninput="b2dBuild()" style="width:148px;letter-spacing:5px;font-size:.95rem;"/>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim)" id="b2dErr"></span>
+      </div>
+    </div>
+    <div class="stp">
+      <div class="stag or">// BINARY → DECIMAL — STEP BY STEP</div>
+      <div id="b2dBitRow" style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:10px 0;"></div>
+      <div id="b2dSum" style="background:var(--card);border:1px solid var(--bdr);border-radius:3px;padding:11px;font-family:'Share Tech Mono',monospace;font-size:11.5px;line-height:1.85;min-height:44px;color:var(--tx);"></div>
+      <div class="sinfo" id="b2dInfo">Press <strong>Next Step →</strong> to start!</div>
+    </div>
+    <div class="ctrl">
+      <button class="btn bo" id="b2dPB" disabled onclick="b2dPrev()">← Prev</button>
+      <button class="btn" id="b2dNB" onclick="b2dNext()" style="background:var(--a2);color:#fff;">Next Step →</button>
+      <button class="btn bo" onclick="b2dReset()">↺ Reset</button>
+      <span class="sc" id="b2dCtr">Step 0/0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 05 ══ -->
+<div class="sec pk" id="s05">
+  <div class="shdr"><div class="sid pk">05</div><div class="sttl">Decimal → Binary (Division Method)</div></div>
+  <div class="sbdy">
+    <div class="sv pk">
+      <div class="svico pk">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, decimal se binary ke liye <em>repeated division by 2</em>! Number ko 2 se divide karo, <em>remainder note karo (0 ya 1)</em>. Quotient pe phir se karo. Jab quotient 0 ho jaaye ruko. Phir remainders ko <em>NEECHE SE UPAR padho</em> — woh hai binary!</p>
+      </div>
+    </div>
+    <div class="pg" style="border-color:rgba(255,45,107,.25)">
+      <div class="pgtl" style="color:var(--pk)">// ENTER DECIMAL (1–255)</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">DECIMAL:</span>
+        <input class="ni pk" type="number" id="d2bIn" value="13" min="1" max="255" oninput="d2bBuild()" style="width:110px;"/>
+      </div>
+    </div>
+    <div class="stp" style="border-color:rgba(255,45,107,.2)">
+      <div class="stag pk">// READ REMAINDERS BOTTOM TO TOP</div>
+      <table class="dtbl" id="d2bTbl">
+        <tr><th>Number (n)</th><th>Quotient (n÷2)</th><th>Remainder (bit)</th><th>Bit Position</th></tr>
+      </table>
+      <div class="sinfo" id="d2bInfo">Press <strong>Next Step →</strong> for <strong id="d2bShow">13</strong></div>
+      <div id="d2bResult" style="display:none;margin-top:12px;">
+        <div class="brl" style="color:var(--pk)">READ BOTTOM TO TOP → BINARY:</div>
+        <div id="d2bBitDisp" style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:8px 0;"></div>
+        <div class="ddisp" style="color:var(--pk)" id="d2bFinal"></div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button class="btn bo" id="d2bPB" disabled onclick="d2bPrev()">← Prev</button>
+      <button class="btn bpk" id="d2bNB" onclick="d2bNext()">Next Step →</button>
+      <button class="btn bo" onclick="d2bReset()">↺ Reset</button>
+      <span class="sc" id="d2bCtr">Step 0/0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 06 ══ -->
+<div class="sec pk" id="s06">
+  <div class="shdr"><div class="sid pk">06</div><div class="sttl">Sign Bit — Signed vs Unsigned</div></div>
+  <div class="sbdy">
+    <div class="sv pk">
+      <div class="svico pk">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, abhi tak sirf positive numbers dekhe. But computer mein <em>negative numbers bhi hote hain!</em> Computer kaise jaanta hai positive ya negative? <em class="r">MSB — leftmost bit — SIGN BIT hai!</em> <em>0 = positive, 1 = negative!</em> 8-bit mein: 7 bits data + 1 bit sign → range -128 to +127. <em>Try it!</em></p>
+      </div>
+    </div>
+    <div class="pg" style="border-color:rgba(255,45,107,.25)">
+      <div class="pgtl" style="color:var(--pk)">// SIGNED 8-BIT NUMBER (-128 to 127)</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <input class="ni pk" type="number" id="signIn" value="13" min="-128" max="127" oninput="updateSign()" style="width:115px;"/>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">range: -128 to 127</span>
+      </div>
+      <div class="signrow" id="signVis"></div>
+      <div style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:12.5px;margin-top:20px;">
+        <span style="color:var(--dim)">Value: </span><span style="color:var(--ye);font-weight:700;font-size:1.05rem;" id="signVal">13</span>
+        &nbsp;&nbsp;
+        <span style="color:var(--dim)">Binary: </span><span style="color:var(--pk);font-weight:700;" id="signBin">00001101</span>
+        &nbsp;&nbsp;
+        <span style="color:var(--dim)">Sign bit: </span><span style="font-weight:700;" id="signBitLbl"></span>
+      </div>
+    </div>
+    <div class="rbox">
+      <div class="rc sg">
+        <div class="rl2 sg">SIGNED 8-BIT</div>
+        <div class="rv2 sg">-128 to +127</div>
+        <div class="rs2">MSB = sign bit<br/>7 bits = data<br/>Formula: -2⁷ to 2⁷-1</div>
+      </div>
+      <div class="rc un">
+        <div class="rl2 un">UNSIGNED 8-BIT</div>
+        <div class="rv2 un">0 to +255</div>
+        <div class="rs2">No sign bit<br/>All 8 bits = data<br/>Formula: 0 to 2⁸-1</div>
+      </div>
+      <div class="rc in">
+        <div class="rl2 in">SIGNED 32-BIT INT</div>
+        <div class="rv2 in" style="font-size:.76rem;">-2,147,483,648 to +2,147,483,647</div>
+        <div class="rs2">Formula: -2³¹ to 2³¹-1<br/>INT_MIN to INT_MAX</div>
+      </div>
+    </div>
+    <div class="ins pk">
+      <strong>⚠️ Integer Overflow!</strong><br/>
+      127 = <strong>0111 1111</strong>. Add 1 → <strong>1000 0000</strong> = -128! Sign bit flips = overflow!<br/>
+      In C++: <strong>INT_MAX + 1</strong> is undefined behavior. Always use <strong>long long</strong> when needed!
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 07 ══ -->
+<div class="sec pu" id="s07">
+  <div class="shdr"><div class="sid pu">07</div><div class="sttl">1's Complement — Flip Every Bit!</div></div>
+  <div class="sbdy">
+    <div class="sv pu">
+      <div class="svico pu">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, <em>1's complement bahut simple hai</em> — har bit ko flip karo! 0→1, 1→0. Bas! C++ mein yeh <em>~ (tilde) operator</em> karta hai. Important formula: <em>~n = -(n+1) always!</em> Kyun? Kyunki n + ~n = all 1s = -1, toh ~n = -1 - n = -(n+1). <em>Animate karo!</em></p>
+      </div>
+    </div>
+    <div class="pg" style="border-color:rgba(199,146,234,.25)">
+      <div class="pgtl" style="color:var(--pu)">// 1's COMPLEMENT — ENTER 0–255</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <input class="ni pu" type="number" id="onesIn" value="13" min="0" max="255" oninput="calcOnes()" style="width:110px;"/>
+        <button class="btn bpu" onclick="animateOnes()">⚡ Animate Flip!</button>
+      </div>
+      <div class="comprow">
+        <div class="crow">
+          <span class="clbl g">Original (n):</span>
+          <div class="cbits" id="onesOrig"></div>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);margin-left:8px;" id="onesOrigD"></span>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);padding-left:115px;margin:2px 0;">↓ flip every bit (~) ↓</div>
+        <div class="crow">
+          <span class="clbl pu">~n (1's comp):</span>
+          <div class="cbits" id="onesComp"></div>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);margin-left:8px;" id="onesCompD"></span>
+        </div>
+      </div>
+      <div class="vbox">
+        <div class="vt">// VERIFICATION</div>
+        <div>n + ~n = <span class="vc" id="onesV1"></span> = <span class="vr">all 1s ✓</span></div>
+        <div>~n in C++ (signed) = <span class="vc" id="onesV2"></span></div>
+      </div>
+    </div>
+    <div class="ins pu">
+      <strong>🔑 ~n = -(n+1) always!</strong><br/>
+      ~0=-1 &nbsp;|&nbsp; ~5=-6 &nbsp;|&nbsp; ~13=-14 &nbsp;|&nbsp; ~(-1)=0<br/>
+      Because: -n = ~n+1 → ~n = -n-1 = -(n+1). This directly links to 2's complement!
+    </div>
+    <pre><span class="kw">int</span> n <span class="op2">=</span> <span class="nm">13</span>;      <span class="cm">// 0000 1101</span>
+<span class="kw">int</span> c <span class="op2">= ~</span>n;    <span class="cm">// 1111 0010 = -14 (signed)</span>
+<span class="cm">// ~n = -(n+1) always!</span>
+<span class="cm">// Real use: clear bit i</span>
+n <span class="op2">=</span> n <span class="op2">&amp; ~</span>(<span class="nm">1</span> <span class="op2">&lt;&lt;</span> i); <span class="cm">// ~(1&lt;&lt;i) = all 1s except bit i</span></pre>
+  </div>
+</div>
+
+<!-- ══ SEC 08 ══ -->
+<div class="sec te" id="s08">
+  <div class="shdr"><div class="sid te">08</div><div class="sttl">2's Complement — How Negatives Live in Memory!</div></div>
+  <div class="sbdy">
+    <div class="sv te">
+      <div class="svico te">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, <em class="t">yeh sabse important concept hai!</em> Computer mein negative numbers ko <em>2's complement</em> mein store karte hain. Formula: <em>-n = ~n + 1</em>! (1's complement + 1). Kaam karta hai kyunki <em>n + (-n) = 0</em> hona chahiye — 2's complement exactly wahi guarantee karta hai!</p>
+      </div>
+    </div>
+    <div class="pg" style="border-color:rgba(0,229,204,.25)">
+      <div class="pgtl" style="color:var(--te)">// 2's COMPLEMENT — ENTER 1–127</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <input class="ni te" type="number" id="twosIn" value="13" min="1" max="127" oninput="calcTwos()" style="width:110px;"/>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">→ gives us -<span id="twosNLbl">13</span> in binary</span>
+      </div>
+      <div class="comprow">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ac);letter-spacing:2px;margin-bottom:4px;">STEP 1 — ORIGINAL NUMBER</div>
+        <div class="crow">
+          <span class="clbl g">n = <span id="twosN">13</span>:</span>
+          <div class="cbits" id="twosOrig"></div>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ac);margin-left:8px;">(positive)</span>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--pu);letter-spacing:2px;margin:10px 0 4px;">STEP 2 — 1's COMPLEMENT (flip all bits)</div>
+        <div class="crow">
+          <span class="clbl pu">~n:</span>
+          <div class="cbits" id="twosOnes"></div>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--pu);margin-left:8px;" id="twosOnesV"></span>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--ye);letter-spacing:2px;margin:10px 0 4px;">STEP 3 — ADD 1 → 2's COMPLEMENT = -n</div>
+        <div class="crow">
+          <span class="clbl te">~n+1 = -n:</span>
+          <div class="cbits" id="twosFinal"></div>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--te);margin-left:8px;" id="twosFinalV"></span>
+        </div>
+      </div>
+      <div class="vbox" style="margin-top:10px;">
+        <div class="vt">// PROOF: n + (-n) MUST = 0</div>
+        <div id="twosProof" style="font-family:'Share Tech Mono',monospace;font-size:11.5px;line-height:1.85;color:var(--tx);"></div>
+      </div>
+    </div>
+    <table class="ptbl" style="margin-top:12px">
+      <tr><th>Decimal</th><th>8-bit 2's Complement</th><th>Verify</th></tr>
+      <tr><td class="pv">-1</td><td class="pb">1111 1111</td><td style="color:var(--te);font-size:11px;">1+255=256=0 mod 256 ✓</td></tr>
+      <tr><td class="pv">-2</td><td class="pb">1111 1110</td><td style="color:var(--te);font-size:11px;">2+254=256=0 ✓</td></tr>
+      <tr><td class="pv">-13</td><td class="pb">1111 0011</td><td style="color:var(--te);font-size:11px;">13+243=256=0 ✓</td></tr>
+      <tr><td class="pv">-128</td><td class="pb">1000 0000</td><td style="color:var(--pk);font-size:11px;">most negative!</td></tr>
+    </table>
+    <div class="ins te">
+      <strong>Why 2's over 1's complement?</strong><br/>
+      1's complement had TWO zeros: +0 (00000000) and -0 (11111111) — problematic!<br/>
+      2's complement has <strong>ONE zero</strong>. CPU addition works identically for positive and negative!
+    </div>
+    <pre><span class="kw">int</span> n <span class="op2">=</span> <span class="nm">13</span>;
+<span class="kw">int</span> neg <span class="op2">= -</span>n;           <span class="cm">// CPU does ~n+1 internally!</span>
+<span class="kw">int</span> manual <span class="op2">= ~</span>n <span class="op2">+</span> <span class="nm">1</span>;   <span class="cm">// same result: -13</span>
+<span class="cm">// Branchless abs:</span>
+<span class="kw">int</span> mask <span class="op2">=</span> n <span class="op2">&gt;&gt;</span> <span class="nm">31</span>;      <span class="cm">// 0 if +ve, -1 if -ve</span>
+<span class="kw">int</span> abs_n <span class="op2">= (</span>n <span class="op2">^</span> mask<span class="op2">) -</span> mask;</pre>
+  </div>
+</div>
+
+<!-- ══ SEC 09 ══ -->
+<div class="sec" id="s09">
+  <div class="shdr"><div class="sid">09</div><div class="sttl">The 6 Bitwise Operators</div></div>
+  <div class="sbdy">
+    <div class="sv">
+      <div class="svico">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, sirf <em>6 operators</em> hain. Ab jab 1's aur 2's complement pata hai — yeh operators aur bhi clear ho jayenge! <em>NOT (~) = 1's complement!</em> AND, OR, XOR — bit-by-bit. Left shift = ×2^k, Right shift = ÷2^k. <em>Yahi hai poori game!</em></p>
+      </div>
+    </div>
+    <table class="otbl">
+      <tr><th>Symbol</th><th>Name</th><th>Operation</th><th>Key Use</th></tr>
+      <tr><td><span class="os">&amp;</span></td><td><span class="on">AND</span></td><td>1 only if BOTH bits are 1<br/><span style="font-size:11px;color:var(--dim)">5&amp;3 → 101&amp;011=001=1</span></td><td><span class="ot">Check/Clear bits<br/>n&amp;1 = odd check</span></td></tr>
+      <tr><td><span class="os">|</span></td><td><span class="on">OR</span></td><td>1 if EITHER bit is 1<br/><span style="font-size:11px;color:var(--dim)">5|3 → 101|011=111=7</span></td><td><span class="ot">Set a bit to 1<br/>n|(1&lt;&lt;i)</span></td></tr>
+      <tr><td><span class="os">^</span></td><td><span class="on">XOR</span></td><td>1 if bits are DIFFERENT<br/><span style="font-size:11px;color:var(--dim)">5^3 → 101^011=110=6</span></td><td><span class="ot">Toggle, find unique!<br/>n^n=0, n^0=n</span></td></tr>
+      <tr><td><span class="os">~</span></td><td><span class="on">NOT (1's complement!)</span></td><td>Flips ALL bits<br/><span style="font-size:11px;color:var(--dim)">~5 = -6 (signed)</span></td><td><span class="ot">~n = -(n+1)<br/>Clear bits</span></td></tr>
+      <tr><td><span class="os">&lt;&lt;</span></td><td><span class="on">Left Shift</span></td><td>Shift left, fill 0s right<br/><span style="font-size:11px;color:var(--dim)">5&lt;&lt;1 → 0101→1010=10</span></td><td><span class="ot">n&lt;&lt;k = n×2^k<br/>Fast multiply!</span></td></tr>
+      <tr><td><span class="os">&gt;&gt;</span></td><td><span class="on">Right Shift</span></td><td>Shift right, fill 0s left<br/><span style="font-size:11px;color:var(--dim)">10&gt;&gt;1 → 1010→0101=5</span></td><td><span class="ot">n&gt;&gt;k = n÷2^k<br/>Fast divide!</span></td></tr>
+    </table>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px;">
+      <div><div class="brl" style="margin-bottom:3px">AND</div>
+        <div class="tt" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="th">A</div><div class="th">B</div><div class="th">A&amp;B</div>
+          <div class="t0">0</div><div class="t0">0</div><div class="t0">0</div>
+          <div class="t0">0</div><div class="t1">1</div><div class="t0">0</div>
+          <div class="t1">1</div><div class="t0">0</div><div class="t0">0</div>
+          <div class="t1">1</div><div class="t1">1</div><div class="t1">1</div>
+        </div>
+      </div>
+      <div><div class="brl" style="margin-bottom:3px">OR</div>
+        <div class="tt" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="th">A</div><div class="th">B</div><div class="th">A|B</div>
+          <div class="t0">0</div><div class="t0">0</div><div class="t0">0</div>
+          <div class="t0">0</div><div class="t1">1</div><div class="t1">1</div>
+          <div class="t1">1</div><div class="t0">0</div><div class="t1">1</div>
+          <div class="t1">1</div><div class="t1">1</div><div class="t1">1</div>
+        </div>
+      </div>
+      <div><div class="brl" style="margin-bottom:3px">XOR</div>
+        <div class="tt" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="th">A</div><div class="th">B</div><div class="th">A^B</div>
+          <div class="t0">0</div><div class="t0">0</div><div class="t0">0</div>
+          <div class="t0">0</div><div class="t1">1</div><div class="t1">1</div>
+          <div class="t1">1</div><div class="t0">0</div><div class="t1">1</div>
+          <div class="t1">1</div><div class="t1">1</div><div class="t0">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 10 ══ -->
+<div class="sec" id="s10">
+  <div class="shdr"><div class="sid">10</div><div class="sttl">Interactive Binary Converter</div></div>
+  <div class="sbdy">
+    <div class="sv">
+      <div class="svico">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, <em>khud try karo!</em> Type karo ya bits click karo. Ab tumhe pata hai yeh bits memory mein exactly aise hi hote hain — MSB left, LSB right. <em>Hands-on = fast learning!</em></p>
+      </div>
+    </div>
+    <div class="pg">
+      <div class="pgtl">// DECIMAL ↔ BINARY — CLICK ANY BIT TO TOGGLE!</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">DEC:</span>
+        <input class="ni" type="number" id="decIn" value="13" min="0" max="255" oninput="fromDec()" style="width:95px;"/>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">BIN:</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:1rem;color:var(--ac);letter-spacing:4px;" id="binStr">00001101</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">HEX:</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:1rem;color:var(--ye);" id="hexStr">0x0D</span>
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;" id="bitsUI"></div>
+      <div style="margin-top:11px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);" id="binCalc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 11 ══ -->
+<div class="sec ye" id="s11">
+  <div class="shdr"><div class="sid ye">11</div><div class="sttl">The 8 Must-Know Tricks</div></div>
+  <div class="sbdy">
+    <div class="sv ye">
+      <div class="svico ye">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, yeh <em>8 tricks yaad kar lo!</em> Amazon, Google, Microsoft — <em>sab jagah poochhe jaate hain!</em> Ab jab binary, sign bit, complements sab pata hai — <em>in tricks ke WHY automatically samajh aayenge!</em> Formula ratto mat — understand karo!</p>
+      </div>
+    </div>
+    <div class="tgrid">
+      <div class="tc"><div class="tn">TRICK 01</div><div class="ttt">Check ODD or EVEN</div>
+        <div class="tcode">n &amp; 1 == 1 → ODD<br/>n &amp; 1 == 0 → EVEN</div>
+        <div class="tw">Last bit of even = always 0, odd = always 1. AND with 1 isolates just LSB. Faster than n%2!</div>
+      </div>
+      <div class="tc"><div class="tn">TRICK 02</div><div class="ttt">Check if ith bit is SET</div>
+        <div class="tcode">if (n &amp; (1 &lt;&lt; i))</div>
+        <div class="tw">1&lt;&lt;i = mask with only bit i = 1. AND with n: if bit i of n is 1 → non-zero = set!</div>
+      </div>
+      <div class="tc"><div class="tn">TRICK 03</div><div class="ttt">SET ith bit (→ 1)</div>
+        <div class="tcode">n = n | (1 &lt;&lt; i)</div>
+        <div class="tw">OR with mask having only bit i = 1. OR with 1 always gives 1. All other bits unchanged!</div>
+      </div>
+      <div class="tc"><div class="tn">TRICK 04</div><div class="ttt">CLEAR ith bit (→ 0)</div>
+        <div class="tcode">n = n &amp; ~(1 &lt;&lt; i)</div>
+        <div class="tw">~(1&lt;&lt;i) = all 1s except bit i (1's complement!). AND forces bit i to 0, rest unchanged!</div>
+      </div>
+      <div class="tc"><div class="tn">TRICK 05</div><div class="ttt">TOGGLE ith bit (flip)</div>
+        <div class="tcode">n = n ^ (1 &lt;&lt; i)</div>
+        <div class="tw">XOR with 1 flips (0→1, 1→0). XOR with 0 keeps same. So XOR with mask flips only bit i!</div>
+      </div>
+      <div class="tc"><div class="tn">TRICK 06</div><div class="ttt">Remove Rightmost Set Bit</div>
+        <div class="tcode">n = n &amp; (n - 1)</div>
+        <div class="tw">n-1 flips all bits from rightmost 1 downward. AND removes that 1. Core of Brian Kernighan!</div>
+      </div>
+      <div class="tc"><div class="tn">TRICK 07</div><div class="ttt">Check Power of 2</div>
+        <div class="tcode">n &gt; 0 &amp;&amp; (n &amp; (n-1)) == 0</div>
+        <div class="tw">Powers of 2 have exactly ONE set bit. Remove it → becomes 0. If yes = power of 2!</div>
+      </div>
+      <div class="tc"><div class="tn">TRICK 08</div><div class="ttt">Multiply / Divide by 2^k</div>
+        <div class="tcode">n &lt;&lt; k → n × 2^k<br/>n &gt;&gt; k → n ÷ 2^k</div>
+        <div class="tw">Left shift = append zeros (×2). Right shift = remove bits (÷2). Much faster than * or /!</div>
+      </div>
+    </div>
+    <div class="ins ye">
+      <strong>🔑 Golden XOR Properties (MOST ASKED!):</strong><br/>
+      n ^ n = <strong>0</strong> &nbsp;|&nbsp; n ^ 0 = <strong>n</strong> &nbsp;|&nbsp; XOR is commutative &amp; associative<br/>
+      [1,1,2,2,3] → 1^1^2^2^3 = 0^0^3 = <strong>3</strong> → find unique in O(n) time, O(1) space!
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 12 ══ -->
+<div class="sec" id="s12">
+  <div class="shdr"><div class="sid">12</div><div class="sttl">Live Bitwise Playground</div></div>
+  <div class="sbdy">
+    <div class="sv">
+      <div class="svico">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, ab khud try karo! Koi do numbers lo, koi bhi operator chuno — <em>live dekho binary level pe kya hota hai!</em> Yahi mera teaching style — see it, not just read it!</p>
+      </div>
+    </div>
+    <div class="pg">
+      <div class="pgtl">// BITWISE VISUALIZER — A OP B</div>
+      <div class="pgrow">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">A =</span>
+        <input class="ni" type="number" id="pgA" value="12" min="0" max="255" oninput="calcPg()" style="width:88px;"/>
+        <select class="nisel" id="pgOp" onchange="calcPg()">
+          <option value="and">&amp; AND</option>
+          <option value="or">| OR</option>
+          <option value="xor">^ XOR</option>
+          <option value="ls">&lt;&lt; LEFT SHIFT</option>
+          <option value="rs">&gt;&gt; RIGHT SHIFT</option>
+        </select>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim)">B =</span>
+        <input class="ni" type="number" id="pgB" value="10" min="0" max="31" oninput="calcPg()" style="width:88px;"/>
+      </div>
+      <div id="pgRes" class="pgres"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 13 ══ -->
+<div class="sec" id="s13">
+  <div class="shdr"><div class="sid">13</div><div class="sttl">Dry Run — Count Set Bits (Brian Kernighan)</div></div>
+  <div class="sbdy">
+    <div class="sv">
+      <div class="svico">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, classic problem — count 1s in binary of n. Naive: O(32). <em>Brian Kernighan: runs only as many times as set bits!</em> n=13 (three 1s) → only <em>3 iterations</em>. Key: <em>n &amp; (n-1) removes rightmost set bit</em>. Dekho step by step!</p>
+      </div>
+    </div>
+    <div class="stp">
+      <div id="drVis" style="display:flex;flex-direction:column;gap:6px;margin:8px 0;"></div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;font-family:'Share Tech Mono',monospace;font-size:12px;margin-top:8px;">
+        <span><span style="color:var(--dim)">n = </span><span style="color:var(--ye);font-weight:700;" id="drN">—</span></span>
+        <span><span style="color:var(--dim)">count = </span><span style="color:var(--ac);font-weight:700;" id="drCnt">0</span></span>
+      </div>
+      <div class="sinfo" id="drInfo">Press <strong>Next Step →</strong> to start! n = 13 (binary: 1101, has 3 set bits)</div>
+    </div>
+    <div class="ctrl">
+      <button class="btn bo" id="drPB" disabled onclick="drPrev()">← Prev</button>
+      <button class="btn bg" id="drNB" onclick="drNext()">Next Step →</button>
+      <button class="btn bo" onclick="drReset()">↺ Reset</button>
+      <span class="sc" id="drCtr">Step 0/6</span>
+    </div>
+    <pre><span class="kw">int</span> <span class="fn">countSetBits</span>(<span class="kw">int</span> n) {
+    <span class="kw">int</span> count <span class="op2">=</span> <span class="nm">0</span>;
+    <span class="kw">while</span> (n <span class="op2">!= 0</span>) {
+        n <span class="op2">=</span> n <span class="op2">&amp;</span> (n <span class="op2">-</span> <span class="nm">1</span>);  <span class="cm">// removes rightmost set bit</span>
+        count<span class="op2">++</span>;
+    }
+    <span class="kw">return</span> count;   <span class="cm">// runs exactly popcount(n) times!</span>
+}
+<span class="cm">// C++ shortcut: __builtin_popcount(n)</span></pre>
+  </div>
+</div>
+
+<!-- ══ SEC 14 ══ -->
+<div class="sec" id="s14">
+  <div class="shdr"><div class="sid">14</div><div class="sttl">Cheat Sheet</div></div>
+  <div class="sbdy">
+    <div class="csgrid">
+      <div class="csi"><span class="csop">n &amp; 1</span><span class="csv">Is n odd?</span></div>
+      <div class="csi"><span class="csop">n | (1&lt;&lt;i)</span><span class="csv">Set ith bit</span></div>
+      <div class="csi"><span class="csop">n &amp; ~(1&lt;&lt;i)</span><span class="csv">Clear ith bit</span></div>
+      <div class="csi"><span class="csop">n ^ (1&lt;&lt;i)</span><span class="csv">Toggle ith bit</span></div>
+      <div class="csi"><span class="csop">n &amp; (n-1)</span><span class="csv">Remove last set bit</span></div>
+      <div class="csi"><span class="csop">n &amp; (-n)</span><span class="csv">Isolate last set bit</span></div>
+      <div class="csi"><span class="csop">n ^ n = 0</span><span class="csv">XOR self = zero</span></div>
+      <div class="csi"><span class="csop">n ^ 0 = n</span><span class="csv">XOR zero = self</span></div>
+      <div class="csi"><span class="csop">n &lt;&lt; k</span><span class="csv">n × 2^k</span></div>
+      <div class="csi"><span class="csop">n &gt;&gt; k</span><span class="csv">n ÷ 2^k</span></div>
+      <div class="csi"><span class="csop">~n</span><span class="csv">-(n+1)</span></div>
+      <div class="csi"><span class="csop">n&amp;(n-1)==0</span><span class="csv">Power of 2?</span></div>
+      <div class="csi"><span class="csop">n &gt;&gt; 31</span><span class="csv">Sign (-1 or 0)</span></div>
+      <div class="csi"><span class="csop">(n^m)+2*(n&amp;m)</span><span class="csv">Add w/o +</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEC 15 ══ -->
+<div class="sec" id="s15">
+  <div class="shdr"><div class="sid">15</div><div class="sttl">Must-Solve Problems (Striver's Order)</div></div>
+  <div class="sbdy">
+    <div class="sv">
+      <div class="svico">🎙</div>
+      <div class="svbdy">
+        <div class="lbl">STRIVER SAYS</div>
+        <p>Bhaiya, <em>is order mein solve karo!</em> Easy se start karo — pattern pakad mein aayega. Phir medium, phir hard. <em>Koi bhi skip mat karna!</em> Har ek problem ek naya trick sikhata hai! 🔥</p>
+      </div>
+    </div>
+    <div class="plist">
+      <div class="pi"><span class="df de">EASY</span><div><div class="pit">Even or Odd</div><div class="pih">n &amp; 1 — warm-up, get comfortable with AND</div></div></div>
+      <div class="pi"><span class="df de">EASY</span><div><div class="pit">Count Set Bits — LC #191 (Hamming Weight)</div><div class="pih">n &amp; (n-1) Brian Kernighan — just dry-ran above!</div></div></div>
+      <div class="pi"><span class="df de">EASY</span><div><div class="pit">Power of Two — LC #231</div><div class="pih">n > 0 &amp;&amp; (n &amp; (n-1)) == 0</div></div></div>
+      <div class="pi"><span class="df de">EASY</span><div><div class="pit">Reverse Bits — LC #190</div><div class="pih">Build result bit by bit using shift + OR</div></div></div>
+      <div class="pi"><span class="df de">EASY</span><div><div class="pit">Single Number — LC #136</div><div class="pih">XOR all elements — pairs cancel! n^n=0</div></div></div>
+      <div class="pi"><span class="df de">EASY</span><div><div class="pit">Missing Number — LC #268</div><div class="pih">XOR indices + values → duplicates cancel</div></div></div>
+      <div class="pi"><span class="df dm">MED</span><div><div class="pit">Single Number II — LC #137 (every num 3×, one 1×)</div><div class="pih">Count bits mod 3 — use ones/twos bit masks</div></div></div>
+      <div class="pi"><span class="df dm">MED</span><div><div class="pit">Single Number III — LC #260 (two unique numbers)</div><div class="pih">XOR all → split groups by differing bit</div></div></div>
+      <div class="pi"><span class="df dm">MED</span><div><div class="pit">Subsets — LC #78 (all 2^n subsets)</div><div class="pih">Loop 0 to 2^n-1, use bits as inclusion mask</div></div></div>
+      <div class="pi"><span class="df dm">MED</span><div><div class="pit">XOR Queries of Subarray — LC #1310</div><div class="pih">Prefix XOR array → answer queries in O(1)</div></div></div>
+      <div class="pi"><span class="df dh">HARD</span><div><div class="pit">Maximum XOR of Two Numbers — LC #421</div><div class="pih">Trie-based greedy — find max XOR bit by bit</div></div></div>
+      <div class="pi"><span class="df dh">HARD</span><div><div class="pit">Total Hamming Distance — LC #477</div><div class="pih">Count 0s and 1s at each bit position — multiply</div></div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<style>
+.df.dm{color:var(--ye);border-color:var(--ye);background:rgba(255,230,0,.08);}
+html[data-theme="light"] .df.dm{background:rgba(136,102,0,.1);}
+.df.dh{color:var(--pk);border-color:var(--pk);background:rgba(255,45,107,.08);}
+html[data-theme="light"] .df.dh{background:rgba(204,0,68,.08);}
+</style>
+
+<script>
+/* ══════════════ THEME ══════════════ */
+(function(){
+  const saved = localStorage.getItem('bm-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.getElementById('themeIco').textContent = saved === 'light' ? '🌙' : '☀️';
+})();
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const cur = html.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('bm-theme', next);
+  document.getElementById('themeIco').textContent = next === 'light' ? '🌙' : '☀️';
+}
+
+/* ══════════════ SIDEBAR ACTIVE ══════════════ */
+const allSecs = document.querySelectorAll('.sec[id]');
+const navLinks = document.querySelectorAll('#nav .nl');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => {
+        l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id);
+      });
+    }
+  });
+}, { rootMargin: '-25% 0px -65% 0px' });
+allSecs.forEach(s => obs.observe(s));
+
+/* ══════════════ SEC 02 — 13 in 8-bit ══════════════ */
+(function(){
+  const n = 13, bits = 8;
+  const bin = n.toString(2).padStart(bits, '0');
+  const c = document.getElementById('thirteenBits');
+  for (let i = 0; i < bits; i++) {
+    const b = bin[i], pos = bits - 1 - i;
+    const d = document.createElement('div');
+    d.className = 'bc ' + (b === '1' ? 'one' : 'zero');
+    d.innerHTML = `<span class="bv">${b}</span><span class="bp">2^${pos}</span>`;
+    c.appendChild(d);
+  }
+})();
+
+/* ══════════════ SEC 04 — BINARY → DECIMAL ══════════════ */
+let b2dSteps = [], b2dIdx = 0;
+
+function b2dBuild() {
+  const raw = document.getElementById('b2dIn').value.replace(/[^01]/g, '').slice(0, 8);
+  if (!raw.length) return;
+  const bin = raw.padStart(8, '0');
+  document.getElementById('b2dErr').textContent = raw.length < 8 ? '(auto-padded)' : '';
+  b2dSteps = [];
+  b2dSteps.push({ phase: 'init', bin, active: -1, sum: 0, info: `<span class="stag or">// START</span>Binary: <strong>${bin}</strong>. Go <strong>right to left</strong> — multiply each bit by 2^position, then sum!` });
+  let runSum = 0;
+  for (let i = 7; i >= 0; i--) {
+    const bit = parseInt(bin[i]);
+    const pos = 7 - i;
+    const val = bit * (1 << pos);
+    runSum += val;
+    b2dSteps.push({
+      phase: 'step', bin, active: i, sum: runSum, bit, pos, val,
+      info: `<span class="stag or">// BIT POSITION ${pos}</span>Bit[${i}] = <strong>${bit}</strong>, position = <strong>${pos}</strong>, value = <strong>${bit}×2^${pos} = ${val}</strong>. Running sum = <span class="g">${runSum}</span>`
+    });
+  }
+  const total = runSum;
+  b2dSteps.push({ phase: 'done', bin, active: -1, sum: total, info: `<span class="stag or">// ✅ DONE</span>Binary <strong>${bin}</strong> = Decimal <span class="g">${total}</span> ✓` });
+  b2dIdx = 0;
+  b2dRender();
+}
+
+function b2dRender() {
+  const s = b2dSteps[b2dIdx];
+  if (!s) return;
+  const br = document.getElementById('b2dBitRow');
+  br.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const bit = s.bin[i], pos = 7 - i;
+    const d = document.createElement('div');
+    d.className = 'bc ' + (bit === '1' ? 'one' : 'zero') + (i === s.active ? ' hl' : '');
+    d.innerHTML = `<span class="bv">${bit}</span><span class="bp">2^${pos}</span>`;
+    br.appendChild(d);
+  }
+  const sumEl = document.getElementById('b2dSum');
+  if (s.phase === 'init') {
+    sumEl.innerHTML = '<span style="color:var(--dim)">Running sum will appear here…</span>';
+  } else {
+    const parts = [];
+    for (let i = 7; i >= 0; i--) {
+      const pos2 = 7 - i, bit2 = parseInt(s.bin[i]);
+      const stepsElapsed = b2dIdx - 1;
+      if (stepsElapsed >= (7 - pos2 + 1) - 1) {
+        const v = 1 << pos2;
+        if (bit2 === 1) parts.push(`<span style="color:var(--ac)">${bit2}×${v}</span>`);
+        else parts.push(`<span style="color:var(--mu)">0×${v}</span>`);
+      }
+    }
+    sumEl.innerHTML = (parts.length ? parts.join(' + ') : '') + (s.sum > 0 ? ` = <span style="color:var(--ye);font-weight:700">${s.sum}</span>` : ' = 0');
+  }
+  document.getElementById('b2dInfo').innerHTML = s.info;
+  document.getElementById('b2dCtr').textContent = `Step ${b2dIdx}/${b2dSteps.length - 1}`;
+  document.getElementById('b2dPB').disabled = b2dIdx === 0;
+  document.getElementById('b2dNB').disabled = b2dIdx === b2dSteps.length - 1;
+}
+function b2dNext() { if (b2dIdx < b2dSteps.length - 1) { b2dIdx++; b2dRender(); } }
+function b2dPrev() { if (b2dIdx > 0) { b2dIdx--; b2dRender(); } }
+function b2dReset() { b2dIdx = 0; b2dRender(); }
+b2dBuild();
+
+/* ══════════════ SEC 05 — DECIMAL → BINARY ══════════════ */
+let d2bSteps = [], d2bIdx = 0;
+
+function d2bBuild() {
+  let n = parseInt(document.getElementById('d2bIn').value) || 1;
+  n = Math.max(1, Math.min(255, n));
+  document.getElementById('d2bShow').textContent = n;
+  d2bSteps = [];
+  d2bSteps.push({ rows: [], n, done: false, info: `<span class="stag pk">// START</span>Divide <strong>${n}</strong> by 2 repeatedly. Note each remainder. Read bottom to top!` });
+  let cur = n, pos = 0, rows = [];
+  while (cur > 0) {
+    const q = Math.floor(cur / 2), r = cur % 2;
+    rows = [...rows, { n: cur, q, r, pos }];
+    d2bSteps.push({
+      rows: rows.map((rw, i) => ({ ...rw, isActive: i === rows.length - 1 })),
+      n, cur, done: false,
+      info: `<span class="stag pk">// STEP ${pos + 1}</span><strong>${cur} ÷ 2</strong> = Quotient: <span style="color:var(--bl)">${q}</span>, Remainder: <span style="color:var(--ye)">${r}</span> → bit[${pos}] = <strong>${r}</strong>`
+    });
+    cur = q; pos++;
+  }
+  d2bSteps.push({
+    rows: rows.map(r => ({ ...r, isActive: false })), n, done: true,
+    info: `<span class="stag pk">// ✅ READ BOTTOM TO TOP!</span>Binary = <span style="color:var(--pk);font-weight:700">${n.toString(2)}</span> (padded 8-bit: ${n.toString(2).padStart(8,'0')})`
+  });
+  d2bIdx = 0; d2bRender();
+}
+
+function d2bRender() {
+  const s = d2bSteps[d2bIdx];
+  const tbl = document.getElementById('d2bTbl');
+  tbl.innerHTML = '<tr><th>Number (n)</th><th>Quotient (n÷2)</th><th>Remainder (bit)</th><th>Bit Position</th></tr>';
+  s.rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.className = r.isActive ? 'active' : 'done';
+    tr.innerHTML = `<td style="color:var(--tx)">${r.n}</td><td class="dq">${r.q}</td><td class="dr">${r.r}</td><td style="color:var(--dim)">${r.pos}</td>`;
+    tbl.appendChild(tr);
+  });
+  document.getElementById('d2bInfo').innerHTML = s.info;
+  const res = document.getElementById('d2bResult');
+  if (s.done) {
+    res.style.display = 'block';
+    const bits = s.n.toString(2).padStart(8, '0');
+    const bd = document.getElementById('d2bBitDisp');
+    bd.innerHTML = '';
+    bits.split('').forEach((b, i) => {
+      const d = document.createElement('div');
+      d.className = 'bc ' + (b === '1' ? 'one' : 'zero');
+      d.innerHTML = `<span class="bv">${b}</span><span class="bp">bit ${7 - i}</span>`;
+      bd.appendChild(d);
+    });
+    document.getElementById('d2bFinal').textContent = `${s.n.toString(2)} = ${s.n} ✓`;
+  } else { res.style.display = 'none'; }
+  document.getElementById('d2bCtr').textContent = `Step ${d2bIdx}/${d2bSteps.length - 1}`;
+  document.getElementById('d2bPB').disabled = d2bIdx === 0;
+  document.getElementById('d2bNB').disabled = d2bIdx === d2bSteps.length - 1;
+}
+function d2bNext() { if (d2bIdx < d2bSteps.length - 1) { d2bIdx++; d2bRender(); } }
+function d2bPrev() { if (d2bIdx > 0) { d2bIdx--; d2bRender(); } }
+function d2bReset() { d2bIdx = 0; d2bRender(); }
+d2bBuild();
+
+/* ══════════════ SEC 06 — SIGN BIT ══════════════ */
+function updateSign() {
+  let n = parseInt(document.getElementById('signIn').value);
+  if (isNaN(n)) n = 0;
+  n = Math.max(-128, Math.min(127, n));
+  const unsigned = n < 0 ? (256 + n) : n;
+  const bin = unsigned.toString(2).padStart(8, '0');
+  document.getElementById('signVal').textContent = n;
+  document.getElementById('signBin').textContent = bin;
+  const signBit = bin[0];
+  const lbl = document.getElementById('signBitLbl');
+  lbl.textContent = signBit === '0' ? '0 (positive ✓)' : '1 (negative ✓)';
+  lbl.style.color = signBit === '0' ? 'var(--ac)' : 'var(--pk)';
+  const vis = document.getElementById('signVis');
+  vis.innerHTML = '';
+  const sb = document.createElement('div');
+  sb.className = 'sbox';
+  sb.innerHTML = `<span class="sv2">${signBit}</span><span style="font-size:6.5px;color:var(--pk)">MSB</span>`;
+  vis.appendChild(sb);
+  for (let i = 1; i < 8; i++) {
+    const d = document.createElement('div');
+    d.className = 'dbox';
+    d.innerHTML = `<span class="dv">${bin[i]}</span><span class="dp">bit ${7 - i}</span>`;
+    vis.appendChild(d);
+  }
+}
+updateSign();
+
+/* ══════════════ SEC 07 — 1's COMPLEMENT ══════════════ */
+function renderCBits(id, val, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '';
+  const bin = (val & 0xFF).toString(2).padStart(8, '0');
+  bin.split('').forEach(b => {
+    const d = document.createElement('div');
+    d.className = `cbt ${cls} ${b === '1' ? 'on' : 'z'}`;
+    d.textContent = b;
+    el.appendChild(d);
+  });
+}
+
+function calcOnes() {
+  let n = parseInt(document.getElementById('onesIn').value);
+  if (isNaN(n)) n = 0;
+  n = Math.max(0, Math.min(255, n));
+  const comp = (~n) & 0xFF;
+  renderCBits('onesOrig', n, 'co');
+  renderCBits('onesComp', comp, 'c1');
+  document.getElementById('onesOrigD').textContent = `= ${n}`;
+  document.getElementById('onesCompD').textContent = `= ${comp} (unsigned) / ${comp > 127 ? comp - 256 : comp} (signed)`;
+  document.getElementById('onesV1').textContent = `${n} + ${comp} = ${n + comp}`;
+  document.getElementById('onesV2').textContent = `~${n} = -(${n}+1) = ${-(n + 1)}`;
+}
+
+function animateOnes() {
+  let n = parseInt(document.getElementById('onesIn').value) || 0;
+  n = Math.max(0, Math.min(255, n));
+  const origEls = document.getElementById('onesOrig').children;
+  const compEls = document.getElementById('onesComp').children;
+  let i = 0;
+  const timer = setInterval(() => {
+    if (i >= 8) { clearInterval(timer); return; }
+    if (origEls[i]) origEls[i].classList.add('flip');
+    if (compEls[i]) compEls[i].classList.add('flip');
+    setTimeout(() => {
+      if (origEls[i]) origEls[i].classList.remove('flip');
+      if (compEls[i]) compEls[i].classList.remove('flip');
+    }, 350);
+    i++;
+  }, 120);
+}
+calcOnes();
+
+/* ══════════════ SEC 08 — 2's COMPLEMENT ══════════════ */
+function calcTwos() {
+  let n = parseInt(document.getElementById('twosIn').value) || 1;
+  n = Math.max(1, Math.min(127, n));
+  document.getElementById('twosNLbl').textContent = n;
+  document.getElementById('twosN').textContent = n;
+  const ones = (~n) & 0xFF;
+  const twos = (ones + 1) & 0xFF;
+  renderCBits('twosOrig', n, 'co');
+  renderCBits('twosOnes', ones, 'c1');
+  renderCBits('twosFinal', twos, 'c2');
+  document.getElementById('twosOnesV').textContent = `= ${ones} (unsigned)`;
+  document.getElementById('twosFinalV').textContent = `= -${n} (${twos} unsigned)`;
+  const nBin = n.toString(2).padStart(8, '0');
+  const twosBin = twos.toString(2).padStart(8, '0');
+  // Simulate add: n + (-n)
+  let carry = 0, sumBits = '';
+  for (let i = 7; i >= 0; i--) {
+    const s = parseInt(nBin[i]) + parseInt(twosBin[i]) + carry;
+    sumBits = (s % 2) + sumBits;
+    carry = Math.floor(s / 2);
+  }
+  document.getElementById('twosProof').innerHTML =
+    `&nbsp;&nbsp;n &nbsp;= ${nBin} &nbsp;(${n})<br>` +
+    `+ (-n) = ${twosBin} &nbsp;(${twos})<br>` +
+    `<span style="color:var(--bdr)">──────────────────</span><br>` +
+    `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span style="color:var(--ac);font-weight:700">${carry ? '1' : ''}${sumBits}</span> ${carry ? '(carry discarded → ' : '('}= <span style="color:var(--ac)">0 ✓</span>)`;
+}
+calcTwos();
+
+/* ══════════════ SEC 10 — INTERACTIVE CONVERTER ══════════════ */
+const bits8 = [128, 64, 32, 16, 8, 4, 2, 1];
+let bstate = [0, 0, 0, 0, 1, 1, 0, 1];
+
+function buildBitsUI() {
+  const c = document.getElementById('bitsUI');
+  c.innerHTML = '';
+  bits8.forEach((pw, i) => {
+    const d = document.createElement('div');
+    d.className = 'ibit' + (bstate[i] ? ' on' : '');
+    d.innerHTML = `<span class="iv">${bstate[i]}</span><span class="ip">bit ${7 - i}</span><span style="font-size:7px;color:var(--dim)">2^${7-i}</span>`;
+    d.onclick = () => { bstate[i] = 1 - bstate[i]; syncFromBits(); };
+    c.appendChild(d);
+  });
+}
+
+function syncFromBits() {
+  let dec = 0;
+  bits8.forEach((pw, i) => { if (bstate[i]) dec += pw; });
+  document.getElementById('decIn').value = dec;
+  updateDisplay(dec);
+  buildBitsUI();
+}
+
+function fromDec() {
+  let v = parseInt(document.getElementById('decIn').value) || 0;
+  v = Math.max(0, Math.min(255, v));
+  const bin = v.toString(2).padStart(8, '0');
+  for (let i = 0; i < 8; i++) bstate[i] = parseInt(bin[i]);
+  updateDisplay(v);
+  buildBitsUI();
+}
+
+function updateDisplay(v) {
+  const bin = v.toString(2).padStart(8, '0');
+  document.getElementById('binStr').textContent = bin;
+  document.getElementById('hexStr').textContent = '0x' + v.toString(16).toUpperCase().padStart(2, '0');
+  const active = bits8.filter((_, i) => bstate[i]);
+  const parts = bits8.map((pw, i) => bstate[i] ? `<span style="color:var(--ac)">${pw}</span>` : `<span style="color:var(--mu)">${pw}×0</span>`);
+  document.getElementById('binCalc').innerHTML = parts.join(' + ') + ' = <span style="color:var(--ye);font-weight:700">' + v + '</span>';
+}
+buildBitsUI();
+updateDisplay(13);
+
+/* ══════════════ SEC 12 — PLAYGROUND ══════════════ */
+function toBin8(n) { return (n & 0xFF).toString(2).padStart(8, '0'); }
+
+function calcPg() {
+  const a = parseInt(document.getElementById('pgA').value) || 0;
+  const b = parseInt(document.getElementById('pgB').value) || 0;
+  const op = document.getElementById('pgOp').value;
+  let res, opStr;
+  if (op === 'and') { res = a & b; opStr = 'AND (&)'; }
+  else if (op === 'or') { res = a | b; opStr = 'OR (|)'; }
+  else if (op === 'xor') { res = a ^ b; opStr = 'XOR (^)'; }
+  else if (op === 'ls') { res = (a << b) & 0xFF; opStr = `LEFT SHIFT (${a} << ${b})`; }
+  else { res = a >> b; opStr = `RIGHT SHIFT (${a} >> ${b})`; }
+  res = res & 0xFF;
+  const aB = toBin8(a), bB = toBin8(b), rB = toBin8(res);
+  function hl(str, col) {
+    return str.split('').map(c => `<span style="color:${c === '1' ? col : 'var(--mu)'};font-weight:${c === '1' ? '700' : '400'}">${c}</span>`).join('');
+  }
+  const el = document.getElementById('pgRes');
+  if (op === 'ls' || op === 'rs') {
+    el.innerHTML = `<span class="rl">A:</span> ${hl(aB,'var(--bl)')} <span style="color:var(--dim)">(${a})</span><br><span class="rl">OP:</span> ${opStr}<br><span class="rl">R:</span> ${hl(rB,'var(--ac)')} <span style="color:var(--dim)">(${res})</span>`;
+  } else {
+    el.innerHTML = `<span class="rl">A:</span> ${hl(aB,'var(--bl)')} <span style="color:var(--dim)">(${a})</span><br><span class="rl">B:</span> ${hl(bB,'var(--pk)')} <span style="color:var(--dim)">(${b})</span><br><span class="rl">${opStr}:</span> ${hl(rB,'var(--ac)')} <span style="color:var(--dim)">(${res})</span>`;
+  }
+}
+calcPg();
+
+/* ══════════════ SEC 13 — DRY RUN (Brian Kernighan) ══════════════ */
+let drSteps = [], drIdx = 0;
+
+function drBuild() {
+  drSteps = [];
+  let n = 13, count = 0;
+  drSteps.push({ n, count, info: `<span class="stag">// START</span>n = <strong>13</strong> = binary <strong>1101</strong>. We'll do <strong>n = n &amp; (n-1)</strong> until n = 0.` });
+  while (n > 0) {
+    const prev = n;
+    const nm1 = n - 1;
+    n = n & nm1;
+    count++;
+    drSteps.push({
+      n, count,
+      info: `<span class="stag">// ITERATION ${count}</span>n = <strong>${prev}</strong> (${prev.toString(2)}), n-1 = <strong>${nm1}</strong> (${nm1.toString(2)})<br>n &amp; (n-1) = ${prev.toString(2)} &amp; ${nm1.toString(2)} = <span class="g">${n.toString(2) || '0'}</span> = <strong>${n}</strong>. count = <span class="g">${count}</span>`
+    });
+  }
+  drSteps.push({ n: 0, count, info: `<span class="stag">// ✅ DONE</span>n = 0, loop ends. Total set bits = <span class="g">${count}</span>. Only <strong>${count} iterations</strong> — not 32!` });
+}
+
+function drRender() {
+  const s = drSteps[drIdx];
+  if (!s) return;
+  document.getElementById('drN').textContent = s.n;
+  document.getElementById('drCnt').textContent = s.count;
+  document.getElementById('drInfo').innerHTML = s.info;
+  document.getElementById('drCtr').textContent = `Step ${drIdx}/${drSteps.length - 1}`;
+  document.getElementById('drPB').disabled = drIdx === 0;
+  document.getElementById('drNB').disabled = drIdx === drSteps.length - 1;
+  // Visualize bits
+  const vis = document.getElementById('drVis');
+  vis.innerHTML = '';
+  const bin = s.n.toString(2).padStart(8, '0');
+  const row = document.createElement('div');
+  row.className = 'bvrow';
+  row.innerHTML = `<span class="bvlbl">n = ${s.n}</span>`;
+  const bitsDiv = document.createElement('div');
+  bitsDiv.className = 'bvbits';
+  bin.split('').forEach(b => {
+    const d = document.createElement('div');
+    d.className = 'bbt' + (b === '1' ? ' on' : '');
+    d.textContent = b;
+    bitsDiv.appendChild(d);
+  });
+  row.appendChild(bitsDiv);
+  vis.appendChild(row);
+}
+
+function drNext() { if (drIdx < drSteps.length - 1) { drIdx++; drRender(); } }
+function drPrev() { if (drIdx > 0) { drIdx--; drRender(); } }
+function drReset() { drIdx = 0; drRender(); }
+drBuild();
+drRender();
+
+/* ══════════════ SIDEBAR SCROLL SPY ══════════════ */
+(function(){
+  const navLinks = document.querySelectorAll('#nav .nl');
+
+  const secObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = '#' + e.target.id;
+        navLinks.forEach(l => {
+          const isActive = l.getAttribute('href') === id;
+          l.classList.toggle('active', isActive);
+          // Scroll active link into view within sidebar
+          if (isActive) l.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('.sec[id]').forEach(s => secObs.observe(s));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dutch National Flag – Striver Style</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --card: #13161e;
+    --border: #1e2330;
+    --accent: #f7c948;
+    --red: #ff4f4f;
+    --green: #3ddc84;
+    --blue: #4fa3ff;
+    --white: #e8eaf0;
+    --muted: #7a7f96;
+    --low: #1a1d28;
+  }
+
+  [data-theme="light"] {
+    --bg: #f7f5f0;
+    --card: #eeeae0;
+    --border: #d0cabb;
+    --accent: #a07800;
+    --red: #cc2200;
+    --green: #1a7a3a;
+    --blue: #1a55aa;
+    --white: #1a1510;
+    --muted: #6a6050;
+    --low: #e8e4d8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+    transition: background .3s, color .3s;
+  }
+
+  /* -- THEME TOGGLE -- */
+  #themeToggle {
+    position: fixed;
+    top: 16px; right: 20px;
+    z-index: 10000;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all .2s;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--white);
+  }
+  #themeToggle:hover { border-color: var(--accent); transform: scale(1.05); }
+
+  /* ── LEFT SIDEBAR ── */
+  #sidebar {
+    position: fixed; top: 0; left: 0;
+    width: 220px; height: 100vh;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    z-index: 9500;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: background .3s, border-color .3s, transform .3s;
+  }
+  .sb-header {
+    padding: 14px 12px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .sb-brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; font-weight: 700;
+    color: var(--accent); letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .sb-actions { display: flex; gap: 6px; }
+  #backHome {
+    flex: 1; display: flex; align-items: center; gap: 5px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px;
+    font-size: 0.7rem; font-weight: 600;
+    color: var(--white); text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all .2s;
+  }
+  #backHome:hover { border-color: var(--accent); color: var(--accent); }
+  .sb-links { flex: 1; overflow-y: auto; padding: 6px 0; }
+  .sb-links::-webkit-scrollbar { width: 3px; }
+  .sb-links::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .sb-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px;
+    text-decoration: none; color: var(--muted);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    transition: all .15s; border-left: 2px solid transparent;
+  }
+  .sb-link:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+  .sb-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(247,201,72,0.07); }
+  [data-theme="light"] .sb-link.active { background: rgba(160,120,0,0.08); }
+  .sb-num {
+    font-size: 9px; font-weight: 700;
+    background: var(--accent); color: #000;
+    padding: 2px 6px; border-radius: 2px; flex-shrink: 0;
+  }
+  body { padding-left: 220px; padding-top: 0; padding-bottom: 60px; }
+  #menuBtn {
+    display: none;
+    position: fixed; top: 12px; left: 12px; z-index: 10001;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 10px; font-size: 1.1rem;
+    cursor: pointer; color: var(--white);
+  }
+  #sbOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 9499; }
+  #sbOverlay.open { display: block; }
+  @media(max-width: 768px) {
+    body { padding-left: 16px !important; }
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); }
+    #menuBtn { display: flex; }
+  }
+
+  /* ── HEADER ── */
+  header { text-align: center; margin-bottom: 36px; }
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 4px;
+    letter-spacing: 2px; margin-bottom: 12px;
+  }
+  header h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.15; }
+  header h1 span { color: var(--accent); }
+  header p { color: var(--muted); margin-top: 8px; font-size: 14px; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── SECTION CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+    margin-bottom: 20px;
+    max-width: 860px;
+    margin-left: auto; margin-right: auto;
+    transition: background .3s, border-color .3s;
+  }
+  .card-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1rem; font-weight: 700;
+    color: var(--accent); margin-bottom: 16px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .card-title .num {
+    background: var(--accent); color: #000;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 800; flex-shrink: 0;
+  }
+
+  /* ── STRIVER BOX ── */
+  .striver-box {
+    background: var(--low);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    font-size: 14.5px; line-height: 1.7;
+    margin-bottom: 14px;
+    transition: background .3s;
+  }
+  .striver-box .name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--accent);
+    margin-bottom: 6px; letter-spacing: 1px;
+  }
+  em { color: var(--accent); font-style: normal; font-weight: 700; }
+
+  /* ── PROBLEM VISUAL ── */
+  .problem-arr {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin: 16px 0; justify-content: center;
+  }
+  .cell {
+    width: 46px; height: 46px; border-radius: 8px;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 1.1rem;
+    font-family: 'JetBrains Mono', monospace;
+    border: 2px solid transparent; transition: all 0.3s;
+  }
+  .c0 { background: #2a1a1a; border-color: var(--red); color: var(--red); }
+  .c1 { background: #1e1e2a; border-color: #888; color: #ccc; }
+  .c2 { background: #1a2032; border-color: var(--blue); color: var(--blue); }
+
+  [data-theme="light"] .c0 { background: #fce8e8; border-color: var(--red); color: var(--red); }
+  [data-theme="light"] .c1 { background: #ede9e0; border-color: #999; color: #555; }
+  [data-theme="light"] .c2 { background: #e0eaf8; border-color: var(--blue); color: var(--blue); }
+
+  .goal-arr .c0 { background: var(--red); color: #fff; border-color: var(--red); }
+  .goal-arr .c1 { background: #555; color: #fff; border-color: #777; }
+  .goal-arr .c2 { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  [data-theme="light"] .goal-arr .c1 { background: #888; border-color: #666; }
+
+  .arr-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--muted);
+    text-align: center; margin-bottom: 6px;
+  }
+
+  /* ── POINTER BOXES ── */
+  .ptr-explain {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin: 12px 0; justify-content: center;
+  }
+  .ptr-box {
+    padding: 10px 16px; border-radius: 8px;
+    font-size: 13px; font-family: 'JetBrains Mono', monospace;
+    text-align: center; border: 1px solid;
+  }
+  .ptr-low  { border-color: var(--red);   background: #2a1a1a; color: var(--red); }
+  .ptr-mid  { border-color: var(--green); background: #1a2a1a; color: var(--green); }
+  .ptr-high { border-color: var(--blue);  background: #1a1a2a; color: var(--blue); }
+
+  [data-theme="light"] .ptr-low  { background: #fce8e8; }
+  [data-theme="light"] .ptr-mid  { background: #e6f5ec; }
+  [data-theme="light"] .ptr-high { background: #e0eaf8; }
+
+  /* ── DRY RUN STEPPER ── */
+  .stepper { max-width: 860px; margin: 0 auto 20px; }
+  .step-controls {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 22px; border-radius: 8px; border: none;
+    cursor: pointer; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 700; transition: all .2s;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-ghost {
+    background: var(--card); color: var(--white);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; }
+  .step-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--muted); margin-left: auto;
+  }
+
+  /* ── ARRAY VISUALISER ── */
+  .vis-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+    max-width: 860px; margin: 0 auto 8px;
+    transition: background .3s;
+  }
+  .arr-row {
+    display: flex; gap: 6px; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 6px;
+  }
+  .vis-cell {
+    width: 48px; height: 48px; border-radius: 8px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 1.15rem;
+    border: 2px solid transparent;
+    transition: all 0.35s; position: relative;
+  }
+
+  /* dark vis-cell states */
+  .vis-cell.v0 { background: #2a1a1a; border-color: var(--red);  color: var(--red); }
+  .vis-cell.v1 { background: #222;    border-color: #666;        color: #ccc; }
+  .vis-cell.v2 { background: #1a1a2e; border-color: var(--blue); color: var(--blue); }
+  .vis-cell.done.v0 { background: var(--red);  color: #fff; }
+  .vis-cell.done.v1 { background: #555; color: #fff; }
+  .vis-cell.done.v2 { background: var(--blue); color: #fff; }
+
+  /* light vis-cell states */
+  [data-theme="light"] .vis-cell.v0 { background: #fce8e8; border-color: var(--red);  color: var(--red); }
+  [data-theme="light"] .vis-cell.v1 { background: #ede9e0; border-color: #999;        color: #555; }
+  [data-theme="light"] .vis-cell.v2 { background: #e0eaf8; border-color: var(--blue); color: var(--blue); }
+  [data-theme="light"] .vis-cell.done.v0 { background: var(--red);  color: #fff; }
+  [data-theme="light"] .vis-cell.done.v1 { background: #888; color: #fff; }
+  [data-theme="light"] .vis-cell.done.v2 { background: var(--blue); color: #fff; }
+
+  .vis-cell.active   { box-shadow: 0 0 0 3px var(--accent); transform: scale(1.12); }
+  .vis-cell.swapping { box-shadow: 0 0 0 3px var(--green);  transform: scale(1.12); }
+
+  .ptr-row {
+    display: flex; gap: 6px; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 12px; min-height: 22px;
+  }
+  .ptr-slot {
+    width: 48px; display: flex; gap: 2px; justify-content: center;
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  }
+  .pt-l { color: var(--red);   font-weight: 700; }
+  .pt-m { color: var(--green); font-weight: 700; }
+  .pt-h { color: var(--blue);  font-weight: 700; }
+
+  .explanation-box {
+    background: var(--low); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 18px;
+    font-size: 13.5px; line-height: 1.6;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--white); min-height: 60px;
+    transition: background .3s;
+  }
+  .explanation-box strong { color: var(--accent); }
+  .explanation-box .case-label {
+    font-size: 11px; color: var(--accent);
+    display: block; margin-bottom: 6px; letter-spacing: 1px;
+  }
+
+  /* ── CODE BLOCK ── */
+  pre {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.8;
+    transition: background .3s;
+  }
+  [data-theme="light"] pre { background: #f0ece0; color: #1a1510; }
+
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .cm  { color: #546e7a; font-style: italic; }
+  .str { color: #c3e88d; }
+  .num { color: var(--accent); }
+  .var { color: var(--white); }
+
+  [data-theme="light"] .kw  { color: #7c3aed; }
+  [data-theme="light"] .fn  { color: #1d4ed8; }
+  [data-theme="light"] .cm  { color: #6b7280; }
+  [data-theme="light"] .str { color: #166534; }
+  [data-theme="light"] .num { color: #92400e; }
+  [data-theme="light"] .var { color: #1a1510; }
+
+  /* ── COMPLEXITY ── */
+  .complexity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cpx-card {
+    background: var(--low); border-radius: 8px;
+    padding: 14px 18px; text-align: center;
+    border: 1px solid var(--border);
+    transition: background .3s;
+  }
+  .cpx-card .label {
+    font-size: 11px; color: var(--muted); letter-spacing: 1px;
+    margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;
+  }
+  .cpx-card .value { font-size: 1.5rem; font-weight: 800; color: var(--green); }
+
+  /* ── INSIGHT ── */
+  .insight {
+    background: #151a10;
+    border: 1px solid rgba(61,220,132,.33);
+    border-radius: 10px; padding: 16px 20px;
+    font-size: 14px; line-height: 1.7;
+    color: var(--green);
+  }
+  [data-theme="light"] .insight {
+    background: #eaf5ee;
+    border-color: rgba(26,122,58,.3);
+  }
+  .insight strong { color: #fff; }
+  [data-theme="light"] .insight strong { color: #002210; }
+</style>
+</head>
+<body>
+
+<button id="menuBtn" onclick="document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('open')">☰</button>
+<div id="sbOverlay" onclick="document.getElementById('sidebar').classList.remove('open');this.classList.remove('open')"></div>
+
+<!-- LEFT SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-header">
+    <div class="sb-brand">🇳🇱 Dutch Flag</div>
+    <div class="sb-actions">
+      <a href="index.html" id="backHome">← Home</a>
+    </div>
+  </div>
+  <div class="sb-links">
+    <a class="sb-link" href="#c1"><span class="sb-num">01</span>The Problem</a>
+    <a class="sb-link" href="#c2"><span class="sb-num">02</span>Intuition</a>
+    <a class="sb-link" href="#c3"><span class="sb-num">03</span>The 3 Cases</a>
+    <a class="sb-link" href="#c4"><span class="sb-num">04</span>Live Dry Run</a>
+    <a class="sb-link" href="#c5"><span class="sb-num">05</span>The Code</a>
+    <a class="sb-link" href="#c6"><span class="sb-num">06</span>Complexity</a>
+  </div>
+</nav>
+
+<!-- ── THEME TOGGLE ── -->
+<button id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark">
+  <span id="themeIcon">☀️</span>
+</button>
+
+<header>
+  <div class="badge">STRIVER EXPLAINS</div>
+  <h1>Dutch National Flag<br/><span>Algorithm</span></h1>
+  <p>// Sort an array of 0s, 1s, and 2s in O(n) time, O(1) space</p>
+</header>
+
+<!-- SECTION 1: PROBLEM -->
+<div class="card" id="c1">
+  <div class="card-title"><div class="num">1</div> The Problem</div>
+  <div class="striver-box">
+    <div class="name">🎙 STRIVER SAYS</div>
+    So bhaiya, yeh ek <em>very famous</em> problem hai. You're given an array with only <em>0s, 1s, and 2s</em> — mixed up randomly. Your job? Sort them <em>in-place</em>, in a single pass. No extra space. And you cannot use any sorting function. That's it!
+  </div>
+
+  <div class="arr-label">INPUT (unsorted mess)</div>
+  <div class="problem-arr">
+    <div class="cell c0">0</div><div class="cell c2">2</div><div class="cell c1">1</div>
+    <div class="cell c0">0</div><div class="cell c2">2</div><div class="cell c1">1</div>
+    <div class="cell c0">0</div><div class="cell c2">2</div>
+  </div>
+
+  <div class="arr-label" style="margin-top:18px">EXPECTED OUTPUT</div>
+  <div class="problem-arr goal-arr">
+    <div class="cell c0">0</div><div class="cell c0">0</div><div class="cell c0">0</div>
+    <div class="cell c1">1</div><div class="cell c1">1</div>
+    <div class="cell c2">2</div><div class="cell c2">2</div><div class="cell c2">2</div>
+  </div>
+</div>
+
+<!-- SECTION 2: INTUITION -->
+<div class="card" id="c2">
+  <div class="card-title"><div class="num">2</div> Intuition — Think Like Striver</div>
+  <div class="striver-box">
+    <div class="name">🎙 STRIVER SAYS</div>
+    Okay so naive approach? Count 0s, 1s, 2s and fill back — that's <em>two passes</em>. But can we do it in <em>one pass</em>? Yes! And that's where the Dutch National Flag algorithm comes in. This was given by <em>Edsger Dijkstra</em>. The Dutch flag has three colours — red, white, blue — and we're sorting three types of elements. Get it? 😄
+    <br/><br/>
+    We'll use <em>three pointers</em>: <em>low</em>, <em>mid</em>, and <em>high</em>. Think of the array as <em>four regions</em>:
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 18px;justify-content:center">
+    <div class="ptr-box ptr-low">low<br/><span style="font-size:10px;color:var(--muted)">0s go here ←</span></div>
+    <div class="ptr-box ptr-mid">mid<br/><span style="font-size:10px;color:var(--muted)">current element</span></div>
+    <div class="ptr-box ptr-high">high<br/><span style="font-size:10px;color:var(--muted)">2s go here →</span></div>
+  </div>
+
+  <div class="striver-box">
+    <div class="name">🎙 INVARIANT (the rule we maintain)</div>
+    ✅ <em>arr[0..low-1]</em> → all 0s (sorted)<br/>
+    ✅ <em>arr[low..mid-1]</em> → all 1s (sorted)<br/>
+    ❓ <em>arr[mid..high]</em> → UNKNOWN (we process this)<br/>
+    ✅ <em>arr[high+1..n-1]</em> → all 2s (sorted)
+  </div>
+</div>
+
+<!-- SECTION 3: THREE CASES -->
+<div class="card" id="c3">
+  <div class="card-title"><div class="num">3</div> The 3 Cases — This is the HEART of the Algorithm</div>
+
+  <div class="striver-box" style="border-color:var(--red)">
+    <div class="name" style="color:var(--red)">CASE 1 — arr[mid] == 0 (Red / 0)</div>
+    If current element is <em style="color:var(--red)">0</em>, it belongs at the beginning!<br/>
+    → Swap <em>arr[mid]</em> with <em>arr[low]</em><br/>
+    → Increment both <em>low++</em> and <em>mid++</em><br/>
+    <span style="font-size:12px;color:var(--muted)">Why mid++? Because after swap, arr[mid-1] is 0 (placed correctly) and arr[mid] was from the sorted 1s zone — safe!</span>
+  </div>
+
+  <div class="striver-box" style="border-color:#888">
+    <div class="name" style="color:var(--muted)">CASE 2 — arr[mid] == 1 (White / 1)</div>
+    If current element is <em>1</em>, it's already in the right zone!<br/>
+    → Just do <em>mid++</em><br/>
+    <span style="font-size:12px;color:var(--muted)">The 1s zone expands to the right naturally.</span>
+  </div>
+
+  <div class="striver-box" style="border-color:var(--blue)">
+    <div class="name" style="color:var(--blue)">CASE 3 — arr[mid] == 2 (Blue / 2)</div>
+    If current element is <em>2</em>, it belongs at the end!<br/>
+    → Swap <em>arr[mid]</em> with <em>arr[high]</em><br/>
+    → Decrement <em>high--</em><br/>
+    → <em>DO NOT increment mid!</em><br/>
+    <span style="font-size:12px;color:var(--muted)">Why? Because what came from arr[high] is unknown — we haven't processed it yet!</span>
+  </div>
+</div>
+
+<!-- SECTION 4: DRY RUN -->
+<div class="stepper">
+  <div class="card" id="c4" style="margin-bottom:12px">
+    <div class="card-title"><div class="num">4</div> Live Dry Run — Step Through It!</div>
+    <div class="striver-box" style="margin-bottom:0">
+      <div class="name">🎙 STRIVER SAYS</div>
+      Bhaiya, <em>dry run karo</em>! This is how I teach in my videos — click next and see exactly what happens at each step. Watch the pointers move!
+    </div>
+  </div>
+
+  <div class="vis-wrap">
+    <div class="ptr-row" id="ptrRow"></div>
+    <div class="arr-row" id="arrRow"></div>
+    <div style="margin-top:16px">
+      <div class="explanation-box" id="explBox">Press <strong>Next Step →</strong> to start the dry run!</div>
+    </div>
+  </div>
+
+  <div class="step-controls">
+    <button class="btn btn-ghost" id="btnPrev" disabled onclick="prevStep()">← Prev</button>
+    <button class="btn btn-primary" id="btnNext" onclick="nextStep()">Next Step →</button>
+    <button class="btn btn-ghost" onclick="resetStepper()">↺ Reset</button>
+    <span class="step-counter" id="stepCounter">Step 0 / 8</span>
+  </div>
+</div>
+
+<!-- SECTION 5: CODE -->
+<div class="card" id="c5">
+  <div class="card-title"><div class="num">5</div> The Code — Clean &amp; Simple</div>
+  <div class="striver-box">
+    <div class="name">🎙 STRIVER SAYS</div>
+    Dekho bhaiya, code kitna <em>clean</em> hai! Just 3 pointers, one while loop, three conditions. That's it. This is the beauty of this algorithm!
+  </div>
+<pre>
+<span class="kw">void</span> <span class="fn">sortColors</span>(<span class="kw">vector</span>&lt;<span class="kw">int</span>&gt;&amp; arr) {
+    <span class="kw">int</span> <span class="var">low</span>  = <span class="num">0</span>;                 <span class="cm">// boundary for 0s</span>
+    <span class="kw">int</span> <span class="var">mid</span>  = <span class="num">0</span>;                 <span class="cm">// current element</span>
+    <span class="kw">int</span> <span class="var">high</span> = arr.size() - <span class="num">1</span>;    <span class="cm">// boundary for 2s</span>
+
+    <span class="kw">while</span> (<span class="var">mid</span> &lt;= <span class="var">high</span>) {
+        <span class="kw">if</span> (arr[<span class="var">mid</span>] == <span class="num">0</span>) {
+            <span class="cm">// 0 belongs at the front → swap with low</span>
+            swap(arr[<span class="var">low</span>], arr[<span class="var">mid</span>]);
+            <span class="var">low</span>++;
+            <span class="var">mid</span>++;
+        }
+        <span class="kw">else if</span> (arr[<span class="var">mid</span>] == <span class="num">1</span>) {
+            <span class="cm">// 1 is already in correct zone → just move mid</span>
+            <span class="var">mid</span>++;
+        }
+        <span class="kw">else</span> {
+            <span class="cm">// 2 belongs at the end → swap with high</span>
+            swap(arr[<span class="var">mid</span>], arr[<span class="var">high</span>]);
+            <span class="var">high</span>--;
+            <span class="cm">// don't increment mid! element from high is unknown</span>
+        }
+    }
+}
+</pre>
+</div>
+
+<!-- SECTION 6: COMPLEXITY -->
+<div class="card" id="c6">
+  <div class="card-title"><div class="num">6</div> Time &amp; Space Complexity</div>
+  <div class="complexity-grid">
+    <div class="cpx-card">
+      <div class="label">TIME COMPLEXITY</div>
+      <div class="value">O(N)</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace">Single pass, mid visits<br/>each element once</div>
+    </div>
+    <div class="cpx-card">
+      <div class="label">SPACE COMPLEXITY</div>
+      <div class="value">O(1)</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace">In-place sorting<br/>no extra array</div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:16px">
+    <strong>🔑 Key Insight (Striver's Golden Trick):</strong><br/>
+    The loop runs while <em>mid ≤ high</em>. When mid crosses high, the unknown region is empty — everything is sorted. The reason we don't do mid++ when arr[mid]==2 is that the element coming from arr[high] after the swap is <em>still unknown</em> — we must re-examine it!
+  </div>
+</div>
+
+<script>
+  // ── THEME ──
+  (function () {
+    const saved = localStorage.getItem('dnf-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeIcon').textContent = saved === 'light' ? '🌙' : '☀️';
+  })();
+
+  function toggleTheme() {
+    const cur  = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('dnf-theme', next);
+    document.getElementById('themeIcon').textContent = next === 'light' ? '🌙' : '☀️';
+  }
+
+  // ── DRY RUN ──
+  const steps = [
+    { arr:[2,0,2,1,1,0], low:0, mid:0, high:5, done:false,
+      expl:"<span class='case-label'>INITIAL STATE</span>We start with <strong>low=0, mid=0, high=5</strong>. The unknown region is the whole array. Let's begin!" },
+    { arr:[2,0,2,1,1,0], low:0, mid:0, high:5, done:false, active:0,
+      expl:"<span class='case-label'>STEP 1 — CASE 3: arr[mid]=2</span><strong>arr[mid] = arr[0] = 2</strong>. 2 belongs at the end! → Swap arr[0] with arr[high=5] → high--" },
+    { arr:[0,0,2,1,1,2], low:0, mid:0, high:4, done:false, active:0,
+      expl:"<span class='case-label'>STEP 2 — CASE 1: arr[mid]=0</span>After swap: <strong>arr[0] = 0</strong>. 0 belongs at front! → Swap arr[mid=0] with arr[low=0] (same spot) → low++, mid++" },
+    { arr:[0,0,2,1,1,2], low:1, mid:1, high:4, done:false, active:1,
+      expl:"<span class='case-label'>STEP 3 — CASE 1: arr[mid]=0</span><strong>arr[mid] = arr[1] = 0</strong>. Again 0! → Swap arr[1] with arr[low=1] → low++, mid++" },
+    { arr:[0,0,2,1,1,2], low:2, mid:2, high:4, done:false, active:2,
+      expl:"<span class='case-label'>STEP 4 — CASE 3: arr[mid]=2</span><strong>arr[mid] = arr[2] = 2</strong>. 2 goes to end! → Swap arr[2] with arr[high=4] → high--. Don't touch mid!" },
+    { arr:[0,0,1,1,2,2], low:2, mid:2, high:3, done:false, active:2,
+      expl:"<span class='case-label'>STEP 5 — CASE 2: arr[mid]=1</span><strong>arr[mid] = arr[2] = 1</strong>. 1 is already in the correct zone! → Just mid++" },
+    { arr:[0,0,1,1,2,2], low:2, mid:3, high:3, done:false, active:3,
+      expl:"<span class='case-label'>STEP 6 — CASE 2: arr[mid]=1</span><strong>arr[mid] = arr[3] = 1</strong>. Another 1! → mid++" },
+    { arr:[0,0,1,1,2,2], low:2, mid:4, high:3, done:false,
+      expl:"<span class='case-label'>LOOP ENDS — mid > high</span><strong>mid (4) > high (3)</strong>. The unknown region is empty. We're done! 🎉 Array is fully sorted." },
+    { arr:[0,0,1,1,2,2], low:2, mid:4, high:3, done:true,
+      expl:"<span class='case-label'>✅ FINAL SORTED ARRAY</span>All <strong style='color:var(--red)'>0s</strong> at the front, <strong>1s</strong> in the middle, <strong style='color:var(--blue)'>2s</strong> at the end. Time: O(N), Space: O(1). 🔥" }
+  ];
+
+  let currentStep = 0;
+
+  function render() {
+    const s = steps[currentStep];
+
+    document.getElementById('arrRow').innerHTML = s.arr.map((v, i) => {
+      let cls = `vis-cell v${v}`;
+      if (s.done) cls += ' done';
+      if (i === s.active && !s.done) cls += ' active';
+      return `<div class="${cls}">${v}</div>`;
+    }).join('');
+
+    document.getElementById('ptrRow').innerHTML = s.arr.map((_, i) => {
+      let ptrs = '';
+      if (i === s.low && !s.done) ptrs += '<span class="pt-l">L</span>';
+      if (i === s.mid  && !s.done && s.mid <= s.high) ptrs += '<span class="pt-m">M</span>';
+      if (i === s.high && !s.done && s.mid <= s.high) ptrs += '<span class="pt-h">H</span>';
+      return `<div class="ptr-slot">${ptrs}</div>`;
+    }).join('');
+
+    document.getElementById('explBox').innerHTML = s.expl;
+    document.getElementById('stepCounter').textContent = `Step ${currentStep} / ${steps.length - 1}`;
+    document.getElementById('btnPrev').disabled = currentStep === 0;
+    document.getElementById('btnNext').disabled = currentStep === steps.length - 1;
+  }
+
+  function nextStep()    { if (currentStep < steps.length - 1) { currentStep++; render(); } }
+  function prevStep()    { if (currentStep > 0)                { currentStep--; render(); } }
+  function resetStepper(){ currentStep = 0; render(); }
+
+  render();
+
+  // Scroll-spy for sidebar
+  (function(){
+    const links = document.querySelectorAll('#sidebar .sb-link');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = '#' + e.target.id;
+          links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === id));
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('.card[id]').forEach(s => obs.observe(s));
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadane's Algorithm — Deep Dive with Striver</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   THEME VARIABLES
+══════════════════════════════════════════ */
+:root {
+  --bg:       #07090f;
+  --bg2:      #0e1118;
+  --surface:  #131720;
+  --surface2: #1a2030;
+  --border:   #252d40;
+  --accent:   #06d6a0;   /* teal-green — distinct from Two Pointer's orange */
+  --accent2:  #ffd166;   /* warm yellow */
+  --accent3:  #ef476f;   /* pink-red for negatives */
+  --blue:     #4895ef;
+  --purple:   #b5179e;
+  --text:     #e8edf5;
+  --muted:    #5a677d;
+  --code-bg:  #090c14;
+  --positive: #06d6a0;
+  --negative: #ef476f;
+}
+html.light {
+  --bg:       #f4f6f0;
+  --bg2:      #eef0ea;
+  --surface:  #ffffff;
+  --surface2: #edf0e8;
+  --border:   #d2d9c8;
+  --accent:   #059669;
+  --accent2:  #b45309;
+  --accent3:  #dc2626;
+  --blue:     #1d6fcf;
+  --purple:   #8b108a;
+  --text:     #111820;
+  --muted:    #5a6a55;
+  --code-bg:  #e8ece2;
+  --positive: #059669;
+  --negative: #dc2626;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  line-height: 1.7;
+  overflow-x: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ── THEME TOGGLE ── */
+.theme-btn {
+  position: fixed; top: 16px; right: 20px; z-index: 999;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 7px 16px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text);
+  display: flex; align-items: center; gap: 7px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── LEFT SIDEBAR ── */
+#sidebar {
+  position: fixed; top: 0; left: 0;
+  width: 230px; height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  z-index: 900;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transition: background 0.3s, border-color 0.3s, transform 0.3s;
+}
+.sb-header {
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sb-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem; font-weight: 700;
+  color: var(--accent); letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.sb-actions { display: flex; gap: 7px; }
+#backHome {
+  flex: 1; display: flex; align-items: center; gap: 5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px;
+  font-size: 0.7rem; font-weight: 600;
+  color: var(--text); text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s;
+}
+#backHome:hover { border-color: var(--accent); color: var(--accent); }
+.sb-links { flex: 1; overflow-y: auto; padding: 6px 0; }
+.sb-links::-webkit-scrollbar { width: 3px; }
+.sb-links::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sb-link {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 14px;
+  cursor: pointer; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  transition: all 0.15s; border-left: 2px solid transparent;
+  border-top: none; border-right: none; border-bottom: none;
+  background: none; width: 100%; text-align: left;
+}
+.sb-link:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.sb-link.active { color: var(--accent); border-left: 2px solid var(--accent); background: rgba(6,214,160,0.07); }
+html.light .sb-link.active { background: rgba(5,150,105,0.07); }
+.sb-num {
+  font-size: 9px; font-weight: 700;
+  background: var(--accent); color: #000;
+  padding: 2px 6px; border-radius: 2px; flex-shrink: 0;
+}
+body { padding-left: 230px; }
+#menuBtn {
+  display: none;
+  position: fixed; top: 12px; left: 12px; z-index: 1001;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 7px 10px; font-size: 1.1rem;
+  cursor: pointer; color: var(--text);
+}
+#sbOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 899; }
+#sbOverlay.open { display: block; }
+@media(max-width: 768px) {
+  body { padding-left: 0; }
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.open { transform: translateX(0); }
+  #menuBtn { display: flex; }
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 70px 40px 55px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+.hero-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 50%, rgba(6,214,160,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(255,209,102,0.06) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+}
+html.light .hero-bg {
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 50%, rgba(5,150,105,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(180,83,9,0.06) 0%, transparent 60%),
+    linear-gradient(180deg, #eef0ea 0%, #f4f6f0 100%);
+}
+.episode-tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 3px;
+  color: var(--accent); text-transform: uppercase;
+  background: rgba(6,214,160,0.1);
+  border: 1px solid rgba(6,214,160,0.3);
+  padding: 5px 16px; border-radius: 20px;
+  margin-bottom: 24px;
+}
+html.light .episode-tag {
+  background: rgba(5,150,105,0.1);
+  border-color: rgba(5,150,105,0.3);
+}
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(44px, 7vw, 86px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.hero h1 span { color: var(--accent); }
+.hero-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 36px; letter-spacing: 1px;
+}
+.chapter-nav {
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+.chapter-nav button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 8px 18px; border-radius: 8px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.chapter-nav button:hover,
+.chapter-nav button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(6,214,160,0.08);
+}
+html.light .chapter-nav button:hover,
+html.light .chapter-nav button.active {
+  background: rgba(5,150,105,0.08);
+}
+
+/* ── PROGRESS ── */
+.progress-wrap { max-width: 860px; margin: 0 auto; padding: 28px 24px 0; }
+.prog-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.4s ease; }
+.prog-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* ── MAIN ── */
+.main { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
+.section { display: none; animation: fadeUp 0.35s ease; }
+.section.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── TYPOGRAPHY ── */
+.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 34px; font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text); margin-bottom: 6px;
+}
+.sec-title span { color: var(--accent); }
+.sec-sub {
+  font-size: 13px; color: var(--muted);
+  padding-bottom: 20px; margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+h3 { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 700; color: var(--text); margin: 30px 0 10px; }
+p  { color: var(--muted); font-size: 15px; margin-bottom: 14px; }
+strong { color: var(--text); }
+
+/* ── STRIVER BOX ── */
+.sv {
+  border-left: 3px solid var(--accent);
+  background: linear-gradient(135deg, rgba(6,214,160,0.06), rgba(255,209,102,0.03));
+  border-radius: 0 12px 12px 0;
+  padding: 18px 22px; margin: 24px 0;
+}
+.sv::before {
+  content: '🎯 STRIVER SAYS';
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 2px;
+  color: var(--accent); font-weight: 700;
+  display: block; margin-bottom: 8px;
+}
+.sv p { color: var(--text); opacity: 0.85; font-size: 15px; margin: 0; }
+
+/* ── CODE ── */
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; line-height: 1.85;
+  margin: 14px 0 22px;
+}
+.kw  { color: var(--accent); }
+.fn  { color: var(--blue); }
+.cm  { color: var(--muted); font-style: italic; }
+.num { color: var(--accent2); }
+.typ { color: var(--purple); }
+.vr  { color: var(--text); }
+html.light pre { color: #1a2410; }
+
+/* ── PILLS ── */
+.pills { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 26px; }
+.pill {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+}
+.pill .lbl { color: var(--muted); font-size: 10px; display: block; letter-spacing: 1px; text-transform: uppercase; }
+.pill .val { color: var(--accent); font-weight: 700; font-size: 15px; }
+.pill.bad .val { color: var(--negative); }
+
+/* ── INSIGHT ── */
+.insight {
+  background: rgba(6,214,160,0.05);
+  border: 1px solid rgba(6,214,160,0.2);
+  border-radius: 10px; padding: 16px 20px;
+  margin: 18px 0; font-size: 14px;
+  color: var(--accent);
+  font-family: 'Nunito', sans-serif;
+}
+html.light .insight { background: rgba(5,150,105,0.06); border-color: rgba(5,150,105,0.25); }
+.insight strong { color: var(--accent); }
+
+/* ── VISUALIZER ── */
+.viz {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 26px;
+  margin: 24px 0;
+}
+.viz-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--accent);
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+}
+.viz-title::before { content: '▶'; }
+
+/* array cells */
+.arr-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; margin: 12px 0 6px; min-height: 90px; }
+.cell {
+  width: 54px; height: 54px;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px; font-weight: 700;
+  color: var(--text);
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+  cursor: default;
+}
+.cell .ci {
+  position: absolute; top: -20px;
+  font-size: 10px; color: var(--muted); font-weight: 400;
+}
+.cell.cur   { border-color: var(--accent2); background: rgba(255,209,102,0.15); box-shadow: 0 0 16px rgba(255,209,102,0.35); color: var(--accent2); }
+.cell.inwin { border-color: var(--accent); background: rgba(6,214,160,0.12); color: var(--accent); }
+.cell.best  { border-color: var(--accent); background: rgba(6,214,160,0.22); box-shadow: 0 0 20px rgba(6,214,160,0.4); color: var(--accent); }
+.cell.neg   { border-color: var(--negative); background: rgba(239,71,111,0.08); color: var(--negative); }
+.cell.past  { opacity: 0.35; }
+.cell.pos-val  { border-color: rgba(6,214,160,0.3); }
+.cell.neg-val  { border-color: rgba(239,71,111,0.3); }
+
+/* variables display */
+.var-row {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  margin: 14px 0; font-family: 'JetBrains Mono', monospace;
+}
+.var-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px;
+  font-size: 13px; min-width: 110px;
+  transition: all 0.3s;
+}
+.var-box .vname { color: var(--muted); font-size: 10px; letter-spacing: 1px; display: block; margin-bottom: 3px; text-transform: uppercase; }
+.var-box .vval  { color: var(--text); font-weight: 700; font-size: 16px; }
+.var-box.changed { border-color: var(--accent2); background: rgba(255,209,102,0.1); }
+.var-box.changed .vval { color: var(--accent2); }
+.var-box.best-box { border-color: var(--accent); }
+.var-box.best-box .vval { color: var(--accent); }
+
+/* step log */
+.slog {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px;
+  margin-top: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--muted);
+  min-height: 52px; line-height: 1.7;
+  transition: background 0.3s;
+}
+.hl  { color: var(--accent); font-weight: 700; }
+.hl2 { color: var(--accent2); font-weight: 700; }
+.hlr { color: var(--negative); font-weight: 700; }
+.hlb { color: var(--blue); font-weight: 700; }
+
+/* controls */
+.ctrls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; align-items: center; }
+.btn {
+  padding: 9px 22px; border-radius: 8px; border: none;
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-g { background: var(--accent); color: #07090f; }
+.btn-g:hover { filter: brightness(1.1); }
+.btn-s { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-s:hover { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+html.light .btn-g { color: #fff; }
+
+/* input group */
+.ig { display: flex; gap: 10px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+.ig label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+.ig input {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 14px; border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  outline: none; width: 260px;
+}
+.ig input:focus { border-color: var(--accent); }
+
+/* table */
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 14px 0 26px; }
+th {
+  background: var(--surface2); color: var(--accent);
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 12px 16px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--muted); }
+td:first-child { color: var(--text); font-weight: 700; }
+tr:hover td { background: rgba(6,214,160,0.03); }
+
+/* quiz */
+.qblock { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin: 20px 0; }
+.qblock .q { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+.qopts { display: flex; flex-direction: column; gap: 9px; }
+.qopt {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 18px;
+  cursor: pointer; font-size: 14px; color: var(--text);
+  transition: all 0.2s; text-align: left;
+  font-family: 'Nunito', sans-serif;
+}
+.qopt:hover { border-color: var(--accent); color: var(--accent); }
+.qopt.correct { border-color: var(--positive); background: rgba(6,214,160,0.1); color: var(--positive); }
+.qopt.wrong   { border-color: var(--negative); background: rgba(239,71,111,0.1); color: var(--negative); }
+.qexp {
+  margin-top: 12px; padding: 12px 16px;
+  background: var(--code-bg); border-radius: 8px;
+  font-size: 13px; color: var(--muted); display: none;
+  font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+}
+
+/* bottom nav */
+.bnav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 48px; padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+.bnav span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+/* legend */
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; font-size: 12px; margin: 8px 0; }
+.ldot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: middle; }
+
+/* chart bars */
+.chart-wrap { display: flex; align-items: flex-end; gap: 5px; height: 100px; margin: 14px 0; }
+.bar {
+  flex: 1; border-radius: 4px 4px 0 0;
+  display: flex; align-items: center; justify-content: flex-end;
+  flex-direction: column; font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700; padding-bottom: 4px;
+  transition: all 0.4s ease; position: relative;
+  min-height: 8px;
+}
+.bar .bval { position: absolute; top: -18px; font-size: 11px; color: var(--muted); }
+
+/* neg-sum warning box */
+.warn-box {
+  background: rgba(239,71,111,0.08);
+  border: 1px solid rgba(239,71,111,0.3);
+  border-radius: 10px; padding: 14px 18px;
+  font-size: 14px; color: var(--negative);
+  margin: 16px 0; font-family: 'JetBrains Mono', monospace;
+}
+
+/* scroll animation for bars */
+@keyframes growBar { from { transform: scaleY(0); transform-origin: bottom; } to { transform: scaleY(1); } }
+
+/* problem card */
+.pcard {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 22px; margin: 18px 0;
+}
+.ptag {
+  display: inline-block;
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  padding: 2px 10px; border-radius: 4px; margin-right: 6px; margin-bottom: 10px;
+}
+.ptag.med  { background: rgba(255,209,102,0.12); color: var(--accent2); }
+.ptag.pat  { background: rgba(6,214,160,0.1); color: var(--accent); }
+.pcard h4  { color: var(--text); font-family: 'Syne', sans-serif; font-size: 16px; margin-bottom: 8px; }
+
+/* score box */
+.score-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-top: 28px; text-align: center; display: none; }
+.score-num { font-family: 'Syne', sans-serif; font-size: 64px; font-weight: 800; color: var(--accent); }
+
+/* custom array input */
+.arr-input-row { display: flex; gap: 8px; align-items: center; margin: 14px 0; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<button id="menuBtn" onclick="document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('open')">☰</button>
+<div id="sbOverlay" onclick="document.getElementById('sidebar').classList.remove('open');this.classList.remove('open')"></div>
+
+<nav id="sidebar">
+  <div class="sb-header">
+    <div class="sb-brand">📈 Kadane's Algo</div>
+    <div class="sb-actions">
+      <a href="index.html" id="backHome">← Home</a>
+    </div>
+  </div>
+  <div class="sb-links">
+    <button class="sb-link active" onclick="go(0);setSbActive(this)"><span class="sb-num">01</span>The Problem</button>
+    <button class="sb-link" onclick="go(1);setSbActive(this)"><span class="sb-num">02</span>Brute Force</button>
+    <button class="sb-link" onclick="go(2);setSbActive(this)"><span class="sb-num">03</span>The Intuition</button>
+    <button class="sb-link" onclick="go(3);setSbActive(this)"><span class="sb-num">04</span>Kadane's Logic</button>
+    <button class="sb-link" onclick="go(4);setSbActive(this)"><span class="sb-num">05</span>Live Dry Run</button>
+    <button class="sb-link" onclick="go(5);setSbActive(this)"><span class="sb-num">06</span>Edge Cases</button>
+    <button class="sb-link" onclick="go(6);setSbActive(this)"><span class="sb-num">07</span>Extensions</button>
+    <button class="sb-link" onclick="go(7);setSbActive(this)"><span class="sb-num">08</span>Quiz</button>
+  </div>
+</nav>
+
+<button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️ Light</button>
+<a href="index.html" style="display:none" id="backHomeOld"></a>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div style="position:relative">
+    <div class="episode-tag">DSA Series · Episode 05</div>
+    <h1>Kadane's <span>Algorithm</span></h1>
+    <div class="hero-sub">Maximum Subarray Sum — from O(n³) brute force to O(n) genius</div>
+    <div class="chapter-nav">
+      <button class="active" onclick="go(0)">01 · The Problem</button>
+      <button onclick="go(1)">02 · Brute Force</button>
+      <button onclick="go(2)">03 · The Intuition</button>
+      <button onclick="go(3)">04 · Kadane's Logic</button>
+      <button onclick="go(4)">05 · Live Dry Run</button>
+      <button onclick="go(5)">06 · Edge Cases</button>
+      <button onclick="go(6)">07 · Extensions</button>
+      <button onclick="go(7)">08 · Quiz</button>
+    </div>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="prog-bar"><div class="prog-fill" id="pFill" style="width:12.5%"></div></div>
+  <div class="prog-label" id="pLabel">Chapter 1 of 8 · The Problem</div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════
+     SECTION 0 — THE PROBLEM
+═══════════════════════════════════════ -->
+<div class="section active" id="s0">
+  <div class="sec-title">The <span>Problem</span></div>
+  <div class="sec-sub">LeetCode #53 · Maximum Subarray · Understand it deeply before solving</div>
+
+  <div class="pcard">
+    <span class="ptag med">Medium</span><span class="ptag pat">DP / Greedy</span>
+    <h4>Maximum Subarray</h4>
+    <p>Given an integer array <code style="color:var(--accent)">nums</code>, find the contiguous subarray (containing at least one element) that has the largest sum and return its sum.</p>
+    <p style="margin-top:10px"><strong>Example:</strong> nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4] → Output: <strong style="color:var(--accent)">6</strong> (subarray [4, -1, 2, 1])</p>
+  </div>
+
+  <div class="sv"><p>Bhai, pehle problem ko acchi tarah samjho. Hume poora array nahi lena — ek <em>subarray</em> lena hai jo contiguous ho (elements adjacent hon) aur uska sum maximum ho. Negative values bhi hain — wahi to cheez complicated karti hai!</p></div>
+
+  <h3>What is a Subarray?</h3>
+  <p>A subarray is a <strong>contiguous portion</strong> of an array. For <code style="color:var(--accent)">[1, 2, 3]</code>: valid subarrays are [1], [2], [3], [1,2], [2,3], [1,2,3]. NOT [1,3] — that's a subsequence, not a subarray.</p>
+
+  <h3>Why is it tricky?</h3>
+  <p>With all positives, the answer is always the whole array. But with negatives, you have to decide: <em>do I include a negative number hoping the next positive compensates?</em></p>
+
+  <div class="viz">
+    <div class="viz-title">Visualize the Problem</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-family:'JetBrains Mono',monospace">Array: [-2, 1, -3, 4, -1, 2, 1, -5, 4]</div>
+    <div class="arr-row" id="probArr"></div>
+    <div class="legend" style="margin-top:20px">
+      <span><span class="ldot" style="background:var(--positive)"></span>Positive</span>
+      <span><span class="ldot" style="background:var(--negative)"></span>Negative</span>
+      <span><span class="ldot" style="background:var(--accent);opacity:0.5"></span>Best subarray [4,-1,2,1] = 6</span>
+    </div>
+    <div style="margin-top:14px;font-size:13px;color:var(--muted);font-family:'JetBrains Mono',monospace">
+      Some subarrays: [4,-1,2,1] = <span style="color:var(--accent);font-weight:700">6 ✓ max</span> · [-2,1,-3,4] = 0 · [1,-3,4,-1,2,1] = 4 · entire array = 2
+    </div>
+  </div>
+
+  <div class="pills">
+    <div class="pill bad"><span class="lbl">Brute O(n³)</span><span class="val">TLE 🔴</span></div>
+    <div class="pill"><span class="lbl">Better O(n²)</span><span class="val">Slow 🟡</span></div>
+    <div class="pill"><span class="lbl">Kadane O(n)</span><span class="val">Optimal 🟢</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECTION 1 — BRUTE FORCE
+═══════════════════════════════════════ -->
+<div class="section" id="s1">
+  <div class="sec-title">Brute <span>Force</span></div>
+  <div class="sec-sub">O(n²) and O(n³) — understand why they fail, then appreciate Kadane</div>
+
+  <div class="sv"><p>Striver always says — pehle brute force socho, phir optimize karo. Agar directly Kadane yaad karo bina brute soche toh interview mein ek baar bhool jaoge aur sab khatam. Pattern samjho!</p></div>
+
+  <h3>O(n³) — Try Every Subarray + Sum Each</h3>
+  <pre>
+<span class="cm">// Fix start i, fix end j, sum from i to j</span>
+<span class="kw">int</span> <span class="vr">maxSum</span> = <span class="fn">Integer</span>.MIN_VALUE;
+
+<span class="kw">for</span> (<span class="kw">int</span> <span class="vr">i</span> = <span class="num">0</span>; <span class="vr">i</span> &lt; n; <span class="vr">i</span>++) {
+    <span class="kw">for</span> (<span class="kw">int</span> <span class="vr">j</span> = <span class="vr">i</span>; <span class="vr">j</span> &lt; n; <span class="vr">j</span>++) {
+        <span class="kw">int</span> <span class="vr">sum</span> = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> <span class="vr">k</span> = <span class="vr">i</span>; <span class="vr">k</span> &lt;= <span class="vr">j</span>; <span class="vr">k</span>++) {
+            <span class="vr">sum</span> += nums[<span class="vr">k</span>];  <span class="cm">// recompute every time 😞</span>
+        }
+        <span class="vr">maxSum</span> = <span class="fn">Math</span>.max(<span class="vr">maxSum</span>, <span class="vr">sum</span>);
+    }
+}
+<span class="cm">// Time: O(n³) — TLE on n > 1000</span></pre>
+
+  <h3>O(n²) — Better: Carry Running Sum</h3>
+  <pre>
+<span class="cm">// Fix start i, extend end j while accumulating</span>
+<span class="kw">int</span> <span class="vr">maxSum</span> = <span class="fn">Integer</span>.MIN_VALUE;
+
+<span class="kw">for</span> (<span class="kw">int</span> <span class="vr">i</span> = <span class="num">0</span>; <span class="vr">i</span> &lt; n; <span class="vr">i</span>++) {
+    <span class="kw">int</span> <span class="vr">sum</span> = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> <span class="vr">j</span> = <span class="vr">i</span>; <span class="vr">j</span> &lt; n; <span class="vr">j</span>++) {
+        <span class="vr">sum</span> += nums[<span class="vr">j</span>];   <span class="cm">// build sum incrementally — better!</span>
+        <span class="vr">maxSum</span> = <span class="fn">Math</span>.max(<span class="vr">maxSum</span>, <span class="vr">sum</span>);
+    }
+}
+<span class="cm">// Time: O(n²) — still fails on n > 10,000</span></pre>
+
+  <div class="warn-box">
+    Both approaches generate every possible subarray. For n = 10⁵ (LeetCode constraints), O(n²) = 10¹⁰ operations. That's ~10 billion. The judge will reject it. We need O(n).
+  </div>
+
+  <div class="insight">
+    <strong>The key question →</strong> Can I decide whether to include the current element in my window — <em>without restarting the entire calculation</em> — just by knowing one variable?
+    <br><br>Kadane's answer: YES. Just track the <strong>running current sum</strong>. If it goes negative, drop everything and start fresh.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECTION 2 — INTUITION
+═══════════════════════════════════════ -->
+<div class="section" id="s2">
+  <div class="sec-title">Build the <span>Intuition</span></div>
+  <div class="sec-sub">The "Reset" insight — why we throw away a negative prefix</div>
+
+  <div class="sv"><p>Yeh wali insight sabse important hai. Agar mera current sum negative ho gaya, toh main usse aage carry kyun karunga? Wo aage aane wale elements ko aur kamzor bana dega! Toh main reset kar deta hoon zero pe — fresh start. Bas yahi Kadane hai.</p></div>
+
+  <h3>The "Drag" Analogy</h3>
+  <p>Think of running a race carrying a heavy bag. The bag is your current subarray sum. If the bag becomes a <strong style="color:var(--negative)">negative weight</strong> — it's actually <em>slowing you down</em>. So you drop it and run free. Starting fresh (sum = 0) is always better than carrying a negative burden.</p>
+
+  <h3>Step-by-Step Intuition Demo</h3>
+  <div class="viz">
+    <div class="viz-title">Intuition Walkthrough · [-2, 1, -3, 4, -1, 2, 1, -5, 4]</div>
+    <div class="arr-row" id="intArr"></div>
+    <div class="var-row">
+      <div class="var-box" id="int-cur"><span class="vname">current_sum</span><span class="vval" id="int-cur-v">0</span></div>
+      <div class="var-box best-box" id="int-max"><span class="vname">max_sum</span><span class="vval" id="int-max-v">-∞</span></div>
+    </div>
+    <div class="slog" id="intLog">Press "Next Step" to walk through the intuition.</div>
+    <div class="ctrls">
+      <button class="btn btn-g" onclick="intStep()">Next Step ›</button>
+      <button class="btn btn-s" onclick="intReset()">Reset</button>
+    </div>
+  </div>
+
+  <h3>The One-Line Rule</h3>
+  <div class="insight">
+    At every element: <strong>curSum += nums[i]</strong><br>
+    If <strong>curSum &lt; 0</strong> → reset curSum = 0 (drop the negative prefix)<br>
+    Always: <strong>maxSum = max(maxSum, curSum)</strong>
+  </div>
+
+  <h3>Why does this work? (Proof by intuition)</h3>
+  <p>Any optimal subarray has a <em>start</em> and an <em>end</em>. At the start of the optimal subarray, the running sum before it was either zero or we just reset. Why? Because if the running sum before it was positive, it would have been included in the optimal subarray. If it was negative, we reset — which is exactly what Kadane does. ✓</p>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECTION 3 — KADANE'S CODE
+═══════════════════════════════════════ -->
+<div class="section" id="s3">
+  <div class="sec-title">Kadane's <span>Code</span></div>
+  <div class="sec-sub">Pseudocode → Java — line by line explanation</div>
+
+  <div class="sv"><p>Ab code likhte hain. Pehle pseudocode, phir Java. Notice karo kitna clean hai — sirf ek loop, do variables. Yahi to beauty hai Kadane ki. Interview mein yeh 5 lines likhoge aur interviewer impress ho jayega!</p></div>
+
+  <h3>Pseudocode</h3>
+  <pre>
+<span class="cm">// Kadane's Algorithm — Pseudocode</span>
+curSum  = 0
+maxSum  = -INFINITY   <span class="cm">// handles all-negative arrays</span>
+
+<span class="kw">for each</span> num <span class="kw">in</span> nums:
+    curSum  = curSum + num           <span class="cm">// extend current window</span>
+    maxSum  = max(maxSum, curSum)    <span class="cm">// update global best</span>
+    <span class="kw">if</span> curSum &lt; 0:
+        curSum = 0                   <span class="cm">// reset — negative prefix is useless</span>
+
+<span class="kw">return</span> maxSum</pre>
+
+  <h3>Java Implementation</h3>
+  <pre>
+<span class="kw">public int</span> <span class="fn">maxSubArray</span>(<span class="typ">int[]</span> <span class="vr">nums</span>) {
+    <span class="kw">int</span> <span class="vr">curSum</span>  = <span class="num">0</span>;
+    <span class="kw">int</span> <span class="vr">maxSum</span>  = <span class="fn">Integer</span>.MIN_VALUE; <span class="cm">// handles all-negative</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> <span class="vr">num</span> : <span class="vr">nums</span>) {
+        <span class="vr">curSum</span> += <span class="vr">num</span>;
+        <span class="vr">maxSum</span>  = <span class="fn">Math</span>.max(<span class="vr">maxSum</span>, <span class="vr">curSum</span>);
+
+        <span class="kw">if</span> (<span class="vr">curSum</span> &lt; <span class="num">0</span>) {
+            <span class="vr">curSum</span> = <span class="num">0</span>; <span class="cm">// discard negative prefix</span>
+        }
+    }
+    <span class="kw">return</span> <span class="vr">maxSum</span>;
+}</pre>
+
+  <h3>Java — With Subarray Indices (Bonus!)</h3>
+  <pre>
+<span class="kw">public int</span> <span class="fn">maxSubArrayWithIndices</span>(<span class="typ">int[]</span> <span class="vr">nums</span>) {
+    <span class="kw">int</span> <span class="vr">curSum</span> = <span class="num">0</span>, <span class="vr">maxSum</span> = <span class="fn">Integer</span>.MIN_VALUE;
+    <span class="kw">int</span> <span class="vr">start</span>  = <span class="num">0</span>, <span class="vr">ansStart</span> = <span class="num">0</span>, <span class="vr">ansEnd</span> = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> <span class="vr">i</span> = <span class="num">0</span>; <span class="vr">i</span> &lt; nums.length; <span class="vr">i</span>++) {
+        <span class="vr">curSum</span> += nums[<span class="vr">i</span>];
+
+        <span class="kw">if</span> (<span class="vr">curSum</span> &gt; <span class="vr">maxSum</span>) {
+            <span class="vr">maxSum</span>   = <span class="vr">curSum</span>;
+            <span class="vr">ansStart</span> = <span class="vr">start</span>;   <span class="cm">// record window start</span>
+            <span class="vr">ansEnd</span>   = <span class="vr">i</span>;       <span class="cm">// record window end</span>
+        }
+        <span class="kw">if</span> (<span class="vr">curSum</span> &lt; <span class="num">0</span>) {
+            <span class="vr">curSum</span> = <span class="num">0</span>;
+            <span class="vr">start</span>  = <span class="vr">i</span> + <span class="num">1</span>;     <span class="cm">// next window starts after reset</span>
+        }
+    }
+    <span class="cm">// subarray is nums[ansStart..ansEnd]</span>
+    <span class="kw">return</span> <span class="vr">maxSum</span>;
+}</pre>
+
+  <div class="pills">
+    <div class="pill"><span class="lbl">Time Complexity</span><span class="val">O(n)</span></div>
+    <div class="pill"><span class="lbl">Space Complexity</span><span class="val">O(1)</span></div>
+    <div class="pill bad"><span class="lbl">Brute Force</span><span class="val">O(n³) → O(n²)</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECTION 4 — LIVE DRY RUN
+═══════════════════════════════════════ -->
+<div class="section" id="s4">
+  <div class="sec-title">Live <span>Dry Run</span></div>
+  <div class="sec-sub">Watch Kadane execute step by step — try your own array!</div>
+
+  <div class="sv"><p>Yeh wala section sabse important hai bhai. Khud dry run karo apne haath se ek baar — tabhi samjhoge. Niche apna array dalo aur step by step chalao. Dekho kab reset hota hai, kab maxSum update hota hai!</p></div>
+
+  <div class="viz">
+    <div class="viz-title">Kadane's Algorithm · Interactive Dry Run</div>
+
+    <div class="arr-input-row">
+      <label style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">Array (comma-separated):</label>
+      <input type="text" id="dryInput" value="-2,1,-3,4,-1,2,1,-5,4" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;width:280px">
+      <button class="btn btn-s" style="font-size:12px;padding:8px 14px" onclick="dryReset()">Apply ↵</button>
+    </div>
+
+    <div class="arr-row" id="dryArr"></div>
+
+    <div class="legend">
+      <span><span class="ldot" style="background:var(--accent2)"></span>Current</span>
+      <span><span class="ldot" style="background:var(--accent)"></span>In window</span>
+      <span><span class="ldot" style="background:var(--accent);opacity:0.6"></span>Best answer</span>
+      <span><span class="ldot" style="background:var(--negative)"></span>Triggered reset</span>
+    </div>
+
+    <div class="var-row">
+      <div class="var-box" id="dry-cur"><span class="vname">curSum</span><span class="vval" id="dry-cur-v">0</span></div>
+      <div class="var-box best-box" id="dry-max"><span class="vname">maxSum</span><span class="vval" id="dry-max-v">-∞</span></div>
+      <div class="var-box" id="dry-idx"><span class="vname">index i</span><span class="vval" id="dry-idx-v">-</span></div>
+      <div class="var-box" id="dry-num"><span class="vname">nums[i]</span><span class="vval" id="dry-num-v">-</span></div>
+    </div>
+
+    <div class="slog" id="dryLog">Press "Next Step" to begin the dry run.</div>
+
+    <div class="ctrls">
+      <button class="btn btn-g" id="dryBtn" onclick="dryStep()">Next Step ›</button>
+      <button class="btn btn-s" onclick="dryReset()">Reset</button>
+      <button class="btn btn-s" onclick="dryAuto()" id="autoBtn">▶ Auto Play</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECTION 5 — EDGE CASES
+═══════════════════════════════════════ -->
+<div class="section" id="s5">
+  <div class="sec-title">Edge <span>Cases</span></div>
+  <div class="sec-sub">Where beginners make mistakes — and how to handle them</div>
+
+  <div class="sv"><p>Interview mein edge cases pooche jate hain. "All negatives" — yeh sabse common mistake hai. Agar tum maxSum = 0 se initialize karo, toh all-negative array pe wrong answer aayega. Isliye Integer.MIN_VALUE use karo!</p></div>
+
+  <h3>Case 1: All Negative Array</h3>
+  <div class="viz">
+    <div class="viz-title">All Negatives · [-3, -1, -4, -2]</div>
+    <div class="arr-row" id="negArr"></div>
+    <div class="slog" id="negLog">Press to simulate all-negative array.</div>
+    <div class="var-row">
+      <div class="var-box" id="neg-cur"><span class="vname">curSum</span><span class="vval" id="neg-cur-v">0</span></div>
+      <div class="var-box best-box"><span class="vname">maxSum</span><span class="vval" id="neg-max-v">-∞</span></div>
+    </div>
+    <div class="ctrls">
+      <button class="btn btn-g" onclick="negStep()">Next Step ›</button>
+      <button class="btn btn-s" onclick="negReset()">Reset</button>
+    </div>
+    <div class="warn-box" style="margin-top:14px">
+      ⚠️ If you initialize maxSum = 0, you'd return 0 — WRONG!<br>
+      The answer is -1 (least negative). Always use Integer.MIN_VALUE.
+    </div>
+  </div>
+
+  <h3>Case 2: Single Element</h3>
+  <p>Array of one element <code style="color:var(--accent)">[5]</code> → answer is 5. <code style="color:var(--accent)">[-7]</code> → answer is -7. Works fine because maxSum is updated before the reset check.</p>
+
+  <h3>Case 3: All Same Positive</h3>
+  <p><code style="color:var(--accent)">[3, 3, 3]</code> → answer is 9 (entire array). curSum never goes negative, keeps accumulating. ✓</p>
+
+  <table>
+    <tr><th>Input</th><th>Expected</th><th>Kadane returns</th><th>⚠️ Wrong if maxSum=0</th></tr>
+    <tr><td>[-2,-3,-1,-5]</td><td>-1</td><td style="color:var(--positive)">-1 ✓</td><td style="color:var(--negative)">0 ✗</td></tr>
+    <tr><td>[5]</td><td>5</td><td style="color:var(--positive)">5 ✓</td><td style="color:var(--positive)">5 ✓</td></tr>
+    <tr><td>[1,2,3,4]</td><td>10</td><td style="color:var(--positive)">10 ✓</td><td style="color:var(--positive)">10 ✓</td></tr>
+    <tr><td>[-1,2,-1]</td><td>2</td><td style="color:var(--positive)">2 ✓</td><td style="color:var(--positive)">2 ✓</td></tr>
+    <tr><td>[-5,-3,-4,-2]</td><td>-2</td><td style="color:var(--positive)">-2 ✓</td><td style="color:var(--negative)">0 ✗</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECTION 6 — EXTENSIONS
+═══════════════════════════════════════ -->
+<div class="section" id="s6">
+  <div class="sec-title">Extensions &amp; <span>Variations</span></div>
+  <div class="sec-sub">Kadane is the base — these problems build on it</div>
+
+  <div class="sv"><p>Ek baar Kadane ban gaya toh uske variations bhi aate hain interviews mein. Maximum Product Subarray, Circular Subarray, Print the subarray — sab mein Kadane ka concept use hota hai. Inhe bhi dekh lo!</p></div>
+
+  <table>
+    <tr><th>Problem</th><th>Variation</th><th>Key Change</th><th>LC#</th></tr>
+    <tr><td>Max Subarray Sum</td><td>Base Kadane</td><td>Reset when curSum &lt; 0</td><td>#53</td></tr>
+    <tr><td>Print the Subarray</td><td>Track indices</td><td>Store start/ansStart/ansEnd</td><td>#53</td></tr>
+    <tr><td>Max Product Subarray</td><td>Track min & max</td><td>Negative × negative = positive</td><td>#152</td></tr>
+    <tr><td>Circular Max Subarray</td><td>Two passes</td><td>max(kadane, totalSum - minKadane)</td><td>#918</td></tr>
+    <tr><td>Count subarrays &gt; sum K</td><td>Prefix sums</td><td>Combine with hashmap</td><td>#560</td></tr>
+  </table>
+
+  <h3>Maximum Product Subarray — The Twist</h3>
+  <div class="insight">
+    Unlike sum, with products a <strong>negative × negative = positive</strong>. So we must track <em>both</em> the maximum and minimum at each step, because a minimum (most negative) might become maximum when multiplied by a negative number ahead.
+  </div>
+
+  <pre>
+<span class="kw">public int</span> <span class="fn">maxProduct</span>(<span class="typ">int[]</span> <span class="vr">nums</span>) {
+    <span class="kw">int</span> <span class="vr">maxProd</span> = nums[<span class="num">0</span>];
+    <span class="kw">int</span> <span class="vr">curMax</span>  = nums[<span class="num">0</span>];   <span class="cm">// track max ending here</span>
+    <span class="kw">int</span> <span class="vr">curMin</span>  = nums[<span class="num">0</span>];   <span class="cm">// track min ending here (for neg×neg)</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> <span class="vr">i</span> = <span class="num">1</span>; <span class="vr">i</span> &lt; nums.length; <span class="vr">i</span>++) {
+        <span class="kw">int</span> <span class="vr">tmp</span> = <span class="vr">curMax</span>;
+        <span class="vr">curMax</span> = <span class="fn">Math</span>.max(nums[<span class="vr">i</span>], <span class="fn">Math</span>.max(<span class="vr">curMax</span>*nums[<span class="vr">i</span>], <span class="vr">curMin</span>*nums[<span class="vr">i</span>]));
+        <span class="vr">curMin</span> = <span class="fn">Math</span>.min(nums[<span class="vr">i</span>], <span class="fn">Math</span>.min(<span class="vr">tmp</span>*nums[<span class="vr">i</span>],   <span class="vr">curMin</span>*nums[<span class="vr">i</span>]));
+        <span class="vr">maxProd</span> = <span class="fn">Math</span>.max(<span class="vr">maxProd</span>, <span class="vr">curMax</span>);
+    }
+    <span class="kw">return</span> <span class="vr">maxProd</span>;
+}</pre>
+
+  <h3>Circular Subarray — The Elegant Trick</h3>
+  <pre>
+<span class="cm">// Max circular subarray sum</span>
+<span class="cm">// Answer is either: normal kadane, OR totalSum - minSubarraySum</span>
+<span class="kw">public int</span> <span class="fn">maxSubarraySumCircular</span>(<span class="typ">int[]</span> <span class="vr">nums</span>) {
+    <span class="kw">int</span> <span class="vr">totalSum</span> = <span class="num">0</span>;
+    <span class="kw">int</span> <span class="vr">maxSum</span>   = nums[<span class="num">0</span>], <span class="vr">curMax</span> = <span class="num">0</span>;
+    <span class="kw">int</span> <span class="vr">minSum</span>   = nums[<span class="num">0</span>], <span class="vr">curMin</span> = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> <span class="vr">num</span> : <span class="vr">nums</span>) {
+        <span class="vr">curMax</span>   = <span class="fn">Math</span>.max(<span class="vr">curMax</span> + <span class="vr">num</span>, <span class="vr">num</span>);
+        <span class="vr">maxSum</span>   = <span class="fn">Math</span>.max(<span class="vr">maxSum</span>, <span class="vr">curMax</span>);
+        <span class="vr">curMin</span>   = <span class="fn">Math</span>.min(<span class="vr">curMin</span> + <span class="vr">num</span>, <span class="vr">num</span>);
+        <span class="vr">minSum</span>   = <span class="fn">Math</span>.min(<span class="vr">minSum</span>, <span class="vr">curMin</span>);
+        <span class="vr">totalSum</span> += <span class="vr">num</span>;
+    }
+    <span class="cm">// if all negative, circular trick gives 0 (wrong) — use maxSum</span>
+    <span class="kw">return</span> (<span class="vr">maxSum</span> &gt; <span class="num">0</span>) ? <span class="fn">Math</span>.max(<span class="vr">maxSum</span>, <span class="vr">totalSum</span> - <span class="vr">minSum</span>) : <span class="vr">maxSum</span>;
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SECTION 7 — QUIZ
+═══════════════════════════════════════ -->
+<div class="section" id="s7">
+  <div class="sec-title">Test <span>Yourself</span></div>
+  <div class="sec-sub">Striver rapid-fire — answer without looking at the code!</div>
+
+  <div class="qblock">
+    <div class="q">Q1. For the array [-2, -3, 4, -1, -2, 1, 5, -3], what is the maximum subarray sum?</div>
+    <div class="qopts" id="q1">
+      <button class="qopt" onclick="ans('q1',0,2,'The optimal subarray is [4,-1,-2,1,5] = 7. Even though -1 and -2 are negatives, the subsequent positives compensate. So we include them.')">A. 5</button>
+      <button class="qopt" onclick="ans('q1',1,2,'The optimal subarray is [4,-1,-2,1,5] = 7. Even though -1 and -2 are negatives, the subsequent positives compensate. So we include them.')">B. 6</button>
+      <button class="qopt" onclick="ans('q1',2,2,'The optimal subarray is [4,-1,-2,1,5] = 7. Even though -1 and -2 are negatives, the subsequent positives compensate. So we include them.')">C. 7 → subarray [4,-1,-2,1,5]</button>
+      <button class="qopt" onclick="ans('q1',3,2,'The optimal subarray is [4,-1,-2,1,5] = 7. Even though -1 and -2 are negatives, the subsequent positives compensate. So we include them.')">D. 9</button>
+    </div>
+    <div class="qexp" id="q1-e"></div>
+  </div>
+
+  <div class="qblock">
+    <div class="q">Q2. Why initialize maxSum = Integer.MIN_VALUE instead of 0?</div>
+    <div class="qopts" id="q2">
+      <button class="qopt" onclick="ans('q2',0,1,'If all elements are negative (e.g., [-3,-1,-4]), maxSum=0 would return 0 which is wrong. The correct answer is -1. Integer.MIN_VALUE ensures we always pick the actual best element.')">A. Because Integer.MIN_VALUE looks cooler in interviews</button>
+      <button class="qopt" onclick="ans('q2',1,1,'If all elements are negative (e.g., [-3,-1,-4]), maxSum=0 would return 0 which is wrong. The correct answer is -1. Integer.MIN_VALUE ensures we always pick the actual best element.')">B. To correctly handle all-negative arrays where the answer is the least-negative element</button>
+      <button class="qopt" onclick="ans('q2',2,1,'If all elements are negative (e.g., [-3,-1,-4]), maxSum=0 would return 0 which is wrong. The correct answer is -1. Integer.MIN_VALUE ensures we always pick the actual best element.')">C. To avoid integer overflow</button>
+      <button class="qopt" onclick="ans('q2',3,1,'If all elements are negative (e.g., [-3,-1,-4]), maxSum=0 would return 0 which is wrong. The correct answer is -1. Integer.MIN_VALUE ensures we always pick the actual best element.')">D. No reason, 0 works fine too</button>
+    </div>
+    <div class="qexp" id="q2-e"></div>
+  </div>
+
+  <div class="qblock">
+    <div class="q">Q3. In Kadane's algorithm, when do we reset curSum to 0?</div>
+    <div class="qopts" id="q3">
+      <button class="qopt" onclick="ans('q3',0,1,'When curSum becomes negative, carrying it forward would only reduce any future subarray sum. Starting fresh (0) is always better than a negative head start.')">A. When curSum equals 0</button>
+      <button class="qopt" onclick="ans('q3',1,1,'When curSum becomes negative, carrying it forward would only reduce any future subarray sum. Starting fresh (0) is always better than a negative head start.')">B. When curSum becomes negative (curSum &lt; 0)</button>
+      <button class="qopt" onclick="ans('q3',2,1,'When curSum becomes negative, carrying it forward would only reduce any future subarray sum. Starting fresh (0) is always better than a negative head start.')">C. When the current element is negative</button>
+      <button class="qopt" onclick="ans('q3',3,1,'When curSum becomes negative, carrying it forward would only reduce any future subarray sum. Starting fresh (0) is always better than a negative head start.')">D. When curSum is less than maxSum</button>
+    </div>
+    <div class="qexp" id="q3-e"></div>
+  </div>
+
+  <div class="qblock">
+    <div class="q">Q4. What is the time and space complexity of Kadane's algorithm?</div>
+    <div class="qopts" id="q4">
+      <button class="qopt" onclick="ans('q4',0,2,'One pass through the array = O(n) time. Only two variables (curSum, maxSum) regardless of input size = O(1) space.')">A. O(n log n) time, O(n) space</button>
+      <button class="qopt" onclick="ans('q4',1,2,'One pass through the array = O(n) time. Only two variables (curSum, maxSum) regardless of input size = O(1) space.')">B. O(n²) time, O(1) space</button>
+      <button class="qopt" onclick="ans('q4',2,2,'One pass through the array = O(n) time. Only two variables (curSum, maxSum) regardless of input size = O(1) space.')">C. O(n) time, O(1) space</button>
+      <button class="qopt" onclick="ans('q4',3,2,'One pass through the array = O(n) time. Only two variables (curSum, maxSum) regardless of input size = O(1) space.')">D. O(n) time, O(n) space</button>
+    </div>
+    <div class="qexp" id="q4-e"></div>
+  </div>
+
+  <div class="score-box" id="scoreBox">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:6px">YOUR SCORE</div>
+    <div class="score-num" id="scoreNum">0/4</div>
+    <div id="scoreMsg" style="color:var(--muted);font-size:15px;margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="btn btn-s" id="prevBtn" onclick="go(cur-1)" disabled>‹ Previous</button>
+  <span id="bLabel">Chapter 1 / 8</span>
+  <button class="btn btn-g" id="nextBtn" onclick="go(cur+1)">Next ›</button>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════
+let cur = 0;
+const N = 8;
+const TITLES = ['The Problem','Brute Force','Intuition','Kadane Code','Dry Run','Edge Cases','Extensions','Quiz'];
+
+function go(n) {
+  if (n < 0 || n >= N) return;
+  document.getElementById('s'+cur).classList.remove('active');
+  document.querySelectorAll('.chapter-nav button')[cur].classList.remove('active');
+  cur = n;
+  document.getElementById('s'+cur).classList.add('active');
+  document.querySelectorAll('.chapter-nav button')[cur].classList.add('active');
+  const pct = Math.round(((cur+1)/N)*100);
+  document.getElementById('pFill').style.width = pct+'%';
+  document.getElementById('pLabel').textContent = `Chapter ${cur+1} of ${N} · ${TITLES[cur]}`;
+  document.getElementById('bLabel').textContent = `Chapter ${cur+1} / ${N}`;
+  document.getElementById('prevBtn').disabled = cur===0;
+  document.getElementById('nextBtn').disabled = cur===N-1;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ════════════════════════════════
+// THEME
+// ════════════════════════════════
+function toggleTheme() {
+  const btn = document.getElementById('themeBtn');
+  document.documentElement.classList.toggle('light');
+  btn.textContent = document.documentElement.classList.contains('light') ? '🌙 Dark' : '☀️ Light';
+  // re-render bar charts if needed
+  renderProbArr();
+}
+
+// ════════════════════════════════
+// HELPERS
+// ════════════════════════════════
+function makeCell(val, idx) {
+  const c = document.createElement('div');
+  c.className = 'cell' + (val >= 0 ? ' pos-val' : ' neg-val');
+  const si = document.createElement('span');
+  si.className = 'ci'; si.textContent = idx;
+  c.appendChild(si);
+  c.appendChild(document.createTextNode(val));
+  return c;
+}
+
+// ════════════════════════════════
+// SEC 0 — PROBLEM ARRAY
+// ════════════════════════════════
+const PA = [-2,1,-3,4,-1,2,1,-5,4];
+const bestIdx = new Set([3,4,5,6]); // indices of best subarray
+
+function renderProbArr() {
+  const d = document.getElementById('probArr');
+  if (!d) return;
+  d.innerHTML = '';
+  PA.forEach((v,i) => {
+    const c = makeCell(v, i);
+    if (bestIdx.has(i)) {
+      c.style.borderColor = 'var(--accent)';
+      c.style.background = 'rgba(6,214,160,0.18)';
+      c.style.color = 'var(--accent)';
+      c.style.boxShadow = '0 0 14px rgba(6,214,160,0.3)';
+    }
+    d.appendChild(c);
+  });
+}
+renderProbArr();
+
+// ════════════════════════════════
+// SEC 2 — INTUITION WALKTHROUGH
+// ════════════════════════════════
+const IA = [-2,1,-3,4,-1,2,1,-5,4];
+let iI=0, iCur=0, iMax=-Infinity, iDone=false, iWinStart=0, iBestStart=0, iBestEnd=-1;
+
+const intMsgs = [
+  () => `i=0, num=<span class="hlr">-2</span> → curSum = 0 + (-2) = <span class="hlr">-2</span> · maxSum = <span class="hl">-2</span> · curSum &lt; 0 → <span class="hl2">RESET to 0</span>`,
+  () => `i=1, num=<span class="hl">1</span> → curSum = 0 + 1 = <span class="hl">1</span> · maxSum = <span class="hl">1</span>`,
+  () => `i=2, num=<span class="hlr">-3</span> → curSum = 1 + (-3) = <span class="hlr">-2</span> · maxSum = 1 · curSum &lt; 0 → <span class="hl2">RESET to 0</span>`,
+  () => `i=3, num=<span class="hl">4</span> → curSum = 0 + 4 = <span class="hl">4</span> · maxSum = <span class="hl">4</span> · new window starts here!`,
+  () => `i=4, num=<span class="hlr">-1</span> → curSum = 4 + (-1) = <span class="hl">3</span> · maxSum = 4 · still positive — keep the window`,
+  () => `i=5, num=<span class="hl">2</span> → curSum = 3 + 2 = <span class="hl">5</span> · maxSum = <span class="hl">5</span>`,
+  () => `i=6, num=<span class="hl">1</span> → curSum = 5 + 1 = <span class="hl">6</span> · maxSum = <span class="hl">6</span> 🎯`,
+  () => `i=7, num=<span class="hlr">-5</span> → curSum = 6 + (-5) = <span class="hl">1</span> · maxSum = 6`,
+  () => `i=8, num=<span class="hl">4</span> → curSum = 1 + 4 = <span class="hl">5</span> · maxSum = 6 · <span class="hl">DONE! Answer = 6</span>`,
+];
+const iCurSums = [-2,1,-2,4,3,5,6,1,5];
+const iMaxSums = [-2,1,1,4,4,5,6,6,6];
+const iResets  = [0,2]; // indices that trigger reset
+const iWins    = [[]   ,[1],[],  [3],[3,4],[3,4,5],[3,4,5,6],[3,4,5,6],[3,4,5,6,8]];
+
+function renderIntArr() {
+  const d = document.getElementById('intArr');
+  d.innerHTML = '';
+  IA.forEach((v,i) => {
+    const c = makeCell(v,i);
+    if (i < iI-1 && iWins[Math.max(0,iI-1)]?.includes(i)) c.classList.add('inwin');
+    else if (i === iI-1) c.classList.add('cur');
+    else if (i < iI) c.classList.add('past');
+    d.appendChild(c);
+  });
+}
+function intReset() {
+  iI=0; iCur=0; iMax=-Infinity; iDone=false;
+  renderIntArr();
+  document.getElementById('int-cur-v').textContent='0';
+  document.getElementById('int-max-v').textContent='-∞';
+  document.getElementById('intLog').textContent='Press "Next Step" to walk through the intuition.';
+  document.getElementById('int-cur').classList.remove('changed');
+  document.getElementById('int-max').classList.remove('changed');
+}
+function intStep() {
+  if (iI >= IA.length) return;
+  document.getElementById('intLog').innerHTML = intMsgs[iI]();
+  document.getElementById('int-cur-v').textContent = iCurSums[iI];
+  document.getElementById('int-max-v').textContent = iMaxSums[iI];
+  document.getElementById('int-cur').classList.toggle('changed', iResets.includes(iI));
+  iI++;
+  renderIntArr();
+}
+intReset();
+
+// ════════════════════════════════
+// SEC 4 — INTERACTIVE DRY RUN
+// ════════════════════════════════
+let dryArr=[], dryI=0, dryCur=0, dryMax=-Infinity, dryDone=false, dryWinS=0, dryBestS=0, dryBestE=-1, autoTimer=null;
+
+function parseDry() {
+  const raw = document.getElementById('dryInput').value;
+  return raw.split(',').map(s=>parseInt(s.trim())).filter(v=>!isNaN(v));
+}
+
+function renderDryArr(cur, win, best, neg) {
+  const d = document.getElementById('dryArr');
+  d.innerHTML = '';
+  dryArr.forEach((v,i) => {
+    const c = makeCell(v,i);
+    if (i === cur) c.classList.add('cur');
+    else if (neg !== undefined && i === neg) c.classList.add('neg');
+    else if (best.has(i)) c.classList.add('best');
+    else if (win.has(i)) c.classList.add('inwin');
+    else if (i < cur) c.classList.add('past');
+    d.appendChild(c);
+  });
+}
+
+function dryReset() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer=null; document.getElementById('autoBtn').textContent='▶ Auto Play'; }
+  dryArr = parseDry();
+  dryI=0; dryCur=0; dryMax=-Infinity; dryDone=false; dryWinS=0; dryBestS=0; dryBestE=-1;
+  renderDryArr(-1, new Set(), new Set(), undefined);
+  setDryVars(0,-Infinity,-1,'-');
+  document.getElementById('dryLog').textContent='Press "Next Step" to begin the dry run.';
+  document.getElementById('dryBtn').disabled=false;
+}
+
+function setDryVars(cur, max, idx, num) {
+  document.getElementById('dry-cur-v').textContent = cur;
+  document.getElementById('dry-max-v').textContent = max===-Infinity?'-∞':max;
+  document.getElementById('dry-idx-v').textContent = idx===-1?'-':idx;
+  document.getElementById('dry-num-v').textContent = num;
+  document.getElementById('dry-max').classList.toggle('changed', max!==-Infinity && idx>=0 && dryCur===max);
+}
+
+function dryStep() {
+  if (dryDone || dryI >= dryArr.length) {
+    document.getElementById('dryLog').innerHTML = `<span class="hl">✓ Complete! Maximum Subarray Sum = <span style="font-size:16px">${dryMax}</span></span>`;
+    dryDone=true;
+    document.getElementById('dryBtn').disabled=true;
+    if (autoTimer) { clearInterval(autoTimer); autoTimer=null; document.getElementById('autoBtn').textContent='▶ Auto Play'; }
+    return;
+  }
+  const num = dryArr[dryI];
+  dryCur += num;
+  let resetted=false, newBest=false;
+  if (dryCur > dryMax) {
+    dryMax=dryCur; dryBestS=dryWinS; dryBestE=dryI; newBest=true;
+  }
+  let logHTML = `i=<span class="hlb">${dryI}</span>, nums[i]=<span class="${num>=0?'hl':'hlr'}">${num}</span> → curSum = ${dryCur-num} + ${num} = <span class="${dryCur>=0?'hl':'hlr'}">${dryCur}</span>`;
+  if (newBest) logHTML += ` → <span class="hl">🎯 New maxSum = ${dryMax}</span>`;
+  const negTrigger = dryCur < 0 ? dryI : undefined;
+  if (dryCur < 0) {
+    logHTML += ` → curSum &lt; 0 → <span class="hl2">RESET to 0</span>`;
+    dryCur=0; dryWinS=dryI+1; resetted=true;
+  }
+  document.getElementById('dryLog').innerHTML = logHTML;
+  setDryVars(dryCur, dryMax, dryI, num);
+
+  const winSet  = new Set();
+  const bestSet = new Set();
+  for(let k=dryWinS; k<dryI+(resetted?0:1); k++) winSet.add(k);
+  for(let k=dryBestS; k<=dryBestE; k++) bestSet.add(k);
+
+  renderDryArr(dryI, winSet, bestSet, negTrigger);
+  dryI++;
+  if (dryI >= dryArr.length) {
+    setTimeout(()=>{
+      document.getElementById('dryLog').innerHTML = `<span class="hl">✓ Complete! Maximum Subarray Sum = ${dryMax}</span>`;
+      dryDone=true;
+      document.getElementById('dryBtn').disabled=true;
+      if(autoTimer){clearInterval(autoTimer);autoTimer=null;document.getElementById('autoBtn').textContent='▶ Auto Play';}
+    },500);
+  }
+}
+
+function dryAuto() {
+  if (autoTimer) {
+    clearInterval(autoTimer); autoTimer=null;
+    document.getElementById('autoBtn').textContent='▶ Auto Play'; return;
+  }
+  document.getElementById('autoBtn').textContent='⏸ Pause';
+  autoTimer = setInterval(()=>{ if(dryDone){clearInterval(autoTimer);autoTimer=null;document.getElementById('autoBtn').textContent='▶ Auto Play';return;} dryStep(); }, 900);
+}
+
+dryReset();
+
+// ════════════════════════════════
+// SEC 5 — ALL NEGATIVE
+// ════════════════════════════════
+const NA=[-3,-1,-4,-2];
+let nI=0, nCur=0, nMax=-Infinity, nDone=false;
+
+function renderNegArr(cur) {
+  const d=document.getElementById('negArr'); d.innerHTML='';
+  NA.forEach((v,i)=>{
+    const c=makeCell(v,i);
+    if(i===cur) c.classList.add('cur');
+    else if(i<cur) c.classList.add('past');
+    d.appendChild(c);
+  });
+}
+function negReset() {
+  nI=0; nCur=0; nMax=-Infinity; nDone=false;
+  renderNegArr(-1);
+  document.getElementById('neg-cur-v').textContent='0';
+  document.getElementById('neg-max-v').textContent='-∞';
+  document.getElementById('negLog').textContent='Press to simulate all-negative array.';
+}
+function negStep() {
+  if(nDone||nI>=NA.length) return;
+  nCur+=NA[nI];
+  if(nCur>nMax) nMax=nCur;
+  let msg=`i=${nI}, num=${NA[nI]} → curSum=${nCur} · maxSum=<span class="hl">${nMax}</span>`;
+  if(nCur<0){msg+=` → curSum&lt;0 → <span class="hl2">RESET</span>`;nCur=0;}
+  document.getElementById('negLog').innerHTML=msg;
+  document.getElementById('neg-cur-v').textContent=nCur;
+  document.getElementById('neg-max-v').textContent=nMax;
+  renderNegArr(nI);
+  nI++;
+  if(nI>=NA.length){
+    setTimeout(()=>{
+      document.getElementById('negLog').innerHTML=`<span class="hl">✓ Answer = ${nMax}</span> (Integer.MIN_VALUE init saved us! 0-init would give 0 ✗)`;
+      nDone=true;
+    },400);
+  }
+}
+negReset();
+
+// ════════════════════════════════
+// QUIZ
+// ════════════════════════════════
+let qScores={}, qCount=0;
+function ans(qid, chosen, correct, explanation) {
+  const opts=document.querySelectorAll(`#${qid} .qopt`);
+  if(opts[0].disabled) return;
+  opts.forEach((o,i)=>{
+    o.disabled=true;
+    if(i===correct) o.classList.add('correct');
+    else if(i===chosen) o.classList.add('wrong');
+  });
+  const exp=document.getElementById(qid+'-e');
+  exp.textContent=(chosen===correct?'✓ Correct! ':'✗ Wrong. ')+explanation;
+  exp.style.display='block';
+  exp.style.color=chosen===correct?'var(--positive)':'var(--negative)';
+  qScores[qid]=chosen===correct;
+  qCount++;
+  if(qCount===4){
+    const sc=Object.values(qScores).filter(Boolean).length;
+    const box=document.getElementById('scoreBox');
+    box.style.display='block';
+    document.getElementById('scoreNum').textContent=`${sc}/4`;
+    const msgs=['Chal theek hai, revision kar!','Good! Ek baar aur practice kar.','Very good bhai! Almost Striver!','🔥 Ekdum perfect! Full marks!'];
+    document.getElementById('scoreMsg').textContent=msgs[sc];
+  }
+}
+// Sidebar active state
+function setSbActive(el) {
+  document.querySelectorAll('#sidebar .sb-link').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Prefix Sum — Deep Dive with Striver</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root[data-theme="dark"] {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1e29;
+    --card: #1e2230;
+    --border: #2a2f42;
+    --accent: #f97316;
+    --accent2: #3b82f6;
+    --accent3: #22c55e;
+    --accent4: #a855f7;
+    --text: #e8eaf0;
+    --text2: #9ca3b0;
+    --text3: #5c6275;
+    --highlight: rgba(249,115,22,0.12);
+    --highlight2: rgba(59,130,246,0.12);
+    --code-bg: #111420;
+    --arr-active: #f97316;
+    --arr-visited: #3b82f6;
+    --arr-neutral: #2a2f42;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f6fa;
+    --bg2: #eef0f7;
+    --bg3: #e8eaf3;
+    --card: #ffffff;
+    --border: #d1d5e8;
+    --accent: #ea6c00;
+    --accent2: #2563eb;
+    --accent3: #16a34a;
+    --accent4: #9333ea;
+    --text: #1a1d2e;
+    --text2: #4b5066;
+    --text3: #9ca3b8;
+    --highlight: rgba(234,108,0,0.09);
+    --highlight2: rgba(37,99,235,0.09);
+    --code-bg: #f0f2fb;
+    --arr-active: #ea6c00;
+    --arr-visited: #2563eb;
+    --arr-neutral: #dde1f0;
+    --shadow: 0 8px 32px rgba(0,0,0,0.10);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* ─── Header ─── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    backdrop-filter: blur(12px);
+  }
+  .brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; }
+  .brand span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .badge { background: var(--highlight); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid var(--accent); }
+  .theme-btn {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+    width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── Sidebar + Layout ─── */
+  .layout { display: flex; min-height: calc(100vh - 57px); }
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    padding: 24px 0; position: sticky; top: 57px; height: calc(100vh - 57px);
+    overflow-y: auto;
+  }
+  .sidebar-title { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); padding: 0 20px 10px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px; cursor: pointer; font-size: 0.875rem; color: var(--text2);
+    transition: all 0.15s; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: var(--bg3); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--highlight); font-weight: 600; }
+  .nav-num { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text3); min-width: 18px; }
+
+  /* ─── Main Content ─── */
+  main { flex: 1; padding: 40px 48px; max-width: 900px; }
+
+  .section { display: none; animation: fadeIn 0.3s ease; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ─── Section Header ─── */
+  .section-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2rem; line-height: 1.2; margin-bottom: 16px; }
+  h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; margin: 28px 0 12px; color: var(--text); }
+  p { color: var(--text2); line-height: 1.75; margin-bottom: 14px; }
+  strong { color: var(--text); font-weight: 600; }
+
+  /* ─── Striver Quote Box ─── */
+  .striver-says {
+    background: var(--highlight);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px; margin: 20px 0;
+    font-size: 0.9rem; color: var(--text);
+    position: relative;
+  }
+  .striver-says::before { content: "🎯 Striver Says:"; display: block; font-weight: 700; color: var(--accent); margin-bottom: 6px; font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* ─── Array Visualizer ─── */
+  .array-container { display: flex; gap: 0; margin: 20px 0; flex-wrap: wrap; align-items: flex-end; }
+  .arr-cell {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .arr-box {
+    width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700;
+    border-radius: 8px; border: 2px solid var(--arr-neutral);
+    background: var(--bg3); color: var(--text);
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .arr-box.active { background: var(--arr-active); border-color: var(--arr-active); color: #fff; transform: scale(1.1); box-shadow: 0 0 18px rgba(249,115,22,0.5); }
+  .arr-box.visited { background: var(--arr-visited); border-color: var(--arr-visited); color: #fff; }
+  .arr-box.result { background: var(--accent3); border-color: var(--accent3); color: #fff; }
+  .arr-idx { font-size: 0.65rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .arr-label { font-size: 0.7rem; color: var(--text3); margin-bottom: 4px; text-align: center; }
+
+  /* ─── Code Block ─── */
+  .code-wrap { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; margin: 20px 0; overflow: hidden; }
+  .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg3); }
+  .code-lang { font-size: 0.72rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+  .copy-btn { font-size: 0.72rem; background: transparent; border: 1px solid var(--border); color: var(--text2); padding: 3px 10px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  pre { padding: 20px; overflow-x: auto; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.7; color: var(--text); }
+  .kw { color: #f97316; font-weight: 600; }
+  .fn { color: #3b82f6; }
+  .cm { color: var(--text3); font-style: italic; }
+  .nm { color: #22c55e; }
+  .st { color: #f59e0b; }
+
+  /* ─── Complexity Box ─── */
+  .complexity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .complexity-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .complexity-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 6px; font-weight: 700; }
+  .complexity-val { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; color: var(--accent3); }
+  .complexity-note { font-size: 0.78rem; color: var(--text2); margin-top: 4px; }
+
+  /* ─── Interactive Step Visualizer ─── */
+  .viz-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 24px 0; box-shadow: var(--shadow); }
+  .viz-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .viz-title span { background: var(--highlight); color: var(--accent); padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; }
+  .controls { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .btn {
+    padding: 9px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+  .step-info { background: var(--bg3); border-radius: 8px; padding: 12px 16px; margin-top: 14px; font-size: 0.88rem; color: var(--text); min-height: 44px; border-left: 3px solid var(--accent2); }
+  .step-info .step-num { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-weight: 700; }
+
+  /* ─── Callout / Info Box ─── */
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 0.9rem; }
+  .callout-info { background: var(--highlight2); border: 1px solid rgba(59,130,246,0.3); color: var(--text); }
+  .callout-warn { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.3); color: var(--text); }
+  .callout-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--text); }
+  .callout::before { display: block; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout-info::before { content: "💡 Key Insight"; color: var(--accent2); }
+  .callout-warn::before { content: "⚠️ Common Mistake"; color: #eab308; }
+  .callout-success::before { content: "✅ Key Takeaway"; color: var(--accent3); }
+
+  /* ─── Formula ─── */
+  .formula { background: var(--bg3); border: 1px solid var(--accent4); border-radius: 8px; padding: 16px 20px; margin: 16px 0; font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: var(--text); text-align: center; }
+  .formula-label { font-family: 'Inter', sans-serif; font-size: 0.72rem; color: var(--accent4); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 8px; }
+
+  /* ─── Quiz ─── */
+  .quiz-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 24px 0; }
+  .quiz-q { font-weight: 600; font-size: 0.95rem; margin-bottom: 14px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 0.875rem; color: var(--text2); transition: all 0.2s; }
+  .quiz-opt:hover { border-color: var(--accent2); color: var(--text); }
+  .quiz-opt.correct { background: rgba(34,197,94,0.15); border-color: var(--accent3); color: var(--accent3); font-weight: 600; }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.12); border-color: #ef4444; color: #ef4444; }
+  .quiz-explain { margin-top: 12px; font-size: 0.85rem; color: var(--text2); padding: 10px 14px; background: var(--bg3); border-radius: 8px; display: none; }
+
+  /* ─── Problem Card ─── */
+  .problem-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 20px 0; }
+  .problem-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .problem-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+  .diff { padding: 3px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .easy { background: rgba(34,197,94,0.15); color: var(--accent3); }
+  .medium { background: rgba(234,179,8,0.15); color: #eab308; }
+  .hard { background: rgba(239,68,68,0.12); color: #ef4444; }
+  .problem-body { padding: 18px 20px; font-size: 0.875rem; color: var(--text2); line-height: 1.7; }
+
+  /* ─── Progress Bar ─── */
+  .progress-wrap { margin-bottom: 32px; }
+  .progress-label { font-size: 0.75rem; color: var(--text3); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* ─── Range Query Input ─── */
+  .range-inputs { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 14px 0; }
+  .range-inputs label { font-size: 0.85rem; color: var(--text2); }
+  .range-inputs input { width: 64px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; outline: none; }
+  .range-inputs input:focus { border-color: var(--accent); }
+  .result-display { background: var(--bg3); border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; }
+  .result-display .res-label { font-size: 0.72rem; color: var(--text3); font-family: 'Inter', sans-serif; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
+  .result-display .res-val { color: var(--accent3); font-weight: 700; font-size: 1.1rem; }
+
+  /* ─── Separator ─── */
+  .sep { height: 1px; background: var(--border); margin: 32px 0; }
+
+  /* ─── Next Button ─── */
+  .nav-footer { display: flex; justify-content: flex-end; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 700px) {
+    main { padding: 24px 18px; }
+    .sidebar { display: none; }
+    h2 { font-size: 1.5rem; }
+    .complexity-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Striver's <span>A-Z</span> — Prefix Sum</div>
+  <div class="header-right">
+    <a href="index.html" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);text-decoration:none;font-size:0.78rem;font-weight:600;transition:all .2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">← Roadmap</a>
+    <span class="badge">Arrays · Step 2</span>
+    <button class="theme-btn" id="themeBtn" title="Toggle theme">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-title">Topics</div>
+    <div class="nav-item active" onclick="showSection(0,this)"><span class="nav-num">01</span>Why Prefix Sum?</div>
+    <div class="nav-item" onclick="showSection(1,this)"><span class="nav-num">02</span>Build the Array</div>
+    <div class="nav-item" onclick="showSection(2,this)"><span class="nav-num">03</span>Range Query</div>
+    <div class="nav-item" onclick="showSection(3,this)"><span class="nav-num">04</span>Live Visualizer</div>
+    <div class="nav-item" onclick="showSection(4,this)"><span class="nav-num">05</span>Java Code</div>
+    <div class="nav-item" onclick="showSection(5,this)"><span class="nav-num">06</span>2D Prefix Sum</div>
+    <div class="nav-item" onclick="showSection(6,this)"><span class="nav-num">07</span>Practice Problems</div>
+    <div class="nav-item" onclick="showSection(7,this)"><span class="nav-num">08</span>Quiz Yourself</div>
+  </nav>
+
+  <!-- Main -->
+  <main id="mainContent">
+
+    <!-- ════ SECTION 0: WHY ════ -->
+    <div class="section active" id="sec0">
+      <div class="section-tag">Section 01</div>
+      <h2>Why do we even need Prefix Sum? 🤔</h2>
+
+      <div class="striver-says">
+        Bhai, suno! Whenever you have multiple range sum queries on the same array, doing brute force is a crime. You're re-calculating the same things again and again. Let me show you why that hurts — and how prefix sum fixes it in one shot.
+      </div>
+
+      <p>Imagine you have an array and someone asks you <strong>Q queries</strong> like: "Give me the sum of elements from index L to R."</p>
+
+      <h3>🐢 Brute Force Approach</h3>
+      <p>For each query, you run a loop from L to R and add everything up.</p>
+
+      <div class="complexity-grid">
+        <div class="complexity-card">
+          <div class="complexity-label">Time per Query</div>
+          <div class="complexity-val">O(N)</div>
+          <div class="complexity-note">Loop through L to R each time</div>
+        </div>
+        <div class="complexity-card">
+          <div class="complexity-label">Total for Q queries</div>
+          <div class="complexity-val">O(N × Q)</div>
+          <div class="complexity-note">Can be 10⁵ × 10⁵ = 10¹⁰ — TLE!</div>
+        </div>
+      </div>
+
+      <div class="callout callout-warn">
+        N = 10⁵ and Q = 10⁵ → Brute force does <strong>10 billion operations</strong>. That's a guaranteed <strong>Time Limit Exceeded</strong> on any judge.
+      </div>
+
+      <h3>🚀 Prefix Sum Approach</h3>
+      <p>Precompute once in <strong>O(N)</strong>. Answer every single query in <strong>O(1)</strong>. That's the magic.</p>
+
+      <div class="complexity-grid">
+        <div class="complexity-card">
+          <div class="complexity-label">Preprocessing</div>
+          <div class="complexity-val">O(N)</div>
+          <div class="complexity-note">Build the prefix array once</div>
+        </div>
+        <div class="complexity-card">
+          <div class="complexity-label">Each Query</div>
+          <div class="complexity-val">O(1)</div>
+          <div class="complexity-note">Just a subtraction formula!</div>
+        </div>
+      </div>
+
+      <div class="callout callout-success">
+        Prefix Sum is the classic <strong>Precomputation</strong> technique. Trade O(N) space to get O(1) query time. One of the most important tricks in competitive programming.
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-primary" onclick="showSection(1, document.querySelectorAll('.nav-item')[1])">Next: Build the Array →</button>
+      </div>
+    </div>
+
+    <!-- ════ SECTION 1: BUILD ════ -->
+    <div class="section" id="sec1">
+      <div class="section-tag">Section 02</div>
+      <h2>Building the Prefix Sum Array 🏗️</h2>
+
+      <div class="striver-says">
+        The idea is dead simple. prefix[i] stores the sum of all elements from index 0 to i. That's it. Once you have this, any range sum is just two lookups away.
+      </div>
+
+      <h3>Formal Definition</h3>
+      <div class="formula">
+        <div class="formula-label">Prefix Array Formula</div>
+        prefix[0] = arr[0]<br/>
+        prefix[i] = prefix[i-1] + arr[i]  &nbsp;&nbsp;&nbsp;for i ≥ 1
+      </div>
+
+      <h3>Step-by-Step Construction</h3>
+      <p>Let's take arr = <strong>[3, 1, 4, 1, 5, 9, 2, 6]</strong> and build the prefix sum array:</p>
+
+      <!-- Build Visualizer -->
+      <div class="viz-card">
+        <div class="viz-title">Build Visualizer <span>Interactive</span></div>
+        <div class="arr-label">Original Array (arr)</div>
+        <div class="array-container" id="buildOrigArr"></div>
+        <div style="margin-top:16px;">
+          <div class="arr-label">Prefix Sum Array (prefix)</div>
+          <div class="array-container" id="buildPrefArr"></div>
+        </div>
+        <div class="step-info" id="buildStepInfo"><span class="step-num">Ready!</span> Press "Next Step" to start building the prefix array one by one.</div>
+        <div class="controls">
+          <button class="btn btn-primary" id="buildNextBtn" onclick="buildStep()">Next Step ▶</button>
+          <button class="btn btn-secondary" onclick="buildReset()">↺ Reset</button>
+          <button class="btn btn-secondary" onclick="buildAutoPlay()">⚡ Auto Play</button>
+        </div>
+      </div>
+
+      <h3>What does prefix[i] mean?</h3>
+      <div class="callout callout-info">
+        <strong>prefix[i] = sum of arr[0] + arr[1] + ... + arr[i]</strong><br/>
+        It's the running total from the beginning up to index i. Think of it like a bank balance — prefix[i] is your total money after day i.
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-primary" onclick="showSection(2, document.querySelectorAll('.nav-item')[2])">Next: Range Query →</button>
+      </div>
+    </div>
+
+    <!-- ════ SECTION 2: RANGE QUERY ════ -->
+    <div class="section" id="sec2">
+      <div class="section-tag">Section 03</div>
+      <h2>Answering Range Queries in O(1) ⚡</h2>
+
+      <div class="striver-says">
+        Now comes the most satisfying part. Once prefix array is built, to get sum from L to R, we don't loop — we just do ONE subtraction. Let me walk you through the derivation, because understanding the "why" is more important than memorising the formula.
+      </div>
+
+      <h3>Derivation — Don't Just Memorise!</h3>
+      <p>We know:</p>
+      <div class="formula">
+        <div class="formula-label">What we know</div>
+        prefix[R] = arr[0] + arr[1] + ... + arr[L-1] + arr[L] + ... + arr[R]<br/><br/>
+        prefix[L-1] = arr[0] + arr[1] + ... + arr[L-1]
+      </div>
+      <p>Subtract the second from the first:</p>
+      <div class="formula">
+        <div class="formula-label">Range Sum Formula</div>
+        <strong>sum(L, R) = prefix[R] - prefix[L-1]</strong><br/><br/>
+        Special case: if L == 0 → sum = prefix[R]
+      </div>
+
+      <div class="callout callout-info">
+        Think of it this way: <strong>prefix[R]</strong> has "too much" — it includes elements before L. So we subtract <strong>prefix[L-1]</strong> to strip them off.
+      </div>
+
+      <!-- Range Query Interactive -->
+      <div class="viz-card">
+        <div class="viz-title">Range Query Visualizer <span>Interactive</span></div>
+        <p style="font-size:0.85rem;color:var(--text2);margin-bottom:14px;">Array: [3, 1, 4, 1, 5, 9, 2, 6]. Enter L and R (0-indexed) to get the range sum instantly.</p>
+        <div class="arr-label">Array</div>
+        <div class="array-container" id="rangeArr"></div>
+        <div class="range-inputs" style="margin-top:16px;">
+          <label>L =</label>
+          <input type="number" id="rL" min="0" max="7" value="2"/>
+          <label>R =</label>
+          <input type="number" id="rR" min="0" max="7" value="5"/>
+          <button class="btn btn-primary" onclick="calcRange()">Calculate ▶</button>
+        </div>
+        <div class="result-display" id="rangeResult" style="display:none">
+          <div class="res-label">Result</div>
+          <div class="res-val" id="rangeResultVal"></div>
+          <div style="font-size:0.82rem;color:var(--text2);margin-top:6px;" id="rangeFormula"></div>
+        </div>
+      </div>
+
+      <h3>Edge Case — L = 0</h3>
+      <div class="callout callout-warn">
+        When L = 0, there's no prefix[L-1] = prefix[-1]. Handle it separately: <code style="color:var(--accent)">sum = prefix[R]</code>. Always check this in interviews!
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-primary" onclick="showSection(3, document.querySelectorAll('.nav-item')[3])">Next: Live Visualizer →</button>
+      </div>
+    </div>
+
+    <!-- ════ SECTION 3: FULL LIVE VISUALIZER ════ -->
+    <div class="section" id="sec3">
+      <div class="section-tag">Section 04</div>
+      <h2>Live Prefix Sum Visualizer 🎮</h2>
+
+      <div class="striver-says">
+        Let's put it all together. Enter your own array, build the prefix sum, then fire range queries. This is what I do — I always visualise before coding.
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-title">Custom Array Playground <span>Try it!</span></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+          <label style="font-size:0.85rem;color:var(--text2)">Enter array (comma separated):</label>
+          <input id="customArr" style="flex:1;min-width:200px;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.9rem;outline:none;" value="2, 4, 5, 3, 1, 6, 2" />
+          <button class="btn btn-primary" onclick="buildCustom()">Build Prefix ▶</button>
+        </div>
+        <div id="customOrigWrap" style="display:none">
+          <div class="arr-label">Your Array</div>
+          <div class="array-container" id="customOrigArr"></div>
+          <div class="arr-label" style="margin-top:12px;">Prefix Sum</div>
+          <div class="array-container" id="customPrefArr"></div>
+          <div class="sep" style="margin:20px 0 14px;"></div>
+          <div class="viz-title" style="margin-bottom:10px;">Range Query <span>O(1)</span></div>
+          <div class="range-inputs">
+            <label>L =</label>
+            <input type="number" id="cL" min="0" value="1" style="width:64px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:'JetBrains Mono',monospace;outline:none;"/>
+            <label>R =</label>
+            <input type="number" id="cR" min="0" value="4" style="width:64px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:'JetBrains Mono',monospace;outline:none;"/>
+            <button class="btn btn-primary" onclick="queryCustom()">Get Sum ▶</button>
+          </div>
+          <div id="customResult" class="result-display" style="display:none">
+            <div class="res-label">Answer</div>
+            <div class="res-val" id="customResultVal"></div>
+            <div style="font-size:0.82rem;color:var(--text2);margin-top:6px;" id="customFormula"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-primary" onclick="showSection(4, document.querySelectorAll('.nav-item')[4])">Next: Java Code →</button>
+      </div>
+    </div>
+
+    <!-- ════ SECTION 4: JAVA CODE ════ -->
+    <div class="section" id="sec4">
+      <div class="section-tag">Section 05</div>
+      <h2>Clean Java Implementation 💻</h2>
+
+      <div class="striver-says">
+        Now write the cleanest possible Java. In interviews, always write modular code — one function to build, one to query. Don't put everything in main.
+      </div>
+
+      <h3>Method 1 — Separate prefix array</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><button class="copy-btn" onclick="copyCode('code1')">Copy</button></div>
+        <pre id="code1"><code><span class="kw">public class</span> <span class="fn">PrefixSum</span> {
+
+    <span class="cm">// O(N) — Build prefix sum array</span>
+    <span class="kw">public static int</span>[] <span class="fn">buildPrefix</span>(<span class="kw">int</span>[] arr) {
+        <span class="kw">int</span> n = arr.length;
+        <span class="kw">int</span>[] prefix = <span class="kw">new int</span>[n];
+        prefix[<span class="nm">0</span>] = arr[<span class="nm">0</span>];
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">1</span>; i &lt; n; i++) {
+            prefix[i] = prefix[i - <span class="nm">1</span>] + arr[i];
+        }
+        <span class="kw">return</span> prefix;
+    }
+
+    <span class="cm">// O(1) — Range sum query [L, R] (0-indexed)</span>
+    <span class="kw">public static int</span> <span class="fn">query</span>(<span class="kw">int</span>[] prefix, <span class="kw">int</span> L, <span class="kw">int</span> R) {
+        <span class="kw">if</span> (L == <span class="nm">0</span>) <span class="kw">return</span> prefix[R];
+        <span class="kw">return</span> prefix[R] - prefix[L - <span class="nm">1</span>];
+    }
+
+    <span class="kw">public static void</span> <span class="fn">main</span>(String[] args) {
+        <span class="kw">int</span>[] arr = {<span class="nm">3</span>, <span class="nm">1</span>, <span class="nm">4</span>, <span class="nm">1</span>, <span class="nm">5</span>, <span class="nm">9</span>, <span class="nm">2</span>, <span class="nm">6</span>};
+        <span class="kw">int</span>[] prefix = <span class="fn">buildPrefix</span>(arr);
+
+        <span class="cm">// Query: sum from index 2 to 5 = 4+1+5+9 = 19</span>
+        System.out.println(<span class="fn">query</span>(prefix, <span class="nm">2</span>, <span class="nm">5</span>)); <span class="cm">// Output: 19</span>
+
+        <span class="cm">// Query: sum from index 0 to 3 = 3+1+4+1 = 9</span>
+        System.out.println(<span class="fn">query</span>(prefix, <span class="nm">0</span>, <span class="nm">3</span>)); <span class="cm">// Output: 9</span>
+    }
+}</code></pre>
+      </div>
+
+      <h3>Method 2 — In-place (space optimized)</h3>
+      <div class="callout callout-warn">
+        Be careful! In-place modifies the original array. Only do this if you don't need the original array later.
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><button class="copy-btn" onclick="copyCode('code2')">Copy</button></div>
+        <pre id="code2"><code><span class="cm">// Mutates arr itself — arr[i] becomes prefix[i]</span>
+<span class="kw">public static void</span> <span class="fn">buildInPlace</span>(<span class="kw">int</span>[] arr) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">1</span>; i &lt; arr.length; i++) {
+        arr[i] += arr[i - <span class="nm">1</span>];
+    }
+}
+<span class="cm">// Same query function works on mutated arr</span></code></pre>
+      </div>
+
+      <h3>Method 3 — 1-indexed (safer for competitive coding)</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><button class="copy-btn" onclick="copyCode('code3')">Copy</button></div>
+        <pre id="code3"><code><span class="cm">// prefix[0] = 0 as sentinel — avoids L-1 edge case entirely!</span>
+<span class="kw">public static int</span>[] <span class="fn">buildPrefix1Indexed</span>(<span class="kw">int</span>[] arr) {
+    <span class="kw">int</span> n = arr.length;
+    <span class="kw">int</span>[] prefix = <span class="kw">new int</span>[n + <span class="nm">1</span>]; <span class="cm">// size n+1</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">1</span>; i &lt;= n; i++) {
+        prefix[i] = prefix[i - <span class="nm">1</span>] + arr[i - <span class="nm">1</span>];
+    }
+    <span class="kw">return</span> prefix;
+}
+
+<span class="cm">// Query [L, R] (0-indexed in original array)</span>
+<span class="kw">public static int</span> <span class="fn">query1</span>(<span class="kw">int</span>[] prefix, <span class="kw">int</span> L, <span class="kw">int</span> R) {
+    <span class="cm">// No special case needed! prefix[0] = 0 handles it.</span>
+    <span class="kw">return</span> prefix[R + <span class="nm">1</span>] - prefix[L];
+}</code></pre>
+      </div>
+
+      <div class="callout callout-success">
+        In competitive programming, always prefer the <strong>1-indexed approach</strong>. It eliminates the L==0 edge case completely with a sentinel zero at prefix[0].
+      </div>
+
+      <div class="complexity-grid">
+        <div class="complexity-card">
+          <div class="complexity-label">Time Complexity</div>
+          <div class="complexity-val">O(N + Q)</div>
+          <div class="complexity-note">O(N) build + O(1) per query</div>
+        </div>
+        <div class="complexity-card">
+          <div class="complexity-label">Space Complexity</div>
+          <div class="complexity-val">O(N)</div>
+          <div class="complexity-note">Extra prefix array of size N</div>
+        </div>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-primary" onclick="showSection(5, document.querySelectorAll('.nav-item')[5])">Next: 2D Prefix Sum →</button>
+      </div>
+    </div>
+
+    <!-- ════ SECTION 5: 2D PREFIX SUM ════ -->
+    <div class="section" id="sec5">
+      <div class="section-tag">Section 06</div>
+      <h2>2D Prefix Sum 🗺️</h2>
+
+      <div class="striver-says">
+        Same idea, extended to 2D grids! Leetcode and interviews love 2D problems. Master this and you'll crack problems like "Range Sum Query 2D" in one attempt.
+      </div>
+
+      <h3>The 2D Formula (Inclusion-Exclusion)</h3>
+      <div class="formula">
+        <div class="formula-label">2D Prefix Build</div>
+        prefix[i][j] = matrix[i][j] + prefix[i-1][j] + prefix[i][j-1] - prefix[i-1][j-1]
+      </div>
+      <div class="formula">
+        <div class="formula-label">2D Range Query (r1,c1) to (r2,c2)</div>
+        sum = prefix[r2][c2] - prefix[r1-1][c2] - prefix[r2][c1-1] + prefix[r1-1][c1-1]
+      </div>
+
+      <p>This is the <strong>inclusion-exclusion principle</strong>. You're adding three rectangles and subtracting the part you double-counted.</p>
+
+      <div class="viz-card">
+        <div class="viz-title">Inclusion-Exclusion Explained <span>Visual</span></div>
+        <div id="2dViz" style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;"></div>
+        <div class="step-info" style="margin-top:14px;border-left-color:var(--accent4);">
+          <strong>Full rectangle</strong> (0,0)→(r2,c2) <strong>minus</strong> top strip (0,0)→(r1-1,c2) <strong>minus</strong> left strip (0,0)→(r2,c1-1) <strong>plus</strong> top-left corner (0,0)→(r1-1,c1-1) that was subtracted twice.
+        </div>
+      </div>
+
+      <h3>Java Code for 2D</h3>
+      <div class="code-wrap">
+        <div class="code-header"><span class="code-lang">Java</span><button class="copy-btn" onclick="copyCode('code4')">Copy</button></div>
+        <pre id="code4"><code><span class="kw">public class</span> <span class="fn">PrefixSum2D</span> {
+
+    <span class="kw">static int</span>[][] prefix;
+
+    <span class="kw">public static void</span> <span class="fn">build</span>(<span class="kw">int</span>[][] matrix) {
+        <span class="kw">int</span> m = matrix.length, n = matrix[<span class="nm">0</span>].length;
+        prefix = <span class="kw">new int</span>[m + <span class="nm">1</span>][n + <span class="nm">1</span>]; <span class="cm">// 1-indexed</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">1</span>; i &lt;= m; i++) {
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nm">1</span>; j &lt;= n; j++) {
+                prefix[i][j] = matrix[i-<span class="nm">1</span>][j-<span class="nm">1</span>]
+                             + prefix[i-<span class="nm">1</span>][j]
+                             + prefix[i][j-<span class="nm">1</span>]
+                             - prefix[i-<span class="nm">1</span>][j-<span class="nm">1</span>];
+            }
+        }
+    }
+
+    <span class="cm">// Query: sum of submatrix (r1,c1) to (r2,c2) — 0-indexed</span>
+    <span class="kw">public static int</span> <span class="fn">query</span>(<span class="kw">int</span> r1, <span class="kw">int</span> c1, <span class="kw">int</span> r2, <span class="kw">int</span> c2) {
+        <span class="kw">return</span> prefix[r2+<span class="nm">1</span>][c2+<span class="nm">1</span>]
+             - prefix[r1][c2+<span class="nm">1</span>]
+             - prefix[r2+<span class="nm">1</span>][c1]
+             + prefix[r1][c1];
+    }
+}</code></pre>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-primary" onclick="showSection(6, document.querySelectorAll('.nav-item')[6])">Next: Practice Problems →</button>
+      </div>
+    </div>
+
+    <!-- ════ SECTION 6: PROBLEMS ════ -->
+    <div class="section" id="sec6">
+      <div class="section-tag">Section 07</div>
+      <h2>Must-Solve Prefix Sum Problems 🔥</h2>
+
+      <div class="striver-says">
+        These are the exact problems I'd tell you to solve before any interview. Start with Easy, get the pattern, then attack Medium. Each problem teaches you a different way prefix sum is hidden inside it.
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-header">
+          <div class="problem-title">1. Range Sum Query — Immutable (LC 303)</div>
+          <span class="diff easy">Easy</span>
+        </div>
+        <div class="problem-body">
+          <strong>Pattern:</strong> Direct application of prefix sum.<br/>
+          <strong>Key insight:</strong> Build prefix in constructor. Answer each query in O(1).<br/>
+          <strong>Gotcha:</strong> Handle L == 0 edge case carefully.
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-header">
+          <div class="problem-title">2. Subarray Sum Equals K (LC 560)</div>
+          <span class="diff medium">Medium</span>
+        </div>
+        <div class="problem-body">
+          <strong>Pattern:</strong> Prefix Sum + HashMap (count of prefix sums seen so far).<br/>
+          <strong>Key insight:</strong> sum(L,R) = K → prefix[R] - prefix[L-1] = K → look for <code style="color:var(--accent)">prefix[R] - K</code> in the map.<br/>
+          <strong>Frequency:</strong> ⭐⭐⭐⭐⭐ — Asked in FAANG constantly.
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-header">
+          <div class="problem-title">3. Range Sum Query 2D (LC 304)</div>
+          <span class="diff medium">Medium</span>
+        </div>
+        <div class="problem-body">
+          <strong>Pattern:</strong> 2D Prefix Sum with inclusion-exclusion.<br/>
+          <strong>Key insight:</strong> The 4-term formula. Same idea as 1D, extended to a rectangle.
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-header">
+          <div class="problem-title">4. Product of Array Except Self (LC 238)</div>
+          <span class="diff medium">Medium</span>
+        </div>
+        <div class="problem-body">
+          <strong>Pattern:</strong> Left prefix product + Right suffix product.<br/>
+          <strong>Key insight:</strong> result[i] = left[i] × right[i]. No division needed. O(1) extra space is the follow-up.
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-header">
+          <div class="problem-title">5. Maximum Subarray Sum (Kadane's — LC 53)</div>
+          <span class="diff medium">Medium</span>
+        </div>
+        <div class="problem-body">
+          <strong>Pattern:</strong> Prefix sum min tracking OR Kadane's algorithm.<br/>
+          <strong>Key insight:</strong> maxSum ending at R = prefix[R] - min(prefix[0..R-1]). See the connection!
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-header">
+          <div class="problem-title">6. Longest Subarray with Sum K (GFG)</div>
+          <span class="diff medium">Medium</span>
+        </div>
+        <div class="problem-body">
+          <strong>Pattern:</strong> Prefix Sum + HashMap (first occurrence index).<br/>
+          <strong>Key insight:</strong> If prefix[R] - K exists in map at index j, length = R - j. Store only first occurrence to maximize length.
+        </div>
+      </div>
+
+      <div class="nav-footer">
+        <button class="btn btn-primary" onclick="showSection(7, document.querySelectorAll('.nav-item')[7])">Next: Quiz Yourself →</button>
+      </div>
+    </div>
+
+    <!-- ════ SECTION 7: QUIZ ════ -->
+    <div class="section" id="sec7">
+      <div class="section-tag">Section 08</div>
+      <h2>Quiz Yourself 🧠</h2>
+
+      <div class="striver-says">
+        Acha bhai, ab check karo kitna samajh aaya! If you can answer these without looking up anything, you've understood prefix sum properly.
+      </div>
+
+      <!-- Q1 -->
+      <div class="quiz-card">
+        <div class="quiz-q">Q1. For arr = [2, 4, 1, 6, 3], what is prefix[3]?</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q1explain')">A) 7</div>
+          <div class="quiz-opt" onclick="answerQ(this, true, 'q1explain')">B) 13</div>
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q1explain')">C) 6</div>
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q1explain')">D) 10</div>
+        </div>
+        <div class="quiz-explain" id="q1explain">prefix[3] = arr[0]+arr[1]+arr[2]+arr[3] = 2+4+1+6 = <strong>13</strong>. Always count from index 0!</div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="quiz-card">
+        <div class="quiz-q">Q2. Using prefix = [2, 6, 7, 13, 16], what is sum(L=1, R=3)?</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q2explain')">A) 13</div>
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q2explain')">B) 7</div>
+          <div class="quiz-opt" onclick="answerQ(this, true, 'q2explain')">C) 11</div>
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q2explain')">D) 6</div>
+        </div>
+        <div class="quiz-explain" id="q2explain">sum(1,3) = prefix[3] - prefix[0] = 13 - 2 = <strong>11</strong>. Remember: L-1 = 0 here, so we subtract prefix[0].</div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="quiz-card">
+        <div class="quiz-q">Q3. Time complexity of answering Q range sum queries with prefix sum precomputation?</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q3explain')">A) O(N×Q)</div>
+          <div class="quiz-opt" onclick="answerQ(this, true, 'q3explain')">B) O(N + Q)</div>
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q3explain')">C) O(N log Q)</div>
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q3explain')">D) O(Q log N)</div>
+        </div>
+        <div class="quiz-explain" id="q3explain"><strong>O(N + Q)</strong> — O(N) to build, then O(1) × Q for all queries. This is why prefix sum beats brute force O(N×Q) completely.</div>
+      </div>
+
+      <!-- Q4 -->
+      <div class="quiz-card">
+        <div class="quiz-q">Q4. What is the "1-indexed trick" used for in prefix sum?</div>
+        <div class="quiz-options">
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q4explain')">A) Saves memory</div>
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q4explain')">B) Faster build time</div>
+          <div class="quiz-opt" onclick="answerQ(this, true, 'q4explain')">C) Eliminates the L==0 edge case</div>
+          <div class="quiz-opt" onclick="answerQ(this, false, 'q4explain')">D) Works for 2D grids only</div>
+        </div>
+        <div class="quiz-explain" id="q4explain">By using prefix[0] = 0 as a sentinel, the formula <code>prefix[R+1] - prefix[L]</code> works for ALL values of L including L=0, so you never need an if-check.</div>
+      </div>
+
+      <div class="callout callout-success" style="margin-top:24px;">
+        🎉 That's Prefix Sum — one of the most powerful and elegant techniques in arrays. Master this, and subarray problems become trivial. Next up: <strong>Sliding Window</strong> and <strong>Two Pointers</strong>!
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ─── Theme Toggle ───────────────────────────────────────────────
+  const themeBtn = document.getElementById('themeBtn');
+  themeBtn.addEventListener('click', () => {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    themeBtn.textContent = isDark ? '🌙' : '☀️';
+  });
+
+  // ─── Section Navigation ─────────────────────────────────────────
+  function showSection(idx, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec' + idx).classList.add('active');
+    el.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (idx === 1) initBuildViz();
+    if (idx === 2) initRangeViz();
+    if (idx === 3) { /* nothing, user-triggered */ }
+    if (idx === 5) init2DViz();
+  }
+
+  // ─── Copy Code ──────────────────────────────────────────────────
+  function copyCode(id) {
+    const text = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      event.target.textContent = '✓ Copied';
+      setTimeout(() => event.target.textContent = 'Copy', 1500);
+    });
+  }
+
+  // ─── Build Visualizer ───────────────────────────────────────────
+  const buildArr = [3, 1, 4, 1, 5, 9, 2, 6];
+  const buildPrefix = [];
+  let buildStep_i = -1;
+  let buildTimer = null;
+
+  function initBuildViz() {
+    buildStep_i = -1;
+    buildPrefix.length = 0;
+    renderBuildOrig();
+    renderBuildPref(Array(buildArr.length).fill(null), -1);
+    document.getElementById('buildStepInfo').innerHTML = '<span class="step-num">Ready!</span> Press "Next Step" to build prefix array.';
+    document.getElementById('buildNextBtn').disabled = false;
+  }
+
+  function renderBuildOrig() {
+    const c = document.getElementById('buildOrigArr'); c.innerHTML = '';
+    buildArr.forEach((v, i) => {
+      c.innerHTML += `<div class="arr-cell"><div class="arr-box" id="borig${i}">${v}</div><div class="arr-idx">[${i}]</div></div>`;
+    });
+  }
+
+  function renderBuildPref(vals, active) {
+    const c = document.getElementById('buildPrefArr'); c.innerHTML = '';
+    vals.forEach((v, i) => {
+      const cls = i === active ? 'active' : (v !== null ? 'visited' : '');
+      c.innerHTML += `<div class="arr-cell"><div class="arr-box ${cls}" id="bpref${i}">${v !== null ? v : '?'}</div><div class="arr-idx">[${i}]</div></div>`;
+    });
+  }
+
+  function buildStep() {
+    buildStep_i++;
+    if (buildStep_i >= buildArr.length) { document.getElementById('buildNextBtn').disabled = true; return; }
+    if (buildStep_i === 0) buildPrefix[0] = buildArr[0];
+    else buildPrefix[buildStep_i] = buildPrefix[buildStep_i - 1] + buildArr[buildStep_i];
+
+    // highlight original
+    document.querySelectorAll('#buildOrigArr .arr-box').forEach((b, i) => {
+      b.className = 'arr-box' + (i === buildStep_i ? ' active' : (i < buildStep_i ? ' visited' : ''));
+    });
+
+    const prefState = Array(buildArr.length).fill(null);
+    for (let k = 0; k <= buildStep_i; k++) prefState[k] = buildPrefix[k];
+    renderBuildPref(prefState, buildStep_i);
+
+    const formula = buildStep_i === 0
+      ? `prefix[0] = arr[0] = ${buildArr[0]}`
+      : `prefix[${buildStep_i}] = prefix[${buildStep_i-1}] + arr[${buildStep_i}] = ${buildPrefix[buildStep_i-1]} + ${buildArr[buildStep_i]} = ${buildPrefix[buildStep_i]}`;
+
+    document.getElementById('buildStepInfo').innerHTML = `<span class="step-num">Step ${buildStep_i + 1}/${buildArr.length}</span> &nbsp; ${formula}`;
+
+    if (buildStep_i === buildArr.length - 1) {
+      document.getElementById('buildNextBtn').disabled = true;
+      document.getElementById('buildStepInfo').innerHTML += ' &nbsp; 🎉 Done!';
+    }
+  }
+
+  function buildReset() {
+    clearInterval(buildTimer);
+    initBuildViz();
+  }
+
+  function buildAutoPlay() {
+    buildReset();
+    buildTimer = setInterval(() => {
+      if (buildStep_i >= buildArr.length - 1) { clearInterval(buildTimer); return; }
+      buildStep();
+    }, 700);
+  }
+
+  // ─── Range Query Visualizer ─────────────────────────────────────
+  const rangeData = [3, 1, 4, 1, 5, 9, 2, 6];
+  const rangePre = [];
+  rangeData.reduce((s, v, i) => { rangePre[i] = s + v; return s + v; }, 0);
+
+  function initRangeViz() {
+    const c = document.getElementById('rangeArr'); c.innerHTML = '';
+    rangeData.forEach((v, i) => {
+      c.innerHTML += `<div class="arr-cell"><div class="arr-box" id="rarr${i}">${v}</div><div class="arr-idx">[${i}]</div></div>`;
+    });
+    document.getElementById('rangeResult').style.display = 'none';
+  }
+
+  function calcRange() {
+    const L = parseInt(document.getElementById('rL').value);
+    const R = parseInt(document.getElementById('rR').value);
+    if (isNaN(L) || isNaN(R) || L < 0 || R >= rangeData.length || L > R) {
+      alert('Invalid L or R! Must be 0-indexed, 0 ≤ L ≤ R ≤ 7'); return;
+    }
+    document.querySelectorAll('#rangeArr .arr-box').forEach((b, i) => {
+      b.className = 'arr-box' + (i >= L && i <= R ? ' result' : '');
+    });
+    const sum = L === 0 ? rangePre[R] : rangePre[R] - rangePre[L - 1];
+    const formula = L === 0 ? `prefix[${R}] = ${rangePre[R]}` : `prefix[${R}] - prefix[${L-1}] = ${rangePre[R]} - ${rangePre[L-1]} = ${sum}`;
+    document.getElementById('rangeResultVal').textContent = `sum(${L}, ${R}) = ${sum}`;
+    document.getElementById('rangeFormula').textContent = formula;
+    document.getElementById('rangeResult').style.display = 'block';
+  }
+
+  // ─── Custom Playground ──────────────────────────────────────────
+  let customArray = [], customPref = [];
+
+  function buildCustom() {
+    const raw = document.getElementById('customArr').value;
+    customArray = raw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+    if (customArray.length < 2) { alert('Enter at least 2 numbers!'); return; }
+    customPref = [];
+    customArray.reduce((s, v, i) => { customPref[i] = s + v; return s + v; }, 0);
+
+    const o = document.getElementById('customOrigArr'); o.innerHTML = '';
+    const p = document.getElementById('customPrefArr'); p.innerHTML = '';
+    customArray.forEach((v, i) => {
+      o.innerHTML += `<div class="arr-cell"><div class="arr-box visited">${v}</div><div class="arr-idx">[${i}]</div></div>`;
+      p.innerHTML += `<div class="arr-cell"><div class="arr-box result">${customPref[i]}</div><div class="arr-idx">[${i}]</div></div>`;
+    });
+    document.getElementById('cL').max = customArray.length - 1;
+    document.getElementById('cR').max = customArray.length - 1;
+    document.getElementById('customOrigWrap').style.display = 'block';
+    document.getElementById('customResult').style.display = 'none';
+  }
+
+  function queryCustom() {
+    const L = parseInt(document.getElementById('cL').value);
+    const R = parseInt(document.getElementById('cR').value);
+    if (isNaN(L) || isNaN(R) || L < 0 || R >= customArray.length || L > R) {
+      alert('Invalid range!'); return;
+    }
+    const sum = L === 0 ? customPref[R] : customPref[R] - customPref[L - 1];
+    const formula = L === 0 ? `prefix[${R}] = ${customPref[R]}` : `prefix[${R}] - prefix[${L-1}] = ${customPref[R]} - ${customPref[L-1]} = ${sum}`;
+    document.getElementById('customResultVal').textContent = `sum(${L}, ${R}) = ${sum}`;
+    document.getElementById('customFormula').textContent = formula;
+    document.getElementById('customResult').style.display = 'block';
+  }
+
+  // ─── 2D Visual ──────────────────────────────────────────────────
+  function init2DViz() {
+    const grid = [[1,2,3],[4,5,6],[7,8,9]];
+    const c = document.getElementById('2dViz'); c.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+    grid.forEach((row, ri) => {
+      const rowEl = document.createElement('div');
+      rowEl.style.cssText = 'display:flex;gap:4px;';
+      row.forEach((v, ci) => {
+        const cell = document.createElement('div');
+        const isQuery = ri >= 1 && ci >= 1;
+        cell.style.cssText = `width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1rem;border:2px solid var(--border);background:${isQuery ? 'var(--arr-active)' : 'var(--bg3)'};color:${isQuery ? '#fff' : 'var(--text)'};`;
+        cell.textContent = v;
+        rowEl.appendChild(cell);
+      });
+      wrap.appendChild(rowEl);
+    });
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:0.78rem;color:var(--text3);margin-top:8px;text-align:center;';
+    label.textContent = 'Orange = query region (1,1)→(2,2)';
+    wrap.appendChild(label);
+    c.appendChild(wrap);
+  }
+
+  // ─── Quiz ───────────────────────────────────────────────────────
+  function answerQ(el, correct, explainId) {
+    const opts = el.parentElement.querySelectorAll('.quiz-opt');
+    opts.forEach(o => o.style.pointerEvents = 'none');
+    el.classList.add(correct ? 'correct' : 'wrong');
+    if (!correct) {
+      opts.forEach(o => { if (o.textContent.includes(document.getElementById(explainId).textContent.split(' ')[0])) {} });
+    }
+    document.getElementById(explainId).style.display = 'block';
+  }
+
+  // ─── Init on load ───────────────────────────────────────────────
+  initBuildViz();
+</script>
+</body>
+</html>

@@ -1,0 +1,2082 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorting Masterclass — Striver Style</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="dark"] {
+    --bg: #0d0f14;
+    --bg2: #13161f;
+    --bg3: #1a1e2e;
+    --card: #1e2235;
+    --border: #2a2f45;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8ecf5;
+    --text2: #8892b0;
+    --text3: #5c6882;
+    --code-bg: #0a0c12;
+    --highlight: rgba(108,99,255,0.15);
+    --glow: 0 0 20px rgba(108,99,255,0.3);
+    --bar: #6c63ff;
+    --bar-sorted: #43e97b;
+    --bar-active: #ff6584;
+    --bar-compare: #f7971e;
+  }
+  :root[data-theme="light"] {
+    --bg: #f0f2f8;
+    --bg2: #ffffff;
+    --bg3: #e8ecf5;
+    --card: #ffffff;
+    --border: #d1d9f0;
+    --accent: #5548e0;
+    --accent2: #e8365d;
+    --accent3: #1a9e5c;
+    --accent4: #d4800a;
+    --text: #1a1e2e;
+    --text2: #4a5568;
+    --text3: #8892b0;
+    --code-bg: #1a1e2e;
+    --highlight: rgba(85,72,224,0.08);
+    --glow: 0 0 20px rgba(85,72,224,0.15);
+    --bar: #5548e0;
+    --bar-sorted: #1a9e5c;
+    --bar-active: #e8365d;
+    --bar-compare: #d4800a;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    width: 260px;
+    height: 100vh;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0 0 40px;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sidebar-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--bg2);
+    z-index: 1;
+  }
+  .sidebar-logo {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .sidebar-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 16px 20px 6px;
+  }
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    font-size: 13px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+    text-decoration: none;
+  }
+  .nav-link:hover { background: var(--highlight); color: var(--text); }
+  .nav-link.active {
+    background: var(--highlight);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 600;
+  }
+  .nav-link .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text3);
+    flex-shrink: 0;
+  }
+  .nav-link.active .dot { background: var(--accent); }
+  .nav-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .nav-link.active .nav-num { background: var(--accent); color: white; }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 260px;
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky; top: 0;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 99;
+    backdrop-filter: blur(10px);
+  }
+  .topbar-breadcrumb {
+    font-size: 13px;
+    color: var(--text3);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .topbar-breadcrumb span { color: var(--text); font-weight: 600; }
+
+  .theme-toggle {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 14px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px;
+    color: var(--text2);
+    font-family: 'Sora', sans-serif;
+    transition: all 0.2s;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── CONTENT ── */
+  .content { padding: 40px; max-width: 900px; }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--bg3) 0%, var(--card) 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(108,99,255,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 50px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .hero h1 .hl { color: var(--accent); }
+  .hero p {
+    font-size: 15px;
+    color: var(--text2);
+    line-height: 1.7;
+    max-width: 600px;
+  }
+  .hero-stats {
+    display: flex; gap: 24px;
+    margin-top: 28px;
+  }
+  .hero-stat {
+    display: flex; flex-direction: column;
+    gap: 2px;
+  }
+  .hero-stat-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .hero-stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 48px;
+    scroll-margin-top: 80px;
+  }
+
+  .section-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 24px;
+  }
+  .section-num {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+    box-shadow: var(--glow);
+  }
+  .section-num.green { background: var(--accent3); box-shadow: 0 0 20px rgba(67,233,123,0.3); }
+  .section-num.red { background: var(--accent2); box-shadow: 0 0 20px rgba(255,101,132,0.3); }
+  .section-num.orange { background: var(--accent4); box-shadow: 0 0 20px rgba(247,151,30,0.3); }
+  .section-num.teal { background: #00c9ff; box-shadow: 0 0 20px rgba(0,201,255,0.3); }
+  .section-num.pink { background: #f953c6; box-shadow: 0 0 20px rgba(249,83,198,0.3); }
+
+  .section-title-wrap { flex: 1; }
+  .section-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .section-sub {
+    font-size: 13px;
+    color: var(--text3);
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 50px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .badge-easy { background: rgba(67,233,123,0.15); color: var(--accent3); }
+  .badge-medium { background: rgba(247,151,30,0.15); color: var(--accent4); }
+  .badge-hard { background: rgba(255,101,132,0.15); color: var(--accent2); }
+
+  .card p, .card li {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.8;
+  }
+  .card ul { padding-left: 20px; }
+  .card li { margin-bottom: 4px; }
+  .card strong { color: var(--text); }
+
+  /* striver talk box */
+  .striver-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .striver-box::before {
+    content: '🎯 Striver says:';
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .striver-box p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .striver-box strong { color: var(--text); }
+
+  /* complexity table */
+  .complexity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 12px;
+  }
+  .complexity-table th {
+    background: var(--bg3);
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: 2px solid var(--border);
+  }
+  .complexity-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .complexity-table tr:hover td { background: var(--highlight); }
+  .complexity-table .good { color: var(--accent3); }
+  .complexity-table .avg { color: var(--accent4); }
+  .complexity-table .bad { color: var(--accent2); }
+
+  /* ── CODE BLOCK ── */
+  .code-wrap {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-lang {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .code-copy {
+    background: none; border: none;
+    font-size: 12px;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: 'Sora', sans-serif;
+    padding: 2px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .code-copy:hover { background: var(--highlight); color: var(--accent); }
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #cdd6f4;
+  }
+  .kw { color: #cba6f7; }
+  .fn { color: #89b4fa; }
+  .str { color: #a6e3a1; }
+  .cm { color: #585b70; font-style: italic; }
+  .num { color: #fab387; }
+  .var { color: #cdd6f4; }
+  .op { color: #89dceb; }
+
+  /* ── VISUALIZER ── */
+  .viz-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .viz-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg3);
+  }
+  .viz-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .viz-body { padding: 24px; }
+
+  .bars-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 160px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+  .bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease, background 0.2s;
+    background: var(--bar);
+    position: relative;
+    min-width: 18px;
+  }
+  .bar.active { background: var(--bar-active); box-shadow: 0 0 8px rgba(255,101,132,0.5); }
+  .bar.compare { background: var(--bar-compare); }
+  .bar.sorted { background: var(--bar-sorted); }
+
+  .bar-label {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  .viz-controls {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .viz-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .viz-btn.primary {
+    background: var(--accent);
+    color: white;
+  }
+  .viz-btn.primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .viz-btn.secondary {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .viz-btn.secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .viz-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  .speed-wrap {
+    display: flex; align-items: center; gap: 8px;
+    margin-left: auto;
+  }
+  .speed-label { font-size: 12px; color: var(--text3); }
+  input[type=range] {
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .viz-status {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 18px;
+  }
+  .viz-status span { color: var(--accent); font-weight: 700; }
+
+  /* step legend */
+  .legend {
+    display: flex; gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+  }
+
+  /* ── INTUITION STEPS ── */
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .step-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .step-circle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-text {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .step-text strong { color: var(--text); }
+
+  /* ── DRY RUN ── */
+  .dry-run {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+  .dry-run-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .dry-table {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+    border-collapse: collapse;
+    width: 100%;
+  }
+  .dry-table th {
+    color: var(--text3);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .dry-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text2);
+  }
+  .dry-table .hl-row td { color: var(--accent); }
+  .arr-box {
+    display: inline-flex; gap: 4px;
+  }
+  .arr-el {
+    width: 28px; height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .arr-el.hi { background: rgba(255,101,132,0.2); border-color: var(--accent2); color: var(--accent2); }
+  .arr-el.hj { background: rgba(247,151,30,0.2); border-color: var(--accent4); color: var(--accent4); }
+  .arr-el.hs { background: rgba(67,233,123,0.2); border-color: var(--accent3); color: var(--accent3); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 40px 0;
+  }
+
+  /* ── COMPARISON TABLE ── */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .compare-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .compare-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .compare-card-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .compare-card-row {
+    display: flex; justify-content: space-between;
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 4px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-card-row:last-child { border-bottom: none; }
+  .compare-card-row .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  /* progress bar at top */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 260px;
+    height: 3px;
+    background: var(--accent);
+    z-index: 999;
+    transition: width 0.1s;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* mobile nav */
+  .mobile-nav-btn {
+    display: none;
+    position: fixed;
+    top: 16px; left: 16px;
+    z-index: 200;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    width: 36px; height: 36px;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    color: white;
+    font-size: 18px;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .topbar { padding: 14px 20px; }
+    .content { padding: 20px; }
+    .mobile-nav-btn { display: flex; }
+    .progress-bar { left: 0; }
+    .hero h1 { font-size: 26px; }
+    .hero-stats { flex-wrap: wrap; gap: 16px; }
+    .viz-controls { flex-direction: column; align-items: flex-start; }
+    .speed-wrap { margin-left: 0; }
+    .compare-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 50px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-weight: 600;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .info-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .info-box-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .info-box-val {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .algo-picker {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .algo-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .algo-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .algo-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<button class="mobile-nav-btn" id="mobileNavBtn">☰</button>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Striver's DSA</div>
+    <div class="sidebar-title">Sorting Masterclass</div>
+  </div>
+
+  <div class="nav-section-label">Getting Started</div>
+  <a class="nav-link active" onclick="navScrollTo('s0')">
+    <span class="nav-num">0</span> Introduction
+  </a>
+
+  <div class="nav-section-label">Basic Sorts — O(n²)</div>
+  <a class="nav-link" onclick="navScrollTo('s1')">
+    <span class="nav-num">1</span> Selection Sort
+  </a>
+  <a class="nav-link" onclick="navScrollTo('s2')">
+    <span class="nav-num">2</span> Bubble Sort
+  </a>
+  <a class="nav-link" onclick="navScrollTo('s3')">
+    <span class="nav-num">3</span> Insertion Sort
+  </a>
+
+  <div class="nav-section-label">Efficient Sorts — O(n log n)</div>
+  <a class="nav-link" onclick="navScrollTo('s4')">
+    <span class="nav-num">4</span> Merge Sort
+  </a>
+  <a class="nav-link" onclick="navScrollTo('s5')">
+    <span class="nav-num">5</span> Quick Sort
+  </a>
+
+  <div class="nav-section-label">Special Sorts</div>
+  <a class="nav-link" onclick="navScrollTo('s6')">
+    <span class="nav-num">6</span> Counting Sort
+  </a>
+  <a class="nav-link" onclick="navScrollTo('s7')">
+    <span class="nav-num">7</span> Radix Sort
+  </a>
+
+  <div class="nav-section-label">Summary</div>
+  <a class="nav-link" onclick="navScrollTo('s8')">
+    <span class="nav-num">8</span> Comparison & When to Use
+  </a>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-breadcrumb">
+      DSA Sheet → Arrays → <span>Sorting Algorithms</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+    <a href="index.html" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);text-decoration:none;font-size:0.8rem;font-weight:600;transition:all .2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">← Roadmap</a>
+    <button class="theme-toggle" id="themeToggle">
+      <span id="themeIcon">☀️</span>
+      <span id="themeLabel">Light Mode</span>
+    </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════════════ S0: INTRO ══════════════════ -->
+    <div class="section" id="s0">
+      <div class="hero">
+        <div class="hero-tag">📚 Complete Guide</div>
+        <h1>Sorting Algorithms<br><span class="hl">From Zero to Hero</span></h1>
+        <p>
+          Hey everyone! This is your complete sorting masterclass — every algorithm explained the way I'd teach it in a whiteboard session. We'll cover <strong>intuition → dry run → code → complexity</strong>. No skipping steps. Let's go! 🚀
+        </p>
+        <div class="hero-stats">
+          <div class="hero-stat"><span class="hero-stat-num">7</span><span class="hero-stat-label">Algorithms</span></div>
+          <div class="hero-stat"><span class="hero-stat-num">∞</span><span class="hero-stat-label">Visualizations</span></div>
+          <div class="hero-stat"><span class="hero-stat-num">O(n²)</span><span class="hero-stat-label">→ O(n log n)</span></div>
+        </div>
+      </div>
+
+      <div class="striver-box">
+        <p>Before we start — <strong>why does sorting matter?</strong> Almost every problem in DSA uses sorting as a building block — Two Sum, 3Sum, Merge Intervals, Meeting Rooms… If you don't understand sorting deeply, you'll always be guessing. Master this and <strong>your problem-solving speed doubles</strong>.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📌 What is Sorting?</div>
+        <p>Sorting is the process of arranging elements of a list in a certain order (typically ascending or descending). The input is an unsorted array <code>[5, 2, 8, 1, 9]</code> and the output is <code>[1, 2, 5, 8, 9]</code>.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🗂️ Types of Sorting Algorithms</div>
+        <ul>
+          <li><strong>Comparison-based:</strong> Compare elements to decide order — Bubble, Selection, Insertion, Merge, Quick</li>
+          <li><strong>Non-comparison-based:</strong> Use properties of data — Counting Sort, Radix Sort (can be O(n)!)</li>
+          <li><strong>In-place:</strong> Uses O(1) extra space — Selection, Bubble, Insertion, Quick</li>
+          <li><strong>Stable:</strong> Equal elements maintain original order — Bubble, Insertion, Merge</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════════════ S1: SELECTION SORT ══════════════════ -->
+    <div class="section" id="s1">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Selection Sort</div>
+          <div class="section-sub">Find the minimum, place it at the correct position</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box"><div class="info-box-label">Time — Best</div><div class="info-box-val avg">O(n²)</div></div>
+        <div class="info-box"><div class="info-box-label">Time — Worst</div><div class="info-box-val bad">O(n²)</div></div>
+        <div class="info-box"><div class="info-box-label">Space</div><div class="info-box-val good">O(1)</div></div>
+        <div class="info-box"><div class="info-box-label">Stable?</div><div class="info-box-val">❌ No</div></div>
+      </div>
+
+      <div class="striver-box">
+        <p>Think of it this way — you have an array and you want to sort it. <strong>In each pass, find the minimum element from the unsorted part and put it in its correct position.</strong> That's it! After pass 1, index 0 is sorted. After pass 2, index 0 and 1 are sorted. And so on...</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Intuition — Step by Step</div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Start from index <strong>i = 0</strong>. Assume the minimum is at index i.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text">Traverse from <strong>i+1 to n-1</strong>, find the actual minimum element's index.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text"><strong>Swap</strong> the minimum element with the element at index i.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">4</div>
+            <div class="step-text">Increment i and <strong>repeat</strong> until the array is sorted.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISUALIZER -->
+      <div class="viz-card">
+        <div class="viz-header">
+          <div class="viz-title">🎬 Live Visualizer — Selection Sort</div>
+        </div>
+        <div class="viz-body">
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar)"></div> Unsorted</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-active)"></div> Current Min</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-compare)"></div> Comparing</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-sorted)"></div> Sorted</div>
+          </div>
+          <div class="bars-container" id="sel-bars"></div>
+          <div class="viz-controls">
+            <button class="viz-btn primary" onclick="startViz('sel')">▶ Start</button>
+            <button class="viz-btn secondary" onclick="resetViz('sel')">↺ Reset</button>
+            <button class="viz-btn secondary" onclick="randomizeViz('sel')">🎲 Random</button>
+            <div class="speed-wrap">
+              <span class="speed-label">Speed:</span>
+              <input type="range" id="sel-speed" min="1" max="5" value="3" style="width:80px">
+            </div>
+          </div>
+          <div class="viz-status" id="sel-status">Click ▶ Start to begin visualization</div>
+        </div>
+      </div>
+
+      <!-- DRY RUN -->
+      <div class="dry-run">
+        <div class="dry-run-title">📝 Dry Run — arr = [64, 25, 12, 22, 11]</div>
+        <table class="dry-table">
+          <tr><th>Pass (i)</th><th>Array State</th><th>Min Index Found</th><th>After Swap</th></tr>
+          <tr><td>i=0</td><td><span class="arr-box"><span class="arr-el hi">64</span><span class="arr-el">25</span><span class="arr-el">12</span><span class="arr-el">22</span><span class="arr-el">11</span></span></td><td>idx=4 (val=11)</td><td><span class="arr-box"><span class="arr-el hs">11</span><span class="arr-el">25</span><span class="arr-el">12</span><span class="arr-el">22</span><span class="arr-el">64</span></span></td></tr>
+          <tr><td>i=1</td><td><span class="arr-box"><span class="arr-el hs">11</span><span class="arr-el hi">25</span><span class="arr-el">12</span><span class="arr-el">22</span><span class="arr-el">64</span></span></td><td>idx=2 (val=12)</td><td><span class="arr-box"><span class="arr-el hs">11</span><span class="arr-el hs">12</span><span class="arr-el">25</span><span class="arr-el">22</span><span class="arr-el">64</span></span></td></tr>
+          <tr><td>i=2</td><td><span class="arr-box"><span class="arr-el hs">11</span><span class="arr-el hs">12</span><span class="arr-el hi">25</span><span class="arr-el">22</span><span class="arr-el">64</span></span></td><td>idx=3 (val=22)</td><td><span class="arr-box"><span class="arr-el hs">11</span><span class="arr-el hs">12</span><span class="arr-el hs">22</span><span class="arr-el">25</span><span class="arr-el">64</span></span></td></tr>
+          <tr><td>i=3</td><td><span class="arr-box"><span class="arr-el hs">11</span><span class="arr-el hs">12</span><span class="arr-el hs">22</span><span class="arr-el hi">25</span><span class="arr-el">64</span></span></td><td>idx=3 (val=25)</td><td><span class="arr-box"><span class="arr-el hs">11</span><span class="arr-el hs">12</span><span class="arr-el hs">22</span><span class="arr-el hs">25</span><span class="arr-el hs">64</span></span></td></tr>
+        </table>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">C++ / Java / Python</span>
+          <button class="code-copy" onclick="copyCode('sel-code')">Copy</button>
+        </div>
+        <pre id="sel-code"><span class="cm">// ── Selection Sort ──</span>
+<span class="kw">void</span> <span class="fn">selectionSort</span>(<span class="kw">int</span> arr[], <span class="kw">int</span> n) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n - <span class="num">1</span>; i++) {
+        <span class="kw">int</span> minIdx = i;          <span class="cm">// Assume min is at i</span>
+        <span class="kw">for</span> (<span class="kw">int</span> j = i + <span class="num">1</span>; j &lt; n; j++) {
+            <span class="kw">if</span> (arr[j] &lt; arr[minIdx])
+                minIdx = j;      <span class="cm">// Found a smaller element</span>
+        }
+        swap(arr[i], arr[minIdx]); <span class="cm">// Place min at correct position</span>
+    }
+}
+
+<span class="cm">// Time: O(n²) — always, even for sorted array (no optimization)</span>
+<span class="cm">// Space: O(1) — in-place</span>
+<span class="cm">// Stable: NO — swap can change relative order of equal elements</span></pre>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════════════ S2: BUBBLE SORT ══════════════════ -->
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="section-num red">2</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Bubble Sort</div>
+          <div class="section-sub">Adjacent swaps — largest element "bubbles up" each pass</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box"><div class="info-box-label">Time — Best</div><div class="info-box-val good">O(n)</div></div>
+        <div class="info-box"><div class="info-box-label">Time — Worst</div><div class="info-box-val bad">O(n²)</div></div>
+        <div class="info-box"><div class="info-box-label">Space</div><div class="info-box-val good">O(1)</div></div>
+        <div class="info-box"><div class="info-box-label">Stable?</div><div class="info-box-val">✅ Yes</div></div>
+      </div>
+
+      <div class="striver-box">
+        <p>Bubble Sort is the simplest sorting algorithm. In each pass, we <strong>compare adjacent elements and swap if they're in wrong order</strong>. After each pass, the largest unsorted element <em>"bubbles up"</em> to its correct position at the end. The KEY optimization — if no swaps happen in a pass, the array is already sorted — <strong>break early!</strong> This gives O(n) for already sorted arrays.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Intuition — Step by Step</div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Run outer loop from <strong>i = 0 to n-1</strong>. In each pass, the last <strong>i</strong> elements are already sorted.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text">Inner loop: compare <strong>arr[j]</strong> and <strong>arr[j+1]</strong>. If arr[j] > arr[j+1], swap them.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text">Use a <strong>didSwap flag</strong> — if no swap in a complete pass, array is sorted, break!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-header">
+          <div class="viz-title">🎬 Live Visualizer — Bubble Sort</div>
+        </div>
+        <div class="viz-body">
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar)"></div> Unsorted</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-compare)"></div> Comparing</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-active)"></div> Swapping</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-sorted)"></div> Sorted</div>
+          </div>
+          <div class="bars-container" id="bub-bars"></div>
+          <div class="viz-controls">
+            <button class="viz-btn primary" onclick="startViz('bub')">▶ Start</button>
+            <button class="viz-btn secondary" onclick="resetViz('bub')">↺ Reset</button>
+            <button class="viz-btn secondary" onclick="randomizeViz('bub')">🎲 Random</button>
+            <div class="speed-wrap">
+              <span class="speed-label">Speed:</span>
+              <input type="range" id="bub-speed" min="1" max="5" value="3" style="width:80px">
+            </div>
+          </div>
+          <div class="viz-status" id="bub-status">Click ▶ Start to begin visualization</div>
+        </div>
+      </div>
+
+      <div class="dry-run">
+        <div class="dry-run-title">📝 Dry Run — arr = [5, 4, 3, 2, 1]</div>
+        <table class="dry-table">
+          <tr><th>Pass</th><th>Comparisons & Swaps</th><th>Array After Pass</th></tr>
+          <tr><td>i=0</td><td>5↔4, 5↔3, 5↔2, 5↔1 (4 swaps)</td><td><span class="arr-box"><span class="arr-el">1</span><span class="arr-el">2</span><span class="arr-el">3</span><span class="arr-el">4</span><span class="arr-el hs">5</span></span></td></tr>
+          <tr><td>i=1</td><td>4↔1, 4↔2, 4↔3 (3 swaps)</td><td><span class="arr-box"><span class="arr-el">1</span><span class="arr-el">2</span><span class="arr-el">3</span><span class="arr-el hs">4</span><span class="arr-el hs">5</span></span></td></tr>
+          <tr><td>i=2</td><td>3↔1, 3↔2 (2 swaps)</td><td><span class="arr-box"><span class="arr-el">1</span><span class="arr-el">2</span><span class="arr-el hs">3</span><span class="arr-el hs">4</span><span class="arr-el hs">5</span></span></td></tr>
+          <tr><td>i=3</td><td>2↔1 (1 swap)</td><td><span class="arr-box"><span class="arr-el hs">1</span><span class="arr-el hs">2</span><span class="arr-el hs">3</span><span class="arr-el hs">4</span><span class="arr-el hs">5</span></span></td></tr>
+        </table>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">C++</span>
+          <button class="code-copy" onclick="copyCode('bub-code')">Copy</button>
+        </div>
+        <pre id="bub-code"><span class="cm">// ── Bubble Sort (Optimized) ──</span>
+<span class="kw">void</span> <span class="fn">bubbleSort</span>(<span class="kw">int</span> arr[], <span class="kw">int</span> n) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n - <span class="num">1</span>; i++) {
+        <span class="kw">bool</span> didSwap = <span class="kw">false</span>;           <span class="cm">// 🔑 Key optimization</span>
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; n - <span class="num">1</span> - i; j++) {
+            <span class="kw">if</span> (arr[j] > arr[j + <span class="num">1</span>]) {
+                swap(arr[j], arr[j + <span class="num">1</span>]);
+                didSwap = <span class="kw">true</span>;
+            }
+        }
+        <span class="kw">if</span> (!didSwap) <span class="kw">break</span>;             <span class="cm">// Already sorted → O(n)</span>
+    }
+}
+
+<span class="cm">// Best Case: O(n) — when array is already sorted (didSwap stays false)</span>
+<span class="cm">// Worst Case: O(n²) — reverse sorted array</span>
+<span class="cm">// Stable: YES — only swap when arr[j] > arr[j+1], equal stays</span></pre>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════════════ S3: INSERTION SORT ══════════════════ -->
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="section-num orange">3</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Insertion Sort</div>
+          <div class="section-sub">Build sorted portion one element at a time — like sorting cards in hand</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box"><div class="info-box-label">Time — Best</div><div class="info-box-val good">O(n)</div></div>
+        <div class="info-box"><div class="info-box-label">Time — Worst</div><div class="info-box-val bad">O(n²)</div></div>
+        <div class="info-box"><div class="info-box-label">Space</div><div class="info-box-val good">O(1)</div></div>
+        <div class="info-box"><div class="info-box-label">Stable?</div><div class="info-box-val">✅ Yes</div></div>
+      </div>
+
+      <div class="striver-box">
+        <p>Think of how you sort playing cards. <strong>You pick one card at a time and insert it in the right position among the already sorted cards in your hand.</strong> That's exactly Insertion Sort! It's brilliant for nearly-sorted arrays because in best case it's O(n). Also used as part of Timsort (what Python's sort() uses internally)!</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Intuition — Step by Step</div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Start from <strong>i = 1</strong> (single element is always sorted).</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text">Pick element at i as <strong>key</strong>. Compare it with elements before it (j = i-1 downto 0).</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text">While <strong>arr[j] > key</strong>, shift arr[j] one position right (arr[j+1] = arr[j]).</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">4</div>
+            <div class="step-text">Place key at <strong>arr[j+1]</strong> — its correct position in the sorted portion.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-header">
+          <div class="viz-title">🎬 Live Visualizer — Insertion Sort</div>
+        </div>
+        <div class="viz-body">
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-sorted)"></div> Sorted Portion</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-active)"></div> Key Element</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-compare)"></div> Shifting</div>
+          </div>
+          <div class="bars-container" id="ins-bars"></div>
+          <div class="viz-controls">
+            <button class="viz-btn primary" onclick="startViz('ins')">▶ Start</button>
+            <button class="viz-btn secondary" onclick="resetViz('ins')">↺ Reset</button>
+            <button class="viz-btn secondary" onclick="randomizeViz('ins')">🎲 Random</button>
+            <div class="speed-wrap">
+              <span class="speed-label">Speed:</span>
+              <input type="range" id="ins-speed" min="1" max="5" value="3" style="width:80px">
+            </div>
+          </div>
+          <div class="viz-status" id="ins-status">Click ▶ Start to begin visualization</div>
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">C++</span>
+          <button class="code-copy" onclick="copyCode('ins-code')">Copy</button>
+        </div>
+        <pre id="ins-code"><span class="cm">// ── Insertion Sort ──</span>
+<span class="kw">void</span> <span class="fn">insertionSort</span>(<span class="kw">int</span> arr[], <span class="kw">int</span> n) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt; n; i++) {
+        <span class="kw">int</span> key = arr[i];     <span class="cm">// Element to insert</span>
+        <span class="kw">int</span> j = i - <span class="num">1</span>;
+        <span class="cm">// Shift elements greater than key one position ahead</span>
+        <span class="kw">while</span> (j >= <span class="num">0</span> && arr[j] > key) {
+            arr[j + <span class="num">1</span>] = arr[j];
+            j--;
+        }
+        arr[j + <span class="num">1</span>] = key;     <span class="cm">// Place key at correct position</span>
+    }
+}
+
+<span class="cm">// Best Case: O(n) — already sorted, inner while loop never executes</span>
+<span class="cm">// Worst Case: O(n²) — reverse sorted, shifts every time</span>
+<span class="cm">// GREAT for: small arrays, nearly sorted data, online sorting</span></pre>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════════════ S4: MERGE SORT ══════════════════ -->
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="section-num green">4</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Merge Sort</div>
+          <div class="section-sub">Divide & Conquer — split, sort, merge</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box"><div class="info-box-label">Time — Best</div><div class="info-box-val good">O(n log n)</div></div>
+        <div class="info-box"><div class="info-box-label">Time — Worst</div><div class="info-box-val good">O(n log n)</div></div>
+        <div class="info-box"><div class="info-box-label">Space</div><div class="info-box-val avg">O(n)</div></div>
+        <div class="info-box"><div class="info-box-label">Stable?</div><div class="info-box-val">✅ Yes</div></div>
+      </div>
+
+      <div class="striver-box">
+        <p>This is where the fun begins! Merge Sort follows <strong>Divide and Conquer</strong> — the most powerful technique in algorithms. The idea is simple: <strong>"If I can't solve the whole problem, break it into smaller problems, solve them, then combine!"</strong> Recursively divide the array into halves until single elements, then merge them back in sorted order. O(n log n) guaranteed — no bad cases!</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Intuition — Divide & Conquer</div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text"><strong>DIVIDE:</strong> Find mid = (low + high) / 2. Recursively sort left half [low..mid] and right half [mid+1..high].</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text"><strong>BASE CASE:</strong> If low >= high (single element), return — a single element is always sorted!</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text"><strong>MERGE:</strong> Take two sorted halves and merge them into one sorted array using two pointers.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">4</div>
+            <div class="step-text">In merge: pick smaller of arr[i] vs arr[j], add to temp, advance pointer. Copy remaining elements.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-header">
+          <div class="viz-title">🎬 Live Visualizer — Merge Sort</div>
+        </div>
+        <div class="viz-body">
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar)"></div> Unsorted</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-compare)"></div> Dividing</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-active)"></div> Merging</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-sorted)"></div> Sorted</div>
+          </div>
+          <div class="bars-container" id="mrg-bars"></div>
+          <div class="viz-controls">
+            <button class="viz-btn primary" onclick="startViz('mrg')">▶ Start</button>
+            <button class="viz-btn secondary" onclick="resetViz('mrg')">↺ Reset</button>
+            <button class="viz-btn secondary" onclick="randomizeViz('mrg')">🎲 Random</button>
+            <div class="speed-wrap">
+              <span class="speed-label">Speed:</span>
+              <input type="range" id="mrg-speed" min="1" max="5" value="3" style="width:80px">
+            </div>
+          </div>
+          <div class="viz-status" id="mrg-status">Click ▶ Start to begin visualization</div>
+        </div>
+      </div>
+
+      <div class="dry-run">
+        <div class="dry-run-title">📝 Recursion Tree — arr = [38, 27, 43, 3]</div>
+        <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);line-height:1.8;">
+<span style="color:var(--accent)">mergeSort([38, 27, 43, 3])</span>
+├── <span style="color:var(--accent4)">mergeSort([38, 27])</span>
+│   ├── mergeSort([38]) → [38]
+│   ├── mergeSort([27]) → [27]
+│   └── merge([38],[27]) → <span style="color:var(--accent3)">[27, 38]</span>
+├── <span style="color:var(--accent4)">mergeSort([43, 3])</span>
+│   ├── mergeSort([43]) → [43]
+│   ├── mergeSort([3])  → [3]
+│   └── merge([43],[3]) → <span style="color:var(--accent3)">[3, 43]</span>
+└── merge([27,38],[3,43]) → <span style="color:var(--accent3)">[3, 27, 38, 43]</span>  ✓
+        </pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">C++</span>
+          <button class="code-copy" onclick="copyCode('mrg-code')">Copy</button>
+        </div>
+        <pre id="mrg-code"><span class="cm">// ── Merge Sort ──</span>
+<span class="kw">void</span> <span class="fn">merge</span>(<span class="kw">int</span> arr[], <span class="kw">int</span> low, <span class="kw">int</span> mid, <span class="kw">int</span> high) {
+    vector&lt;<span class="kw">int</span>&gt; temp;
+    <span class="kw">int</span> i = low, j = mid + <span class="num">1</span>;
+    <span class="kw">while</span> (i &lt;= mid && j &lt;= high) {
+        <span class="kw">if</span> (arr[i] &lt;= arr[j]) temp.push_back(arr[i++]);
+        <span class="kw">else</span>                  temp.push_back(arr[j++]);
+    }
+    <span class="kw">while</span> (i &lt;= mid)  temp.push_back(arr[i++]);  <span class="cm">// Remaining left</span>
+    <span class="kw">while</span> (j &lt;= high) temp.push_back(arr[j++]);  <span class="cm">// Remaining right</span>
+    <span class="kw">for</span> (<span class="kw">int</span> k = low; k &lt;= high; k++)
+        arr[k] = temp[k - low];
+}
+
+<span class="kw">void</span> <span class="fn">mergeSort</span>(<span class="kw">int</span> arr[], <span class="kw">int</span> low, <span class="kw">int</span> high) {
+    <span class="kw">if</span> (low >= high) <span class="kw">return</span>;       <span class="cm">// Base case</span>
+    <span class="kw">int</span> mid = (low + high) / <span class="num">2</span>;
+    <span class="fn">mergeSort</span>(arr, low, mid);       <span class="cm">// Sort left half</span>
+    <span class="fn">mergeSort</span>(arr, mid + <span class="num">1</span>, high);  <span class="cm">// Sort right half</span>
+    <span class="fn">merge</span>(arr, low, mid, high);     <span class="cm">// Merge sorted halves</span>
+}
+
+<span class="cm">// Time: O(n log n) — always. log n levels × O(n) merge per level</span>
+<span class="cm">// Space: O(n) — temp array in merge</span>
+<span class="cm">// Stable: YES — we use <= in merge (equal goes left first)</span></pre>
+      </div>
+
+      <div class="striver-box">
+        <p>⚡ <strong>Why O(n log n)?</strong> Think of the recursion tree. There are <strong>log n levels</strong> (we keep halving). At each level, the total work done for all merges is <strong>O(n)</strong>. So total = log n × n = <strong>O(n log n)</strong>. Beautiful math!</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════════════ S5: QUICK SORT ══════════════════ -->
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="section-num teal">5</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Quick Sort</div>
+          <div class="section-sub">Pick a pivot, partition around it, recurse</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box"><div class="info-box-label">Time — Best</div><div class="info-box-val good">O(n log n)</div></div>
+        <div class="info-box"><div class="info-box-label">Time — Worst</div><div class="info-box-val bad">O(n²)</div></div>
+        <div class="info-box"><div class="info-box-label">Space</div><div class="info-box-val good">O(log n)</div></div>
+        <div class="info-box"><div class="info-box-label">Stable?</div><div class="info-box-val">❌ No</div></div>
+      </div>
+
+      <div class="striver-box">
+        <p>Quick Sort is <strong>the most used sorting algorithm in practice</strong>. It's in-place (O(log n) stack space) and has great cache performance. The idea: <strong>pick a pivot, put all smaller elements to its left, all larger to its right</strong> (this is called PARTITION). Then recursively sort the left and right parts. The pivot is now in its FINAL sorted position!</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Partition — The Heart of Quick Sort</div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Pick pivot (we'll use the <strong>first element</strong> as pivot). Use two pointers: i = low+1, j = high.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text"><strong>i pointer:</strong> Move right while arr[i] &lt;= pivot (i should stop at element > pivot).</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text"><strong>j pointer:</strong> Move left while arr[j] > pivot (j should stop at element &lt;= pivot).</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">4</div>
+            <div class="step-text">If i &lt; j: <strong>swap arr[i] and arr[j]</strong>. Repeat until i >= j.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">5</div>
+            <div class="step-text"><strong>Swap pivot (arr[low]) with arr[j]</strong>. Now pivot is at its correct final position!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="viz-header">
+          <div class="viz-title">🎬 Live Visualizer — Quick Sort</div>
+        </div>
+        <div class="viz-body">
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar)"></div> Unsorted</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div> Pivot</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-compare)"></div> i pointer</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-active)"></div> j pointer</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bar-sorted)"></div> Placed</div>
+          </div>
+          <div class="bars-container" id="qk-bars"></div>
+          <div class="viz-controls">
+            <button class="viz-btn primary" onclick="startViz('qk')">▶ Start</button>
+            <button class="viz-btn secondary" onclick="resetViz('qk')">↺ Reset</button>
+            <button class="viz-btn secondary" onclick="randomizeViz('qk')">🎲 Random</button>
+            <div class="speed-wrap">
+              <span class="speed-label">Speed:</span>
+              <input type="range" id="qk-speed" min="1" max="5" value="3" style="width:80px">
+            </div>
+          </div>
+          <div class="viz-status" id="qk-status">Click ▶ Start to begin visualization</div>
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">C++</span>
+          <button class="code-copy" onclick="copyCode('qk-code')">Copy</button>
+        </div>
+        <pre id="qk-code"><span class="cm">// ── Quick Sort ──</span>
+<span class="kw">int</span> <span class="fn">partition</span>(<span class="kw">int</span> arr[], <span class="kw">int</span> low, <span class="kw">int</span> high) {
+    <span class="kw">int</span> pivot = arr[low];     <span class="cm">// Pivot = first element</span>
+    <span class="kw">int</span> i = low + <span class="num">1</span>;
+    <span class="kw">int</span> j = high;
+
+    <span class="kw">while</span> (<span class="kw">true</span>) {
+        <span class="kw">while</span> (i &lt;= high && arr[i] &lt;= pivot) i++;  <span class="cm">// Move i right</span>
+        <span class="kw">while</span> (j > low  && arr[j] > pivot)  j--;  <span class="cm">// Move j left</span>
+        <span class="kw">if</span> (i &lt; j) swap(arr[i], arr[j]);
+        <span class="kw">else break</span>;
+    }
+    swap(arr[low], arr[j]);   <span class="cm">// Place pivot at correct position</span>
+    <span class="kw">return</span> j;                 <span class="cm">// Pivot's final index</span>
+}
+
+<span class="kw">void</span> <span class="fn">quickSort</span>(<span class="kw">int</span> arr[], <span class="kw">int</span> low, <span class="kw">int</span> high) {
+    <span class="kw">if</span> (low >= high) <span class="kw">return</span>;
+    <span class="kw">int</span> pIdx = <span class="fn">partition</span>(arr, low, high);
+    <span class="fn">quickSort</span>(arr, low, pIdx - <span class="num">1</span>);   <span class="cm">// Sort left of pivot</span>
+    <span class="fn">quickSort</span>(arr, pIdx + <span class="num">1</span>, high);  <span class="cm">// Sort right of pivot</span>
+}
+
+<span class="cm">// Avg: O(n log n) | Worst: O(n²) — when pivot is always min/max</span>
+<span class="cm">// Worst case avoided by random pivot selection in practice!</span></pre>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚠️ When does Quick Sort give O(n²)?</div>
+        <p>When the pivot is always the smallest or largest element — like sorting an already-sorted array with pivot = first element. This creates an unbalanced partition: one side has n-1 elements, other has 0. That's n levels × O(n) work = O(n²).</p>
+        <br><p><strong>Fix:</strong> Use random pivot, or median-of-three pivot selection. In practice, Quick Sort with good pivot choice beats Merge Sort due to better cache locality!</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════════════ S6: COUNTING SORT ══════════════════ -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="section-num pink">6</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Counting Sort</div>
+          <div class="section-sub">Non-comparison sort — use frequency counting, O(n+k)</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box"><div class="info-box-label">Time</div><div class="info-box-val good">O(n + k)</div></div>
+        <div class="info-box"><div class="info-box-label">Space</div><div class="info-box-val avg">O(k)</div></div>
+        <div class="info-box"><div class="info-box-label">Stable?</div><div class="info-box-val">✅ Yes</div></div>
+        <div class="info-box"><div class="info-box-label">Range</div><div class="info-box-val">Small k only</div></div>
+      </div>
+
+      <div class="striver-box">
+        <p>Here's where we <strong>break the O(n log n) barrier</strong> — but with a catch! Counting Sort doesn't COMPARE elements at all. Instead, it <strong>counts how many times each value appears</strong>, then reconstructs the sorted array from counts. O(n + k) where k = range of values. But it only works for integers with a <strong>small range</strong>.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Intuition — Step by Step</div>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div class="step-text">Find <strong>max element</strong> in array. Create count array of size max+1, initialized to 0.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text"><strong>Count frequencies:</strong> For each element x, increment count[x].</div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text"><strong>Reconstruct:</strong> For i from 0 to max, add i to output count[i] times.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dry-run">
+        <div class="dry-run-title">📝 Dry Run — arr = [4, 2, 2, 8, 3, 3, 1]</div>
+        <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);line-height:2;">
+Input: [4, 2, 2, 8, 3, 3, 1]
+
+Count Array (index = value):
+Index:  <span style="color:var(--text3)">0  1  2  3  4  5  6  7  8</span>
+Count: [0, <span style="color:var(--accent3)">1</span>, <span style="color:var(--accent3)">2</span>, <span style="color:var(--accent3)">2</span>, <span style="color:var(--accent3)">1</span>, 0, 0, 0, <span style="color:var(--accent3)">1</span>]
+
+Reconstruct: 1×1, 2×2, 3×2, 4×1, 8×1
+
+Output: <span style="color:var(--accent)">[1, 2, 2, 3, 3, 4, 8]</span>  ✓
+        </pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">C++</span>
+          <button class="code-copy" onclick="copyCode('cnt-code')">Copy</button>
+        </div>
+        <pre id="cnt-code"><span class="cm">// ── Counting Sort ──</span>
+<span class="kw">void</span> <span class="fn">countingSort</span>(vector&lt;<span class="kw">int</span>&gt;& arr) {
+    <span class="kw">int</span> maxVal = *max_element(arr.begin(), arr.end());
+    vector&lt;<span class="kw">int</span>&gt; count(maxVal + <span class="num">1</span>, <span class="num">0</span>);
+
+    <span class="kw">for</span> (<span class="kw">int</span> x : arr)
+        count[x]++;            <span class="cm">// Count occurrences</span>
+
+    <span class="kw">int</span> idx = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt;= maxVal; i++)
+        <span class="kw">while</span> (count[i]-- > <span class="num">0</span>)
+            arr[idx++] = i;    <span class="cm">// Rebuild sorted array</span>
+}
+
+<span class="cm">// Time: O(n + k) where k = max value in array</span>
+<span class="cm">// Space: O(k) for count array</span>
+<span class="cm">// Use when: integers, small range (e.g. 0 to 1000)</span>
+<span class="cm">// DON'T use when: large range, negative numbers (need offset), floats</span></pre>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════════════ S7: RADIX SORT ══════════════════ -->
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="section-num" style="background:#00c9ff;box-shadow:0 0 20px rgba(0,201,255,0.3)">7</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Radix Sort</div>
+          <div class="section-sub">Sort digit by digit — from least significant to most significant</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box"><div class="info-box-label">Time</div><div class="info-box-val good">O(d × (n+k))</div></div>
+        <div class="info-box"><div class="info-box-label">Space</div><div class="info-box-val avg">O(n + k)</div></div>
+        <div class="info-box"><div class="info-box-label">Stable?</div><div class="info-box-val">✅ Yes</div></div>
+        <div class="info-box"><div class="info-box-label">d = digits</div><div class="info-box-val">k = 10</div></div>
+      </div>
+
+      <div class="striver-box">
+        <p>Radix Sort takes Counting Sort further — it handles large numbers by sorting <strong>one digit at a time</strong>, from the rightmost digit (units) to leftmost (highest place value). Key insight: use <strong>stable Counting Sort</strong> as a subroutine for each digit position. For 32-bit integers, d = 10 digits, so it's effectively O(n)!</p>
+      </div>
+
+      <div class="dry-run">
+        <div class="dry-run-title">📝 Dry Run — arr = [170, 45, 75, 90, 802, 24, 2, 66]</div>
+        <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);line-height:2;">
+After sorting by <span style="color:var(--accent4)">units digit</span>:  [170, 90, 802, 2, 24, 45, 75, 66]
+After sorting by <span style="color:var(--accent4)">tens digit</span>:   [802, 2, 24, 45, 66, 170, 75, 90]
+After sorting by <span style="color:var(--accent4)">hundreds digit</span>: [<span style="color:var(--accent)">2, 24, 45, 66, 75, 90, 170, 802</span>] ✓
+
+Note: Each step uses STABLE sort — so relative order from
+previous step is preserved for equal digits.
+        </pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-lang">C++</span>
+          <button class="code-copy" onclick="copyCode('rdx-code')">Copy</button>
+        </div>
+        <pre id="rdx-code"><span class="cm">// ── Radix Sort ──</span>
+<span class="kw">void</span> <span class="fn">countSort</span>(vector&lt;<span class="kw">int</span>&gt;& arr, <span class="kw">int</span> exp) {
+    <span class="kw">int</span> n = arr.size();
+    vector&lt;<span class="kw">int</span>&gt; output(n), count(<span class="num">10</span>, <span class="num">0</span>);
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+        count[(arr[i] / exp) % <span class="num">10</span>]++;          <span class="cm">// Count current digit</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt; <span class="num">10</span>; i++)
+        count[i] += count[i - <span class="num">1</span>];              <span class="cm">// Prefix sum (for stable sort)</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = n - <span class="num">1</span>; i >= <span class="num">0</span>; i--) {       <span class="cm">// Build output (RTL for stability)</span>
+        <span class="kw">int</span> d = (arr[i] / exp) % <span class="num">10</span>;
+        output[--count[d]] = arr[i];
+    }
+    arr = output;
+}
+
+<span class="kw">void</span> <span class="fn">radixSort</span>(vector&lt;<span class="kw">int</span>&gt;& arr) {
+    <span class="kw">int</span> maxVal = *max_element(arr.begin(), arr.end());
+    <span class="kw">for</span> (<span class="kw">int</span> exp = <span class="num">1</span>; maxVal / exp > <span class="num">0</span>; exp *= <span class="num">10</span>)
+        <span class="fn">countSort</span>(arr, exp);
+}
+
+<span class="cm">// d = number of digits, k = 10 (decimal)</span>
+<span class="cm">// Time: O(d × n) ≈ O(n) for fixed-size integers</span></pre>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════════════ S8: COMPARISON ══════════════════ -->
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="section-num" style="background:linear-gradient(135deg,var(--accent),var(--accent2))">8</div>
+        <div class="section-title-wrap">
+          <div class="section-title">Comparison & When to Use</div>
+          <div class="section-sub">The final verdict — which sort to pick and when</div>
+        </div>
+      </div>
+
+      <div class="striver-box">
+        <p>In interviews, <strong>you'll never be asked to implement the wrong sort</strong> if you know WHY each exists. Here's the decision framework I use — memorize this!</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 Complete Complexity Reference</div>
+        <table class="complexity-table">
+          <tr>
+            <th>Algorithm</th>
+            <th>Best</th>
+            <th>Average</th>
+            <th>Worst</th>
+            <th>Space</th>
+            <th>Stable</th>
+          </tr>
+          <tr><td>Selection Sort</td><td class="avg">O(n²)</td><td class="avg">O(n²)</td><td class="bad">O(n²)</td><td class="good">O(1)</td><td>❌</td></tr>
+          <tr><td>Bubble Sort</td><td class="good">O(n)</td><td class="avg">O(n²)</td><td class="bad">O(n²)</td><td class="good">O(1)</td><td>✅</td></tr>
+          <tr><td>Insertion Sort</td><td class="good">O(n)</td><td class="avg">O(n²)</td><td class="bad">O(n²)</td><td class="good">O(1)</td><td>✅</td></tr>
+          <tr><td>Merge Sort</td><td class="good">O(n log n)</td><td class="good">O(n log n)</td><td class="good">O(n log n)</td><td class="avg">O(n)</td><td>✅</td></tr>
+          <tr><td>Quick Sort</td><td class="good">O(n log n)</td><td class="good">O(n log n)</td><td class="bad">O(n²)</td><td class="good">O(log n)</td><td>❌</td></tr>
+          <tr><td>Counting Sort</td><td class="good">O(n+k)</td><td class="good">O(n+k)</td><td class="good">O(n+k)</td><td class="avg">O(k)</td><td>✅</td></tr>
+          <tr><td>Radix Sort</td><td class="good">O(d·n)</td><td class="good">O(d·n)</td><td class="good">O(d·n)</td><td class="avg">O(n+k)</td><td>✅</td></tr>
+        </table>
+      </div>
+
+      <div class="compare-grid">
+        <div class="compare-card">
+          <div class="compare-card-name">🎯 General Purpose</div>
+          <div class="compare-card-row"><span>Pick</span><span class="val" style="color:var(--accent3)">Merge Sort</span></div>
+          <div class="compare-card-row"><span>Why</span><span class="val">Guaranteed O(n log n)</span></div>
+        </div>
+        <div class="compare-card">
+          <div class="compare-card-name">⚡ In-Place + Fast</div>
+          <div class="compare-card-row"><span>Pick</span><span class="val" style="color:var(--accent)">Quick Sort</span></div>
+          <div class="compare-card-row"><span>Why</span><span class="val">Best cache perf</span></div>
+        </div>
+        <div class="compare-card">
+          <div class="compare-card-name">📦 Nearly Sorted</div>
+          <div class="compare-card-row"><span>Pick</span><span class="val" style="color:var(--accent4)">Insertion Sort</span></div>
+          <div class="compare-card-row"><span>Why</span><span class="val">O(n) best case</span></div>
+        </div>
+        <div class="compare-card">
+          <div class="compare-card-name">🔢 Small Int Range</div>
+          <div class="compare-card-row"><span>Pick</span><span class="val" style="color:var(--accent2)">Counting Sort</span></div>
+          <div class="compare-card-row"><span>Why</span><span class="val">Beats O(n log n)!</span></div>
+        </div>
+        <div class="compare-card">
+          <div class="compare-card-name">🔗 Linked List</div>
+          <div class="compare-card-row"><span>Pick</span><span class="val" style="color:var(--accent3)">Merge Sort</span></div>
+          <div class="compare-card-row"><span>Why</span><span class="val">No random access needed</span></div>
+        </div>
+        <div class="compare-card">
+          <div class="compare-card-name">🏭 Real World</div>
+          <div class="compare-card-row"><span>C++ STL</span><span class="val">Introsort</span></div>
+          <div class="compare-card-row"><span>Python</span><span class="val">Timsort</span></div>
+        </div>
+      </div>
+
+      <div class="striver-box">
+        <p>🏆 <strong>My Interview Tip:</strong> In 90% of interview questions, just use the language's built-in sort (C++ sort(), Java Arrays.sort(), Python sorted()) — it's O(n log n) optimized. Only when the problem says "implement sorting" or has a constraint that needs a specific property (stability, O(n), etc.) do you choose manually. <strong>Always explain your choice!</strong></p>
+      </div>
+
+      <!-- INTERACTIVE CHALLENGE -->
+      <div class="card" style="border-color:var(--accent)">
+        <div class="card-title">🏋️ Quick Challenge — Which Sort?</div>
+        <p style="margin-bottom:16px">Given these scenarios, which sorting algorithm would you use?</p>
+        <div id="quiz-container"></div>
+      </div>
+
+    </div><!-- end s8 -->
+
+  </div><!-- end content -->
+</div><!-- end main -->
+
+<script>
+// ══════════════════════════════
+// THEME TOGGLE
+// ══════════════════════════════
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const themeLabel = document.getElementById('themeLabel');
+let isDark = true;
+
+themeToggle.addEventListener('click', () => {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  themeIcon.textContent = isDark ? '☀️' : '🌙';
+  themeLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  // re-render all bars
+  Object.keys(vizState).forEach(k => renderBars(k, vizState[k].arr, vizState[k].highlights || {}));
+});
+
+// ══════════════════════════════
+// SIDEBAR NAVIGATION
+// ══════════════════════════════
+function navScrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  // Close mobile sidebar if open
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// Mobile nav
+document.getElementById('mobileNavBtn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+// Progress bar
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY;
+  const total = document.body.scrollHeight - window.innerHeight;
+  const pct = Math.min((scrolled / total) * 100, 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// Active nav link on scroll
+const sections = ['s0','s1','s2','s3','s4','s5','s6','s7','s8'];
+window.addEventListener('scroll', () => {
+  let current = sections[0];
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 120) current = id;
+  });
+  document.querySelectorAll('.nav-link').forEach((l, i) => {
+    l.classList.toggle('active', sections[i] === current);
+  });
+});
+
+// ══════════════════════════════
+// CODE COPY
+// ══════════════════════════════
+function copyCode(id) {
+  const el = document.getElementById(id);
+  const text = el.innerText || el.textContent;
+  navigator.clipboard.writeText(text).catch(() => {});
+  event.target.textContent = '✓ Copied!';
+  setTimeout(() => event.target.textContent = 'Copy', 1500);
+}
+
+// ══════════════════════════════
+// VISUALIZER ENGINE
+// ══════════════════════════════
+const DEFAULT_ARRAYS = {
+  sel: [64, 25, 12, 22, 11, 45, 33],
+  bub: [5, 3, 8, 1, 9, 2, 7],
+  ins: [9, 5, 1, 4, 3, 8, 2],
+  mrg: [38, 27, 43, 3, 9, 82, 10],
+  qk:  [10, 7, 8, 9, 1, 5, 6],
+};
+
+const vizState = {};
+
+function initViz(key) {
+  vizState[key] = {
+    arr: [...DEFAULT_ARRAYS[key]],
+    running: false,
+    steps: [],
+    stepIdx: 0,
+    highlights: {},
+    sorted: new Set()
+  };
+  renderBars(key, vizState[key].arr, {});
+}
+
+function getSpeed(key) {
+  const s = parseInt(document.getElementById(key + '-speed').value);
+  return [500, 300, 180, 90, 40][s - 1];
+}
+
+function renderBars(key, arr, highlights) {
+  const container = document.getElementById(key + '-bars');
+  if (!container) return;
+  const max = Math.max(...arr);
+  container.innerHTML = '';
+  arr.forEach((val, i) => {
+    const col = document.createElement('div');
+    col.style.display = 'flex';
+    col.style.flexDirection = 'column';
+    col.style.alignItems = 'center';
+    col.style.flex = '1';
+
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.height = (val / max * 140) + 'px';
+
+    const st = vizState[key];
+    if (st && st.sorted && st.sorted.has(i)) {
+      bar.classList.add('sorted');
+    } else if (highlights.active === i) {
+      bar.classList.add('active');
+    } else if (highlights.compare === i) {
+      bar.classList.add('compare');
+    } else if (highlights.pivot === i) {
+      bar.style.background = '#a855f7';
+      bar.style.boxShadow = '0 0 8px rgba(168,85,247,0.5)';
+    }
+
+    const label = document.createElement('div');
+    label.className = 'bar-label';
+    label.textContent = val;
+    col.appendChild(bar);
+    col.appendChild(label);
+    container.appendChild(col);
+  });
+}
+
+function setStatus(key, msg) {
+  const el = document.getElementById(key + '-status');
+  if (el) el.innerHTML = msg;
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// ─── SELECTION SORT VIZ ───
+async function runSelectionSort(key) {
+  const st = vizState[key];
+  const arr = st.arr;
+  const n = arr.length;
+  st.sorted = new Set();
+
+  for (let i = 0; i < n - 1 && st.running; i++) {
+    let minIdx = i;
+    for (let j = i + 1; j < n && st.running; j++) {
+      renderBars(key, arr, { active: minIdx, compare: j });
+      setStatus(key, `Pass ${i+1}: Comparing <span>arr[${j}]=${arr[j]}</span> with current min <span>arr[${minIdx}]=${arr[minIdx]}</span>`);
+      await sleep(getSpeed(key));
+      if (arr[j] < arr[minIdx]) minIdx = j;
+    }
+    if (minIdx !== i) {
+      [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+    }
+    st.sorted.add(i);
+    renderBars(key, arr, {});
+    setStatus(key, `Placed <span>${arr[i]}</span> at index ${i} ✓`);
+    await sleep(getSpeed(key));
+  }
+  st.sorted.add(n - 1);
+  renderBars(key, arr, {});
+  setStatus(key, `✅ <span>Sorted!</span> Total passes: ${n-1}`);
+  st.running = false;
+}
+
+// ─── BUBBLE SORT VIZ ───
+async function runBubbleSort(key) {
+  const st = vizState[key];
+  const arr = st.arr;
+  const n = arr.length;
+  st.sorted = new Set();
+
+  for (let i = 0; i < n - 1 && st.running; i++) {
+    let swapped = false;
+    for (let j = 0; j < n - 1 - i && st.running; j++) {
+      renderBars(key, arr, { compare: j, active: j + 1 });
+      setStatus(key, `Pass ${i+1}: Comparing <span>${arr[j]}</span> and <span>${arr[j+1]}</span>${arr[j]>arr[j+1]?' → Swapping!':''}`);
+      await sleep(getSpeed(key));
+      if (arr[j] > arr[j + 1]) {
+        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+        swapped = true;
+      }
+    }
+    st.sorted.add(n - 1 - i);
+    renderBars(key, arr, {});
+    if (!swapped) {
+      for (let k = 0; k < n; k++) st.sorted.add(k);
+      setStatus(key, `✅ <span>Early exit!</span> No swaps in pass ${i+1} — already sorted!`);
+      break;
+    } else {
+      setStatus(key, `Pass ${i+1} done. <span>${arr[n-1-i]}</span> is in place.`);
+    }
+    await sleep(getSpeed(key));
+  }
+  for (let k = 0; k < n; k++) st.sorted.add(k);
+  renderBars(key, arr, {});
+  if (st.running) setStatus(key, `✅ <span>Sorted!</span>`);
+  st.running = false;
+}
+
+// ─── INSERTION SORT VIZ ───
+async function runInsertionSort(key) {
+  const st = vizState[key];
+  const arr = st.arr;
+  const n = arr.length;
+  st.sorted = new Set([0]);
+  renderBars(key, arr, {});
+
+  for (let i = 1; i < n && st.running; i++) {
+    const keyVal = arr[i];
+    let j = i - 1;
+    setStatus(key, `Picking key = <span>${keyVal}</span> at index ${i}`);
+    await sleep(getSpeed(key));
+
+    while (j >= 0 && arr[j] > keyVal && st.running) {
+      arr[j + 1] = arr[j];
+      renderBars(key, arr, { compare: j, active: j + 1 });
+      setStatus(key, `Shifting <span>${arr[j]}</span> one step right`);
+      await sleep(getSpeed(key));
+      j--;
+    }
+    arr[j + 1] = keyVal;
+    for (let k = 0; k <= i; k++) st.sorted.add(k);
+    renderBars(key, arr, {});
+    setStatus(key, `Inserted <span>${keyVal}</span> at index ${j+1}`);
+    await sleep(getSpeed(key));
+  }
+  setStatus(key, `✅ <span>Sorted!</span>`);
+  st.running = false;
+}
+
+// ─── MERGE SORT VIZ ───
+async function runMergeSort(key) {
+  const st = vizState[key];
+  const arr = st.arr;
+  st.sorted = new Set();
+
+  async function merge(lo, mid, hi) {
+    const left = arr.slice(lo, mid + 1);
+    const right = arr.slice(mid + 1, hi + 1);
+    let i = 0, j = 0, k = lo;
+    while (i < left.length && j < right.length && st.running) {
+      renderBars(key, arr, { active: lo + i, compare: mid + 1 + j });
+      setStatus(key, `Merging [${lo}..${mid}] and [${mid+1}..${hi}]: comparing <span>${left[i]}</span> and <span>${right[j]}</span>`);
+      await sleep(getSpeed(key));
+      if (left[i] <= right[j]) arr[k++] = left[i++];
+      else arr[k++] = right[j++];
+    }
+    while (i < left.length) arr[k++] = left[i++];
+    while (j < right.length) arr[k++] = right[j++];
+    for (let x = lo; x <= hi; x++) {
+      renderBars(key, arr, { active: x });
+      await sleep(getSpeed(key) * 0.3);
+    }
+  }
+
+  async function ms(lo, hi) {
+    if (lo >= hi || !st.running) return;
+    const mid = Math.floor((lo + hi) / 2);
+    await ms(lo, mid);
+    await ms(mid + 1, hi);
+    await merge(lo, mid, hi);
+  }
+
+  await ms(0, arr.length - 1);
+  for (let k = 0; k < arr.length; k++) st.sorted.add(k);
+  renderBars(key, arr, {});
+  setStatus(key, `✅ <span>Sorted!</span>`);
+  st.running = false;
+}
+
+// ─── QUICK SORT VIZ ───
+async function runQuickSort(key) {
+  const st = vizState[key];
+  const arr = st.arr;
+  st.sorted = new Set();
+
+  async function partition(lo, hi) {
+    const pivot = arr[lo];
+    let i = lo + 1, j = hi;
+    setStatus(key, `Pivot = <span>${pivot}</span> at index ${lo}`);
+    await sleep(getSpeed(key));
+
+    while (true && st.running) {
+      while (i <= hi && arr[i] <= pivot) {
+        renderBars(key, arr, { compare: i, pivot: lo });
+        await sleep(getSpeed(key) * 0.5);
+        i++;
+      }
+      while (j > lo && arr[j] > pivot) {
+        renderBars(key, arr, { active: j, pivot: lo });
+        await sleep(getSpeed(key) * 0.5);
+        j--;
+      }
+      if (i < j) {
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        renderBars(key, arr, { compare: i, active: j, pivot: lo });
+        setStatus(key, `Swapping <span>${arr[j]}</span> and <span>${arr[i]}</span>`);
+        await sleep(getSpeed(key));
+      } else break;
+    }
+    [arr[lo], arr[j]] = [arr[j], arr[lo]];
+    st.sorted.add(j);
+    renderBars(key, arr, {});
+    setStatus(key, `Pivot <span>${arr[j]}</span> placed at final position ${j} ✓`);
+    await sleep(getSpeed(key));
+    return j;
+  }
+
+  async function qs(lo, hi) {
+    if (lo >= hi || !st.running) {
+      if (lo === hi) st.sorted.add(lo);
+      return;
+    }
+    const p = await partition(lo, hi);
+    await qs(lo, p - 1);
+    await qs(p + 1, hi);
+  }
+
+  await qs(0, arr.length - 1);
+  for (let k = 0; k < arr.length; k++) st.sorted.add(k);
+  renderBars(key, arr, {});
+  setStatus(key, `✅ <span>Sorted!</span>`);
+  st.running = false;
+}
+
+const runners = { sel: runSelectionSort, bub: runBubbleSort, ins: runInsertionSort, mrg: runMergeSort, qk: runQuickSort };
+
+function startViz(key) {
+  const st = vizState[key];
+  if (st.running) return;
+  st.running = true;
+  runners[key](key);
+}
+
+function resetViz(key) {
+  if (vizState[key]) vizState[key].running = false;
+  setTimeout(() => {
+    vizState[key] = { arr: [...DEFAULT_ARRAYS[key]], running: false, highlights: {}, sorted: new Set() };
+    renderBars(key, vizState[key].arr, {});
+    setStatus(key, 'Click ▶ Start to begin visualization');
+  }, 100);
+}
+
+function randomizeViz(key) {
+  if (vizState[key]) vizState[key].running = false;
+  setTimeout(() => {
+    const n = 8;
+    const arr = Array.from({ length: n }, () => Math.floor(Math.random() * 85) + 10);
+    DEFAULT_ARRAYS[key] = [...arr];
+    vizState[key] = { arr, running: false, highlights: {}, sorted: new Set() };
+    renderBars(key, arr, {});
+    setStatus(key, 'New random array! Click ▶ Start');
+  }, 100);
+}
+
+// ══════════════════════════════
+// QUIZ
+// ══════════════════════════════
+const quizData = [
+  { q: "Sort 1 million integers in range [0, 100]", answers: ["Counting Sort", "Merge Sort", "Quick Sort", "Bubble Sort"], correct: 0, exp: "Small range integers → Counting Sort gives O(n+k) = O(n+100) ≈ O(n)!" },
+  { q: "Sort a nearly-sorted array of size 1000", answers: ["Merge Sort", "Selection Sort", "Insertion Sort", "Quick Sort"], correct: 2, exp: "Nearly sorted → Insertion Sort! Best case O(n) — inner while loop barely runs." },
+  { q: "Need stable sort with guaranteed O(n log n)", answers: ["Quick Sort", "Merge Sort", "Heap Sort", "Selection Sort"], correct: 1, exp: "Merge Sort: always O(n log n), stable, perfect for linked lists too!" },
+  { q: "Sort in-place with best average performance", answers: ["Merge Sort", "Bubble Sort", "Quick Sort", "Insertion Sort"], correct: 2, exp: "Quick Sort: O(log n) stack space, excellent cache locality, fastest in practice!" },
+];
+
+let answered = new Set();
+const qc = document.getElementById('quiz-container');
+quizData.forEach((q, qi) => {
+  const div = document.createElement('div');
+  div.style.cssText = 'margin-bottom:20px;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)';
+  div.innerHTML = `
+    <p style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">${qi+1}. ${q.q}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px" id="quiz-opts-${qi}">
+      ${q.answers.map((a,ai) => `
+        <button onclick="answerQuiz(${qi},${ai})" style="
+          padding:7px 14px;border-radius:8px;border:1px solid var(--border);
+          background:var(--card);color:var(--text2);font-family:'Sora',sans-serif;
+          font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;
+        " id="qopt-${qi}-${ai}">${a}</button>
+      `).join('')}
+    </div>
+    <div id="quiz-exp-${qi}" style="margin-top:10px;font-size:13px;color:var(--text3);display:none;padding:10px;border-radius:8px;background:var(--highlight)"></div>
+  `;
+  qc.appendChild(div);
+});
+
+function answerQuiz(qi, ai) {
+  if (answered.has(qi)) return;
+  answered.add(qi);
+  const q = quizData[qi];
+  const opts = document.getElementById('quiz-opts-' + qi);
+  const exp = document.getElementById('quiz-exp-' + qi);
+
+  for (let i = 0; i < q.answers.length; i++) {
+    const btn = document.getElementById(`qopt-${qi}-${i}`);
+    btn.style.cursor = 'default';
+    if (i === q.correct) {
+      btn.style.background = 'rgba(67,233,123,0.2)';
+      btn.style.borderColor = 'var(--accent3)';
+      btn.style.color = 'var(--accent3)';
+    } else if (i === ai && ai !== q.correct) {
+      btn.style.background = 'rgba(255,101,132,0.2)';
+      btn.style.borderColor = 'var(--accent2)';
+      btn.style.color = 'var(--accent2)';
+    }
+  }
+  exp.style.display = 'block';
+  exp.innerHTML = (ai === q.correct ? '✅ Correct! ' : '❌ Wrong. ') + q.exp;
+  exp.style.color = ai === q.correct ? 'var(--accent3)' : 'var(--accent2)';
+}
+
+// ══════════════════════════════
+// INIT
+// ══════════════════════════════
+['sel','bub','ins','mrg','qk'].forEach(initViz);
+</script>
+</body>
+</html>
