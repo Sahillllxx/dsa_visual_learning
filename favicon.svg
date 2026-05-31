@@ -1,22 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#1a0533"/>
-      <stop offset="100%" style="stop-color:#0a0a0f"/>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e0a3c"/>
+      <stop offset="100%" stop-color="#060610"/>
     </radialGradient>
-    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#a855f7"/>
-      <stop offset="100%" style="stop-color:#06b6d4"/>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
+    <linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e879f9"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
-  <circle cx="50" cy="50" r="50" fill="url(#bgGrad)"/>
-  <circle cx="50" cy="50" r="46" fill="none" stroke="url(#textGrad)" stroke-width="2.5" opacity="0.9"/>
-  <text x="50" y="60"
-        font-family="Arial Black, sans-serif"
-        font-size="30"
-        font-weight="900"
-        text-anchor="middle"
-        fill="url(#textGrad)"
-        letter-spacing="2">DSA</text>
+  <circle cx="50" cy="50" r="50" fill="url(#bg)"/>
+  <polygon points="50,18 78,34 78,66 50,82 22,66 22,34"
+           fill="none" stroke="url(#g1)" stroke-width="2" opacity="0.8"/>
+  <circle cx="50" cy="50" r="47" fill="none" stroke="url(#g1)" stroke-width="1.2" stroke-dasharray="8 5" opacity="0.5"/>
+  <circle cx="50" cy="18" r="3" fill="#a855f7" filter="url(#glow)"/>
+  <circle cx="78" cy="34" r="3" fill="#06b6d4" filter="url(#glow)"/>
+  <circle cx="78" cy="66" r="3" fill="#ec4899" filter="url(#glow)"/>
+  <circle cx="50" cy="82" r="3" fill="#a855f7" filter="url(#glow)"/>
+  <circle cx="22" cy="66" r="3" fill="#06b6d4" filter="url(#glow)"/>
+  <circle cx="22" cy="34" r="3" fill="#ec4899" filter="url(#glow)"/>
+  <text x="50" y="58" font-family="Arial Black, sans-serif" font-size="22"
+        font-weight="900" text-anchor="middle" fill="url(#tg)"
+        filter="url(#glow)" letter-spacing="2">DSA</text>
 </svg>
-
